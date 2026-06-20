@@ -27,6 +27,10 @@
   .pill .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:7px;vertical-align:1px}
   .pill.online .dot{background:var(--bull);box-shadow:0 0 8px var(--bull)}
   .pill.off .dot{background:var(--bear)}
+  .pill.demo{color:var(--warn);border-color:var(--warn)} .pill.demo .dot{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+  .pill.live{color:var(--bull);border-color:var(--bull)} .pill.live .dot{background:var(--bull);box-shadow:0 0 8px var(--bull)}
+  .srctag{font-size:11px;margin-left:8px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);letter-spacing:.04em;vertical-align:middle}
+  .srctag.demo{color:var(--warn);border-color:var(--warn)} .srctag.live{color:var(--bull);border-color:var(--bull)}
   .lead{color:var(--ink-2);font-size:17px;margin:10px 0 0}
   .steps{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 2px;color:var(--muted);font-size:14px}
   .steps b{color:var(--ink)}
@@ -86,7 +90,7 @@
 
   /* proof receipt */
   .why-line{color:var(--ink-2);margin:0 0 12px;font-size:15px}
-  .receipt{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:15px;font:14px/1.9 var(--mono)}
+  .receipt{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:15px;font:14px/1.9 var(--mono);word-break:break-word}
   .receipt .k{color:var(--muted)} .receipt b{color:var(--ink)}
   .chainchip{display:inline-flex;align-items:center;gap:6px;color:var(--accent2);border:1px solid var(--accent2);
        border-radius:999px;padding:2px 10px;font:13px var(--sans)}
@@ -101,12 +105,81 @@
   .hashdiff .lbl{color:var(--muted);font:13px var(--sans);letter-spacing:.04em}
   .hashdiff .a b{color:var(--ink)} .hashdiff .b b{color:var(--bear);text-shadow:0 0 12px rgba(255,77,94,.5)}
   .recordbox{width:100%;min-height:118px;background:#0e141d;border:1px solid var(--line);border-radius:8px;
-    color:var(--ink2);font:13px/1.6 var(--mono);padding:12px;resize:vertical;white-space:pre-wrap;word-break:break-all}
+    color:var(--ink-2);font:13px/1.6 var(--mono);padding:12px;resize:vertical;white-space:pre-wrap;word-break:break-all}
   .recordbox:focus{outline:2px solid var(--accent2);outline-offset:2px}
   .fp{display:flex;gap:14px;align-items:baseline;margin-top:10px;flex-wrap:wrap}
   .fp .lbl{color:var(--muted);font:13px var(--sans);letter-spacing:.04em;min-width:210px}
   .fp .mono{font:15px/1.6 var(--mono);word-break:break-all;flex:1;min-width:200px}
   .fp .mono .d{color:var(--bear);font-weight:800;text-shadow:0 0 10px rgba(255,77,94,.55)}
+
+  /* === visualizations === */
+  #strengthMeter{margin:14px 0 2px}
+  .sm-row{display:grid;grid-template-columns:60px 1fr 78px;align-items:center;gap:10px;margin:7px 0}
+  .sm-lbl{font-size:.82em;color:var(--muted)}
+  .sm-lbl.bull{color:var(--bull)} .sm-lbl.bear{color:var(--bear)}
+  .sm-bar{position:relative;height:18px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+  .sm-bar i{display:block;height:100%;width:0;border-radius:inherit;transition:width .6s var(--ease)}
+  .sm-bar i.bull{background:var(--bull)}
+  .sm-bar i.bear{background:var(--bear);background-image:repeating-linear-gradient(45deg,transparent 0,transparent 5px,rgba(0,0,0,.22) 5px,rgba(0,0,0,.22) 9px)}
+  .sm-val{font:.82em var(--mono);color:var(--ink);text-align:right}
+  .sm-conf{margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+  .sm-conf-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .sm-conf-top span{font-size:.78em;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .sm-conf-top b{font:.95em var(--mono);color:var(--ink)}
+  .sm-conf i{display:block;height:8px;width:0;border-radius:4px;margin-top:6px;transition:width .6s var(--ease)}
+  .sm-conf i{background:var(--brand)}   /* neutral: verdict is already colour-coded in the hero + label, so this bar isn't a 3rd "side" */
+  .sm-cap{font-size:.76em;color:var(--muted);margin-top:9px}
+  .vchip{display:inline-block;padding:1px 8px;border-radius:6px;font-weight:700;font-size:.92em;border:1px solid currentColor}
+  .vchip.v-BUY{color:var(--bull)} .vchip.v-HOLD{color:var(--warn)} .vchip.v-AVOID{color:var(--bear)}
+  .evidence-over{margin:16px 0 2px;font-size:1.05em;color:var(--ink);padding:11px 14px;
+    border-left:3px solid var(--brand);background:rgba(124,92,255,.07);border-radius:0 8px 8px 0}
+  .evidence-over .arrow{color:var(--brand);font-weight:800;margin:0 6px} .evidence-over .agree{color:var(--bull)}
+  .gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:12px;margin:6px 0}
+  .gauge .glbl{font-size:.76em;color:var(--muted);margin-bottom:4px}
+  .gauge .grow{display:flex;align-items:center;gap:8px}
+  .gtrack{position:relative;flex:1;height:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+  .gtrack .gt{position:absolute;top:-3px;width:2px;height:16px;background:var(--bg);box-shadow:0 0 0 1px var(--ink-2)}
+  .gfill{height:100%;border-radius:5px;transition:width .5s var(--ease)}
+  .gfill.ok{background:var(--accent2)} .gfill.warn{background:var(--warn)}
+  .gval{font:.76em var(--mono);color:var(--ink);min-width:64px;text-align:right}
+  .gval.ok b{color:var(--accent2)} .gval.warn b{color:var(--warn)}
+  .gauge .gcol{flex:1;min-width:0}
+  .gauge .gaxis{display:flex;justify-content:space-between;margin-top:4px;font:.62em/1 var(--mono);color:var(--muted)}
+  .gauge .gcap{font-size:.64em;color:var(--faint);margin-top:4px}
+  .cap{font-size:.76em;margin-top:8px}
+  #priceSvg{width:100%;height:200px;display:block}
+  #priceSvg polyline,#priceSvg line,#priceSvg circle{vector-effect:non-scaling-stroke}
+  #priceSvg .price{fill:none;stroke:var(--ink-2);stroke-width:2}
+  #priceSvg .ma{fill:none;stroke:var(--brand);stroke-width:2;stroke-dasharray:5 4}
+  #priceSvg .asof{stroke:var(--accent2);stroke-width:1.5;opacity:.7}
+  #priceSvg .mark{fill:none;stroke:var(--ink);stroke-width:2.5}
+  #priceCap{font-size:.76em;color:var(--muted);margin-top:8px}
+  .chart{display:flex;gap:8px;align-items:flex-start;margin-top:6px}
+  .chart .yaxis{position:relative;flex:0 0 56px;height:200px;font:.66em/1.1 var(--mono);color:var(--muted)}
+  .chart .yaxis span{position:absolute;right:0;transform:translateY(-50%);white-space:nowrap}
+  .chart .plot{flex:1;min-width:0;position:relative}
+  .xaxis{display:flex;justify-content:space-between;font:.66em/1.1 var(--mono);color:var(--muted);margin-top:5px}
+  .axisname{font-size:.7em;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 3px}
+  .axisname.x{text-align:center;margin:5px 0 0}
+  #priceSvg .grid{stroke:var(--line);stroke-width:1;opacity:.55}
+  #priceSvg{cursor:crosshair}
+  #priceSvg .cross{stroke:var(--ink-2);stroke-width:1;opacity:.55;stroke-dasharray:3 3}
+  #priceSvg .focus{fill:var(--accent2);stroke:var(--bg);stroke-width:2}
+  .charttip{position:absolute;top:4px;transform:translateX(-50%);pointer-events:none;z-index:4;
+    background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-sm);
+    padding:6px 9px;font:.68em/1.45 var(--mono);color:var(--ink);white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.55)}
+  .charttip[hidden]{display:none}
+  .charttip .d{color:var(--muted)} .charttip .pr{color:var(--ink)} .charttip .mav{color:var(--brand)}
+  .charttip .chg.up{color:var(--bull)} .charttip .chg.dn{color:var(--bear)}
+  .pricepanel{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;background:var(--surface-2)}
+  .pricepanel .panel-h{font-size:15px;color:var(--ink-2);margin:0 0 8px}
+  .chartlegend{position:absolute;top:8px;right:8px;z-index:2;pointer-events:none;display:flex;flex-direction:column;gap:5px;
+    font-size:.66em;color:var(--ink-2);background:rgba(18,24,33,.85);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 9px}
+  .chartlegend .lg{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+  .chartlegend i{display:inline-block;width:18px;flex:0 0 18px;height:0}
+  .chartlegend .sw-line{border-top:2px solid var(--ink-2)}
+  .chartlegend .sw-ma{border-top:2px dashed var(--brand)}
+  .chartlegend .sw-now{width:11px;flex:0 0 11px;height:11px;border-radius:50%;border:2px solid var(--ink)}
 
   .reveal{animation:rise .45s var(--ease) both}
   .pop{animation:pop .5s var(--ease) both}
@@ -126,6 +199,7 @@
   @media (prefers-reduced-motion: reduce){
     *{animation:none !important;scroll-behavior:auto}
     .status .bar{background-position:0 0}
+    .sm-bar i,.gfill{transition:none}
   }
 </style>
 </head>
@@ -134,6 +208,7 @@
   <header>
     <h1>GlassBox</h1>
     <span class="pill" id="health"><span class="dot"></span><span id="healthTxt">connecting…</span></span>
+    <span class="pill" id="mode" title="LIVE = every question runs the full live pipeline. DEMO = the canonical pitch question is a pre-baked instant cache; other questions still run live."><span class="dot"></span><span id="modeTxt">mode…</span></span>
   </header>
   <p class="lead">An AI Bull and Bear debate your trade — then we lock the verdict so it <b>can't be quietly rewritten</b>.</p>
   <div class="steps"><span><b>1.</b> Ask</span><span>→</span><span><b>2.</b> Get a verdict</span><span>→</span><span><b>3.</b> Prove it can't be faked</span></div>
@@ -145,7 +220,7 @@
       <div><label>Asset</label><div class="chip">SUI/USDC <small>· more soon</small></div></div>
       <div><label for="risk">Risk tolerance</label>
         <select id="risk"><option>low</option><option selected>moderate</option><option>high</option></select></div>
-      <div style="flex:0 0 auto"><button id="go" onclick="analyze()">Analyze ⌘↵</button></div>
+      <div style="flex:0 0 auto"><button id="go" onclick="analyze()">Analyze</button></div>
     </div>
     <div id="status" class="status" role="status" aria-live="polite"></div>
   </section>
@@ -153,21 +228,45 @@
   <div id="skeleton"><div class="debate"><div class="sk"></div><div class="sk"></div></div></div>
 
   <section id="result" class="card hidden" aria-labelledby="decH" aria-live="polite">
-    <h2 id="decH" class="muted" style="font-size:13px;text-transform:uppercase;letter-spacing:.08em">Decision</h2>
+    <h2 id="decH" class="muted" style="font-size:13px;text-transform:uppercase;letter-spacing:.08em">Decision <span id="srcTag" class="srctag"></span></h2>
     <div class="hero" id="heroBlock">
       <div class="verdict" id="verdict"></div>
+      <div id="strengthMeter" aria-label="Decision strength meter"></div>
       <div class="hero-row2">
-        <div class="sigchip" id="signal"></div>
         <div class="meta">Suggested size: <b id="size"></b> <span class="muted">of your portfolio</span></div>
       </div>
     </div>
     <div class="resolved" id="resolved"></div>
     <div class="debate" id="debate">
       <div class="side bull"><h3><span class="sq" aria-hidden="true"></span>Bull case</h3><ul id="bullPts"></ul>
-        <div class="reb" id="bullReb"></div><div class="conv" id="bullConv"></div></div>
+        <div class="reb" id="bullReb"></div></div>
       <div class="side bear"><h3><span class="sq" aria-hidden="true"></span>Bear case</h3><ul id="bearPts"></ul>
-        <div class="reb" id="bearReb"></div><div class="conv" id="bearConv"></div></div>
+        <div class="reb" id="bearReb"></div></div>
     </div>
+    <div id="evidenceOverride" class="evidence-over"></div>
+    <section class="pricepanel hidden" id="priceDetails" aria-label="Evidence behind this call">
+      <div class="panel-h">Evidence behind this call <span class="muted">· check the verdict against the market data the agents could cite</span></div>
+      <div class="axisname y">↕ Price (USD)</div>
+      <div class="chart">
+        <div class="yaxis" id="priceYAxis"></div>
+        <div class="plot">
+          <svg id="priceSvg" viewBox="0 0 600 180" preserveAspectRatio="none" role="img" aria-label="SUI daily closing price on the vertical axis in US dollars, over time on the horizontal axis (daily closes), with the 20-day average and the verdict pinned at the last close"></svg>
+          <div class="chartlegend">
+            <span class="lg"><i class="sw-line"></i>Price</span>
+            <span class="lg"><i class="sw-ma"></i>20-day average</span>
+            <span class="lg"><i class="sw-now"></i>Now (last close)</span>
+          </div>
+          <div id="priceTip" class="charttip" hidden></div>
+          <div class="xaxis" id="priceXAxis"></div>
+        </div>
+      </div>
+      <div class="axisname x">↔ Time</div>
+      <div id="priceCap"></div>
+    </section>
+    <details class="why"><summary>See the numbers they debated</summary>
+      <div id="evidenceGauges" class="gauges"></div>
+      <div class="cap muted">These are the exact market inputs in the signed fingerprint.</div>
+    </details>
     <details class="why"><summary>Why you should doubt this</summary>
       <div class="meta" id="risknote"></div>
       <div class="meta" id="counter"></div>
@@ -214,7 +313,8 @@ async function api(path,opts){
 
 (async()=>{try{const h=await api('/api/health');
   $('#health').classList.add('online'); $('#healthTxt').textContent='AI online · '+h.provider;
-}catch(e){$('#health').classList.add('off');$('#healthTxt').textContent='AI offline';}})();
+  const dm=!!h.demoMode; $('#mode').classList.add(dm?'demo':'live'); $('#modeTxt').textContent=dm?'DEMO mode':'LIVE mode';
+}catch(e){$('#health').classList.add('off');$('#healthTxt').textContent='AI offline';$('#modeTxt').textContent='mode ?';}})();
 
 const STEPS=["Spinning up the Bull and Bear analysts…","The agents are debating both sides…",
              "Cross-examining and scoring conviction…","Resolving the verdict…"];
@@ -230,8 +330,11 @@ async function analyze(){
   $('#result').classList.add('hidden'); $('#auditCard').classList.add('hidden');
   $('#skeleton').style.display='block'; startSteps();
   try{
-    const d=await api('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
+    const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({goalText:goal,asset:'SUI/USDC',risk:$('#risk').value})});
+    if(!r.ok && r.status!==422) throw new Error("service busy — please try again");
+    S.source = r.headers.get('X-GlassBox-Source') || 'live';
+    const d=await r.json();
     if(d && d.outOfScope){ $('#status').textContent=d.message; return; }
     S.decision=d; render(d); $('#status').textContent='';
   }catch(e){$('#status').textContent='Could not analyze: '+e.message;}
@@ -246,21 +349,140 @@ function render(d){
   $('#bullPts').innerHTML=li(d.bull.points); $('#bearPts').innerHTML=li(d.bear.points);
   $('#bullReb').textContent=d.bull.rebuttal?('Rebuttal: '+d.bull.rebuttal):'';
   $('#bearReb').textContent=d.bear.rebuttal?('Rebuttal: '+d.bear.rebuttal):'';
-  $('#bullConv').textContent='conviction '+d.bull.convictionRevised+'/5 ('+convWord(d.bull.convictionRevised)+')';
-  $('#bearConv').textContent='conviction '+d.bear.convictionRevised+'/5 ('+convWord(d.bear.convictionRevised)+')';
   $('#resolved').innerHTML='<b>'+(d.winningSide==='bull'?'Bull':'Bear')+' side wins the argument.</b> '+esc(d.whyResolved||'');
   const v=$('#verdict'); v.innerHTML='<span class="glyph" aria-hidden="true">'+(GLYPH[d.verdict]||'')+'</span>'+d.verdict;
   v.className='verdict v-'+d.verdict;
-  $('#signal').innerHTML='Signal strength: <b>'+d.signalBand+'</b> · '+d.signalStrengthPct+'% <span class="muted" style="font-size:13px">(rule-based, not a profit forecast)</span>';
   $('#size').textContent=d.suggestedSizePct+'%';
   $('#risknote').innerHTML='<b>Main risk:</b> '+esc(d.riskNote||'');
   $('#counter').innerHTML='<b>Would change if:</b> '+esc(d.counterfactual||'');
   $('#blind').innerHTML='<b>Blind spots:</b> '+esc((d.blindSpots||[]).join('; '));
+  renderStrength(d); renderEvidence(d); renderPriceChart(d);
+  const _c=S.source==='cache'; $('#srcTag').textContent=_c?'cached demo':'live'; $('#srcTag').className='srctag '+(_c?'demo':'live');
   $('#result').classList.remove('hidden');
   $('#debate').classList.remove('reveal'); void $('#debate').offsetWidth; $('#debate').classList.add('reveal');
-  const hb=$('#heroBlock'); hb.style.opacity='0'; setTimeout(()=>{hb.style.opacity='';hb.classList.add('pop');},520);
+  const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const hb=$('#heroBlock'); hb.style.opacity='0'; setTimeout(()=>{hb.style.opacity='';hb.classList.add('pop');growMeter();},rm?0:520);
   $('#prove').disabled=false; $('#prove').textContent='🔒 Prove it';
 }
+
+function ord(n){ const v=n%100, s=['th','st','nd','rd']; return n+(s[(v-20)%10]||s[v]||s[0]); }  // 1st 2nd 3rd 15th 41st
+function renderStrength(d){
+  const bull=+d.bull.convictionRevised||0, bear=+d.bear.convictionRevised||0;
+  const sig=+d.signalStrengthPct||0, band=d.signalBand||'', vd=d.verdict, i=d.inputs||{};
+  const net=bull-bear, lean=net>0?'Bull':net<0?'Bear':'a draw';
+  const bar=(lbl,cls,w,val)=>'<div class="sm-row"><span class="sm-lbl '+cls+'">'+lbl+'</span>'
+    +'<div class="sm-bar"><i class="'+cls+'" data-w="'+w+'"></i></div><span class="sm-val">'+val+'</span></div>';
+  const volPct=Math.round((i.realizedVolPercentile||0)*100);
+  const spreadTxt=Number.isFinite(i.spreadBps)?i.spreadBps+'bps':'—';
+  const manip=[]; if(i.spreadBps>50)manip.push('a wide spread'); if(i.deepbookTopDepthUsd<20000)manip.push('thin liquidity');
+  // the score ALWAYS multiplies by (1-volPctile), so state the trim honestly instead of claiming "no discount"
+  const disc = manip.length ? 'forced toward 0 by a manipulation flag ('+manip.join(' & ')+')'
+    : volPct>0 ? 'trimmed '+volPct+'% for volatility (vol '+ord(volPct)+' pctile · spread '+spreadTxt+')'
+    : 'no volatility trim (spread '+spreadTxt+')';
+  $('#strengthMeter').innerHTML =
+    bar('Bull','bull',bull/5*100,bull+'/5')
+    + bar('Bear','bear',bear/5*100,bear+'/5')
+    + '<div class="sm-conf v-'+vd+'"><div class="sm-conf-top"><span>Confidence in '+vd+'</span><b>'+sig+'% · '+band+'</b></div><i data-w="'+sig+'"></i></div>'
+    + '<div class="sm-cap">Bull '+bull+' vs Bear '+bear+' → net '+(net>0?'+':'')+net+' toward '+lean
+      + '; '+disc+' → <b>'+sig+'% confident</b>. Rule-based, not a profit forecast.</div>';
+  $('#strengthMeter').setAttribute('aria-label',
+    'Bull conviction '+bull+' of 5, Bear '+bear+' of 5; '+sig+' percent confidence in '+vd);
+}
+function growMeter(){ document.querySelectorAll('#strengthMeter [data-w]').forEach(i=>{ i.style.width=(i.dataset.w||0)+'%'; }); }
+
+function renderEvidence(d){
+  const i=d.inputs||{}, f=d.flags||{}, vd=d.verdict, base=f.baselineVerdict||'HOLD';
+  const chip=x=>'<span class="vchip v-'+x+'">'+x+'</span>';
+  $('#evidenceOverride').innerHTML =
+    base===vd ? 'Rule-based baseline '+chip(base)+' and the debate '+chip(vd)+' <span class="agree">agree ✓</span>'
+    : f.llmOverrodeSignals ? 'Rule-based baseline said '+chip(base)+'<span class="arrow">→</span>the debate resolved '+chip(vd)+' <span class="muted">· a 2-step override, here’s why above</span>'
+    : 'Rule-based baseline leaned '+chip(base)+'<span class="arrow">→</span>the debate resolved '+chip(vd)+' <span class="muted">· a one-step nuance</span>';
+  const G=[
+    ['RSI (14)','rsi14', v=>v, [30,70], v=>(v>=70||v<=30)?'warn':'ok', v=>v, '0','100','Bands: 30 oversold · 70 overbought'],
+    ['Trend vs 20-day MA','trendPctVs20MA', v=>Math.max(0,Math.min(100,(v+20)/40*100)), [50], v=>v>=0?'ok':'warn', v=>(v>0?'+':'')+v+'%', '-20%','+20%','Mark: 0% = price at its 20-day average'],
+    ['Volatility (pctile)','realizedVolPercentile', v=>v*100, [70], v=>v>0.7?'warn':'ok', v=>ord(Math.round(v*100)), '0th','100th','Mark: 70th pctile = elevated volatility'],
+    ['Drawdown from high','drawdownFromHighPct', v=>Math.min(100,Math.abs(v)/80*100), [37], v=>v<-30?'warn':'ok', v=>v+'%', '0%','-80%','Mark: -30% = deep drawdown'],
+    ['DeepBook depth','deepbookTopDepthUsd', v=>Math.min(100,v/200000*100), [10], v=>v<20000?'warn':'ok', v=>'$'+Math.round(v/1000)+'k', '$0','$200k','Mark: $20k = thin-liquidity floor'],
+    ['Spread','spreadBps', v=>Math.min(100,v/60*100), [83], v=>v>50?'warn':'ok', v=>v+'bps', '0','60 bps','Mark: 50 bps = wide spread'],
+  ];
+  $('#evidenceGauges').innerHTML = G.map(g=>{
+    const v=i[g[1]]; if(v==null) return '';
+    const p=Math.max(0,Math.min(100,g[2](v))), st=g[4](v), gl=st==='warn'?'!':'✓';
+    const ticks=g[3].map(t=>'<span class="gt" style="left:'+t+'%"></span>').join('');
+    return '<div class="gauge"><span class="glbl">'+g[0]+'</span><div class="grow">'
+      + '<div class="gcol"><div class="gtrack">'+ticks+'<i class="gfill '+st+'" style="width:'+p+'%"></i></div>'
+      + '<div class="gaxis"><span>'+g[6]+'</span><span>'+g[7]+'</span></div></div>'
+      + '<span class="gval '+st+'">'+g[5](v)+' <b>'+gl+'</b></span></div>'
+      + '<div class="gcap">'+g[8]+'</div></div>';
+  }).join('');
+}
+
+function renderPriceChart(d){
+  const s=d.chartSeries, det=$('#priceDetails');
+  if(!s || s.length<21){ det.classList.add('hidden'); return; }
+  det.classList.remove('hidden');
+  const W=600,H=180,pad=8, n=s.length;
+  const lo=Math.min(...s), hi=Math.max(...s), rng=(hi-lo)||1;
+  const X=i=> pad + i*(W-pad-2)/(n-1);          // last point ends near the right edge (no forecast gap)
+  const Y=v=> H-pad - (v-lo)/rng*(H-2*pad);
+  const price = s.map((v,i)=> X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
+  const ma=[]; for(let i=0;i<n;i++){ if(i<19){ma.push(null);continue;} let sum=0; for(let j=i-19;j<=i;j++) sum+=s[j]; ma.push(sum/20); }
+  const maPts = ma.map((v,i)=> v==null?null:(X(i).toFixed(1)+','+Y(v).toFixed(1))).filter(Boolean).join(' ');
+  const lx=X(n-1), ly=Y(s[n-1]), asOf=((d.inputs&&d.inputs.asOfIso)||'').slice(0,10);
+  // y-axis (price, USD) + x-axis (time) — labels are HTML so they stay crisp despite the stretched SVG
+  const dec=hi<2?3:2, fmtP=v=>'$'+v.toFixed(dec), midI=Math.floor((n-1)/2);
+  const yVals=[hi,(hi+lo)/2,lo];
+  const gridH=yVals.map(v=>'<line class="grid" x1="'+pad+'" y1="'+Y(v).toFixed(1)+'" x2="'+(W-2).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'"/>').join('');
+  const gridV=[0,midI].map(i=>'<line class="grid" x1="'+X(i).toFixed(1)+'" y1="'+pad+'" x2="'+X(i).toFixed(1)+'" y2="'+(H-pad)+'"/>').join('');
+  $('#priceYAxis').innerHTML = yVals.map(v=>'<span style="top:'+(Y(v)/H*200).toFixed(1)+'px">'+fmtP(v)+'</span>').join('');
+  const dayMs=86400000, base=asOf?new Date(asOf+'T00:00:00Z'):new Date();
+  const fmtD=i=>{ const dt=new Date(base.getTime()-(n-1-i)*dayMs); return (dt.getUTCMonth()+1)+'/'+dt.getUTCDate(); };
+  $('#priceXAxis').innerHTML = [0,midI,n-1].map((i,k)=>'<span>'+fmtD(i)+(k===2?' · now':'')+'</span>').join('');
+  $('#priceSvg').innerHTML =
+    gridH + gridV
+    + '<polyline class="ma" points="'+maPts+'"/>'
+    + '<polyline class="price" points="'+price+'"/>'
+    + '<line class="asof" x1="'+lx.toFixed(1)+'" y1="'+pad+'" x2="'+lx.toFixed(1)+'" y2="'+(H-pad)+'"/>'
+    + '<circle class="mark" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="5"/>'
+    + '<line id="xhair" class="cross" x1="0" y1="'+pad+'" x2="0" y2="'+(H-pad)+'" style="display:none"/>'
+    + '<circle id="xfocus" class="focus" cx="0" cy="0" r="4" style="display:none"/>';
+  $('#priceCap').innerHTML = 'SUI · daily closes'+(asOf?' · as-of '+asOf:'')+'. <b>No forecast — nothing is drawn to the right of now.</b> Hover any point for that day’s price.';
+  _chart = {s, ma, n, lo, rng, base, dec};                 // state for the hover crosshair
+  if(!_chartBound){
+    const svg=$('#priceSvg');
+    svg.addEventListener('mousemove', _chartMove);
+    svg.addEventListener('mouseleave', _chartLeave);
+    _chartBound=true;
+  }
+}
+
+// --- price-chart hover: crosshair + per-day tooltip -------------------------
+let _chart=null, _chartBound=false;
+function _chartMove(e){
+  const c=_chart; if(!c) return;
+  const W=600,H=180,pad=8, r=$('#priceSvg').getBoundingClientRect();
+  if(!r.width) return;
+  const fx=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+  let idx=Math.round((fx*W-pad)*(c.n-1)/(W-pad-2));
+  idx=Math.max(0,Math.min(c.n-1,idx));
+  const v=c.s[idx], mav=c.ma[idx];
+  const px=pad+idx*(W-pad-2)/(c.n-1), py=H-pad-(v-c.lo)/c.rng*(H-2*pad);
+  const xh=$('#xhair'), xf=$('#xfocus');
+  xh.setAttribute('x1',px.toFixed(1)); xh.setAttribute('x2',px.toFixed(1)); xh.style.display='';
+  xf.setAttribute('cx',px.toFixed(1)); xf.setAttribute('cy',py.toFixed(1)); xf.style.display='';
+  const dt=new Date(c.base.getTime()-(c.n-1-idx)*86400000);
+  const dstr=(dt.getUTCMonth()+1)+'/'+dt.getUTCDate()+'/'+String(dt.getUTCFullYear()).slice(2);
+  let html='<span class="d">'+dstr+(idx===c.n-1?' · now':'')+'</span>'
+    + '<br><b class="pr">$'+v.toFixed(c.dec)+'</b>';
+  if(mav!=null){ const dv=(v/mav-1)*100;
+    html += ' <span class="mav">MA $'+mav.toFixed(c.dec)+'</span>'
+      + '<br><span class="chg '+(dv>=0?'up':'dn')+'">'+(dv>=0?'+':'')+dv.toFixed(1)+'% vs 20-day avg</span>'; }
+  const tip=$('#priceTip'); tip.innerHTML=html; tip.hidden=false;
+  const _half=(tip.offsetWidth||128)/2;   // clamp by the tip's real half-width so it never clips at the edges (incl. present mode)
+  tip.style.left=Math.max(_half,Math.min(r.width-_half, px/W*r.width))+'px';
+}
+function _chartLeave(){ const a=$('#xhair'),b=$('#xfocus'),t=$('#priceTip');
+  if(a)a.style.display='none'; if(b)b.style.display='none'; if(t)t.hidden=true; }
 
 async function prove(){
   $('#prove').disabled=true; $('#prove').textContent='Signing + anchoring…';

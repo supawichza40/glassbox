@@ -9,7 +9,7 @@ import json
 import os
 from typing import Literal
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -66,7 +66,8 @@ def health():
     fast, smart = config.models()
     return {"ok": True, "provider": config.LLM_PROVIDER, "fastModel": fast,
             "smartModel": smart, "auditSink": config.AUDIT_SINK,
-            "anchor": config.ANCHOR, "execution": config.EXECUTION}
+            "anchor": config.ANCHOR, "execution": config.EXECUTION,
+            "demoMode": config.DEMO_MODE}
 
 
 @app.get("/api/pubkey")
@@ -76,13 +77,15 @@ def pubkey():
 
 
 @app.post("/api/analyze")
-def analyze(req: AnalyzeReq):
+def analyze(req: AnalyzeReq, response: Response):
     cached = demo.lookup(req.goalText)   # instant + deterministic in DEMO_MODE
     if cached is not None:
+        response.headers["X-GlassBox-Source"] = "cache"
         return cached
     redirect = guard.relevance_gate(req.goalText)   # "Hello" -> friendly redirect, not a verdict
     if redirect:
         return JSONResponse(status_code=422, content={"outOfScope": True, "message": redirect})
+    response.headers["X-GlassBox-Source"] = "live"
     return analyze_mod.analyze(req.goalText, req.asset, req.risk)
 
 
@@ -111,7 +114,7 @@ def verify_ep(record_id: str):
 @app.post("/api/rehash")
 def rehash(req: AuditReq):
     """Hash a (possibly altered) decision — lets the UI prove a tamper changes the hash."""
-    return {"recordHash": crypto.sha256_hex(crypto.canonical(req.decision))}
+    return {"recordHash": crypto.sha256_hex(crypto.canonical(audit_mod._anchored_object(req.decision)))}
 
 
 _STATIC = os.path.join(os.path.dirname(__file__), "static")

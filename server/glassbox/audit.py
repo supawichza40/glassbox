@@ -11,8 +11,9 @@ from . import config, crypto
 
 
 def _anchored_object(decision: dict) -> dict:
-    # Decision already excludes raw goal text (inputs are enums). Anchor as-is.
-    return decision
+    # Decision already excludes raw goal text (inputs are enums). `chartSeries` is
+    # presentation-only — strip it so it's never hashed / signed / in the tamper record.
+    return {k: v for k, v in decision.items() if k != "chartSeries"}
 
 
 def write_audit(decision: dict, goal_text: str = "", epochs: int = 5) -> dict:
