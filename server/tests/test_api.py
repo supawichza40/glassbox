@@ -110,6 +110,16 @@ def test_chart_series_present_but_excluded_from_hash(client, canned_chat_json, l
     assert hashlib.sha256(a["recordCanonical"].encode()).hexdigest() == a["recordHash"]
 
 
+def test_health_reports_demo_mode(client):
+    assert "demoMode" in client.get("/api/health").json()
+
+
+def test_analyze_tags_source_header(client, canned_chat_json):
+    # DEMO_MODE is off in tests -> a real analyze is tagged 'live'
+    r = client.post("/api/analyze", json={"goalText": "grow my savings steadily", "risk": "moderate"})
+    assert r.headers.get("X-GlassBox-Source") == "live"
+
+
 # --------------------------------------------------------------------------
 # /api/rehash on an ALTERED decision yields a different hash (tamper)
 # --------------------------------------------------------------------------
