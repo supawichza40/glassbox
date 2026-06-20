@@ -273,7 +273,7 @@ async function prove(){
       '<span class="k">signature — proves origin</span> &nbsp;<b>'+frag(a.signature)+'…</b><br>'+
       '<span class="k">stored on</span> &nbsp;<span class="chainchip">● '+(a.sink==='walrus'?'Walrus · Sui':'local (offline)')+'</span>'+
       (a.blobId?' &nbsp;<b>'+frag(a.blobId)+'…</b>':'')+
-      (a.suiObjectId?'<br><span class="k">anchored on Sui — object</span> &nbsp;<a href="https://suiscan.xyz/testnet/object/'+a.suiObjectId+'" target="_blank" rel="noopener"><b>'+frag(a.suiObjectId)+'…</b></a>'+(a.anchorEpoch!=null?' &nbsp;<span class="k">epoch</span> <b>'+a.anchorEpoch+'</b>':''):'');
+      (a.suiObjectId?'<br><span class="k">Walrus registration object (Sui)</span> &nbsp;<a href="https://suiscan.xyz/testnet/object/'+a.suiObjectId+'" target="_blank" rel="noopener"><b>'+frag(a.suiObjectId)+'…</b></a>'+(a.anchorEpoch!=null?' &nbsp;<span class="k">storage epoch</span> <b>'+a.anchorEpoch+'</b>':''):'');
     $('#recordEdit').value = a.recordCanonical || '';
     $('#ancHash').textContent = a.recordHash;
     $('#walrusNote').textContent = '';

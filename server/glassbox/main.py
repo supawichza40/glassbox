@@ -10,7 +10,7 @@ from typing import Literal
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -91,7 +91,20 @@ def rehash(req: AuditReq):
     return {"recordHash": crypto.sha256_hex(crypto.canonical(req.decision))}
 
 
-# Serve the demo UI from /  (mounted last so /api/* takes precedence)
 _STATIC = os.path.join(os.path.dirname(__file__), "static")
+
+
+@app.get("/verify")
+@app.get("/r/{record_id}")
+def verify_page(record_id: str = ""):
+    """Standalone 'verify-it-yourself' receipt page (independent of the API/UI).
+
+    The page reads ?r=<id>; /r/<id> is a clean alias. It re-fetches the blob from Walrus
+    and re-checks hash + signature IN THE BROWSER — no GlassBox server in the trust path.
+    """
+    return FileResponse(os.path.join(_STATIC, "verify.html"))
+
+
+# Serve the demo UI from /  (mounted last so /api/* + explicit routes take precedence)
 if os.path.isdir(_STATIC):
     app.mount("/", StaticFiles(directory=_STATIC, html=True), name="ui")

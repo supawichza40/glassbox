@@ -83,7 +83,7 @@ interface AnchoredDecision {
 }
 
 interface AuditRecord {
-  recordHash: string;          // sha256(canonicalize(AnchoredDecision)) — RFC 8785 JCS
+  recordHash: string;          // sha256(canonicalize(AnchoredDecision)) — deterministic canonical JSON (sorted keys, compact separators); NOT full RFC 8785 JCS
   signature: string; pubkey: string;            // ed25519 origin; pubkey published in README
   sink: "walrus"|"local"; blobId: string|null; deletable: false; storedUntilEpoch: number|null;
   anchorTxDigest: string|null; tsaToken: string|null;   // independence

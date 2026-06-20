@@ -37,3 +37,4 @@ plainlang-examples/
 codeplain.log
 .claude/
 skills-lock.json
+.gstack/

@@ -26,7 +26,8 @@ def verify(audit: dict) -> dict:
 
     return {
         "hashMatch": crypto.sha256_hex(fetched) == audit.get("recordHash"),
-        "signatureValid": crypto.verify_sig(fetched, audit.get("signature", ""), audit.get("pubkey", "")),
+        # Pin to the PUBLISHED key (the trust root), not the pubkey field carried in the record.
+        "signatureValid": crypto.verify_sig(fetched, audit.get("signature", ""), crypto.PUBKEY_HEX),
         "source": source,
         "blobId": blob_id,
     }
