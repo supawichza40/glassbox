@@ -10,12 +10,13 @@ from typing import Literal
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import analyze as analyze_mod
 from . import audit as audit_mod
-from . import config, crypto, demo
+from . import config, crypto, demo, guard
 from . import verify as verify_mod
 
 app = FastAPI(title="GlassBox", version="0.1.0")
@@ -57,6 +58,9 @@ def analyze(req: AnalyzeReq):
     cached = demo.lookup(req.goalText)   # instant + deterministic in DEMO_MODE
     if cached is not None:
         return cached
+    redirect = guard.relevance_gate(req.goalText)   # "Hello" -> friendly redirect, not a verdict
+    if redirect:
+        return JSONResponse(status_code=422, content={"outOfScope": True, "message": redirect})
     return analyze_mod.analyze(req.goalText, req.asset, req.risk)
 
 

@@ -217,6 +217,7 @@ async function analyze(){
   try{
     const d=await api('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({goalText:goal,asset:'SUI/USDC',risk:$('#risk').value})});
+    if(d && d.outOfScope){ $('#status').textContent=d.message; return; }
     S.decision=d; render(d); $('#status').textContent='';
   }catch(e){$('#status').textContent='Could not analyze: '+e.message;}
   finally{stopSteps();$('#skeleton').style.display='none';$('#go').disabled=false;}
