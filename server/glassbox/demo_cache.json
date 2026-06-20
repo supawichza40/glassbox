@@ -32,7 +32,7 @@
       "rebuttal": "While the asset has experienced a significant -62.6% drawdown from its all-time high, the current price is trending -7.6% below its 20-day moving average, indicating continued weakness rather than a clear bottom."
     },
     "winningSide": "bull",
-    "whyResolved": "The BEAR's rebuttal.revisedConviction dropped to 0, indicating their case was not supported by the inputs after rebuttal, while the BULL's rebuttal.revisedConviction increased to 6.",
+    "whyResolved": "The bear's conviction collapsed to 0 under rebuttal while the bull's held at a full 5/5, so the debate resolves bullish - but the -62.6% drawdown from the high keeps the verdict at HOLD.",
     "verdict": "HOLD",
     "riskNote": "The primary risk is the continued downtrend, with the price trading -7.6% below its 20-day moving average, as indicated by `trendPctVs20MA`.",
     "suggestedSizePct": 13,

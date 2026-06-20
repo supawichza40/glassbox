@@ -29,7 +29,7 @@
   .pill.off .dot{background:var(--bear)}
   .pill.demo{color:var(--warn);border-color:var(--warn)} .pill.demo .dot{background:var(--warn);box-shadow:0 0 8px var(--warn)}
   .pill.live{color:var(--bull);border-color:var(--bull)} .pill.live .dot{background:var(--bull);box-shadow:0 0 8px var(--bull)}
-  .srctag{font-size:11px;margin-left:8px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);letter-spacing:.04em;vertical-align:2px}
+  .srctag{font-size:11px;margin-left:8px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);letter-spacing:.04em;vertical-align:middle}
   .srctag.demo{color:var(--warn);border-color:var(--warn)} .srctag.live{color:var(--bull);border-color:var(--bull)}
   .lead{color:var(--ink-2);font-size:17px;margin:10px 0 0}
   .steps{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 2px;color:var(--muted);font-size:14px}
@@ -90,7 +90,7 @@
 
   /* proof receipt */
   .why-line{color:var(--ink-2);margin:0 0 12px;font-size:15px}
-  .receipt{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:15px;font:14px/1.9 var(--mono)}
+  .receipt{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:15px;font:14px/1.9 var(--mono);word-break:break-word}
   .receipt .k{color:var(--muted)} .receipt b{color:var(--ink)}
   .chainchip{display:inline-flex;align-items:center;gap:6px;color:var(--accent2);border:1px solid var(--accent2);
        border-radius:999px;padding:2px 10px;font:13px var(--sans)}
@@ -105,7 +105,7 @@
   .hashdiff .lbl{color:var(--muted);font:13px var(--sans);letter-spacing:.04em}
   .hashdiff .a b{color:var(--ink)} .hashdiff .b b{color:var(--bear);text-shadow:0 0 12px rgba(255,77,94,.5)}
   .recordbox{width:100%;min-height:118px;background:#0e141d;border:1px solid var(--line);border-radius:8px;
-    color:var(--ink2);font:13px/1.6 var(--mono);padding:12px;resize:vertical;white-space:pre-wrap;word-break:break-all}
+    color:var(--ink-2);font:13px/1.6 var(--mono);padding:12px;resize:vertical;white-space:pre-wrap;word-break:break-all}
   .recordbox:focus{outline:2px solid var(--accent2);outline-offset:2px}
   .fp{display:flex;gap:14px;align-items:baseline;margin-top:10px;flex-wrap:wrap}
   .fp .lbl{color:var(--muted);font:13px var(--sans);letter-spacing:.04em;min-width:210px}
@@ -127,7 +127,7 @@
   .sm-conf-top span{font-size:.78em;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
   .sm-conf-top b{font:.95em var(--mono);color:var(--ink)}
   .sm-conf i{display:block;height:8px;width:0;border-radius:4px;margin-top:6px;transition:width .6s var(--ease)}
-  .sm-conf.v-BUY i{background:var(--bull)} .sm-conf.v-HOLD i{background:var(--warn)} .sm-conf.v-AVOID i{background:var(--bear)}
+  .sm-conf i{background:var(--brand)}   /* neutral: verdict is already colour-coded in the hero + label, so this bar isn't a 3rd "side" */
   .sm-cap{font-size:.76em;color:var(--muted);margin-top:9px}
   .vchip{display:inline-block;padding:1px 8px;border-radius:6px;font-weight:700;font-size:.92em;border:1px solid currentColor}
   .vchip.v-BUY{color:var(--bull)} .vchip.v-HOLD{color:var(--warn)} .vchip.v-AVOID{color:var(--bear)}
@@ -138,14 +138,14 @@
   .gauge .glbl{font-size:.76em;color:var(--muted);margin-bottom:4px}
   .gauge .grow{display:flex;align-items:center;gap:8px}
   .gtrack{position:relative;flex:1;height:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;overflow:hidden}
-  .gtrack .gt{position:absolute;top:-3px;width:2px;height:16px;background:var(--ink-2);box-shadow:0 0 0 1px var(--bg)}
+  .gtrack .gt{position:absolute;top:-3px;width:2px;height:16px;background:var(--bg);box-shadow:0 0 0 1px var(--ink-2)}
   .gfill{height:100%;border-radius:5px;transition:width .5s var(--ease)}
   .gfill.ok{background:var(--accent2)} .gfill.warn{background:var(--warn)}
   .gval{font:.76em var(--mono);color:var(--ink);min-width:64px;text-align:right}
   .gval.ok b{color:var(--accent2)} .gval.warn b{color:var(--warn)}
   .gauge .gcol{flex:1;min-width:0}
-  .gauge .gaxis{display:flex;justify-content:space-between;margin-top:4px;font:9px/1 var(--mono);color:var(--muted)}
-  .gauge .gcap{font-size:10px;color:var(--faint);margin-top:4px}
+  .gauge .gaxis{display:flex;justify-content:space-between;margin-top:4px;font:.62em/1 var(--mono);color:var(--muted)}
+  .gauge .gcap{font-size:.64em;color:var(--faint);margin-top:4px}
   .cap{font-size:.76em;margin-top:8px}
   #priceSvg{width:100%;height:200px;display:block}
   #priceSvg polyline,#priceSvg line,#priceSvg circle{vector-effect:non-scaling-stroke}
@@ -155,10 +155,10 @@
   #priceSvg .mark{fill:none;stroke:var(--ink);stroke-width:2.5}
   #priceCap{font-size:.76em;color:var(--muted);margin-top:8px}
   .chart{display:flex;gap:8px;align-items:flex-start;margin-top:6px}
-  .chart .yaxis{position:relative;flex:0 0 50px;height:200px;font:11px/1.1 var(--mono);color:var(--muted)}
+  .chart .yaxis{position:relative;flex:0 0 56px;height:200px;font:.66em/1.1 var(--mono);color:var(--muted)}
   .chart .yaxis span{position:absolute;right:0;transform:translateY(-50%);white-space:nowrap}
   .chart .plot{flex:1;min-width:0;position:relative}
-  .xaxis{display:flex;justify-content:space-between;font:11px/1.1 var(--mono);color:var(--muted);margin-top:5px}
+  .xaxis{display:flex;justify-content:space-between;font:.66em/1.1 var(--mono);color:var(--muted);margin-top:5px}
   .axisname{font-size:.7em;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 3px}
   .axisname.x{text-align:center;margin:5px 0 0}
   #priceSvg .grid{stroke:var(--line);stroke-width:1;opacity:.55}
@@ -167,14 +167,14 @@
   #priceSvg .focus{fill:var(--accent2);stroke:var(--bg);stroke-width:2}
   .charttip{position:absolute;top:4px;transform:translateX(-50%);pointer-events:none;z-index:4;
     background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-sm);
-    padding:6px 9px;font:11.5px/1.45 var(--mono);color:var(--ink);white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.55)}
+    padding:6px 9px;font:.68em/1.45 var(--mono);color:var(--ink);white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.55)}
   .charttip[hidden]{display:none}
   .charttip .d{color:var(--muted)} .charttip .pr{color:var(--ink)} .charttip .mav{color:var(--brand)}
   .charttip .chg.up{color:var(--bull)} .charttip .chg.dn{color:var(--bear)}
   .pricepanel{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;background:var(--surface-2)}
   .pricepanel .panel-h{font-size:15px;color:var(--ink-2);margin:0 0 8px}
   .chartlegend{position:absolute;top:8px;right:8px;z-index:2;pointer-events:none;display:flex;flex-direction:column;gap:5px;
-    font-size:11px;color:var(--ink-2);background:rgba(18,24,33,.85);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 9px}
+    font-size:.66em;color:var(--ink-2);background:rgba(18,24,33,.85);border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 9px}
   .chartlegend .lg{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
   .chartlegend i{display:inline-block;width:18px;flex:0 0 18px;height:0}
   .chartlegend .sw-line{border-top:2px solid var(--ink-2)}
@@ -365,16 +365,20 @@ function render(d){
   $('#prove').disabled=false; $('#prove').textContent='🔒 Prove it';
 }
 
+function ord(n){ const v=n%100, s=['th','st','nd','rd']; return n+(s[(v-20)%10]||s[v]||s[0]); }  // 1st 2nd 3rd 15th 41st
 function renderStrength(d){
   const bull=+d.bull.convictionRevised||0, bear=+d.bear.convictionRevised||0;
   const sig=+d.signalStrengthPct||0, band=d.signalBand||'', vd=d.verdict, i=d.inputs||{};
   const net=bull-bear, lean=net>0?'Bull':net<0?'Bear':'a draw';
   const bar=(lbl,cls,w,val)=>'<div class="sm-row"><span class="sm-lbl '+cls+'">'+lbl+'</span>'
     +'<div class="sm-bar"><i class="'+cls+'" data-w="'+w+'"></i></div><span class="sm-val">'+val+'</span></div>';
-  const trips=[]; if(i.realizedVolPercentile>0.7)trips.push('high volatility');
-  if(i.spreadBps>50)trips.push('a wide spread'); if(i.deepbookTopDepthUsd<20000)trips.push('thin liquidity');
-  const disc=trips.length ? 'discounted for '+trips.join(' & ')
-    : 'calm market (vol '+Math.round((i.realizedVolPercentile||0)*100)+'th pctile, spread '+i.spreadBps+'bps)';
+  const volPct=Math.round((i.realizedVolPercentile||0)*100);
+  const spreadTxt=Number.isFinite(i.spreadBps)?i.spreadBps+'bps':'—';
+  const manip=[]; if(i.spreadBps>50)manip.push('a wide spread'); if(i.deepbookTopDepthUsd<20000)manip.push('thin liquidity');
+  // the score ALWAYS multiplies by (1-volPctile), so state the trim honestly instead of claiming "no discount"
+  const disc = manip.length ? 'forced toward 0 by a manipulation flag ('+manip.join(' & ')+')'
+    : volPct>0 ? 'trimmed '+volPct+'% for volatility (vol '+ord(volPct)+' pctile · spread '+spreadTxt+')'
+    : 'no volatility trim (spread '+spreadTxt+')';
   $('#strengthMeter').innerHTML =
     bar('Bull','bull',bull/5*100,bull+'/5')
     + bar('Bear','bear',bear/5*100,bear+'/5')
@@ -396,7 +400,7 @@ function renderEvidence(d){
   const G=[
     ['RSI (14)','rsi14', v=>v, [30,70], v=>(v>=70||v<=30)?'warn':'ok', v=>v, '0','100','Bands: 30 oversold · 70 overbought'],
     ['Trend vs 20-day MA','trendPctVs20MA', v=>Math.max(0,Math.min(100,(v+20)/40*100)), [50], v=>v>=0?'ok':'warn', v=>(v>0?'+':'')+v+'%', '-20%','+20%','Mark: 0% = price at its 20-day average'],
-    ['Volatility (pctile)','realizedVolPercentile', v=>v*100, [70], v=>v>0.7?'warn':'ok', v=>Math.round(v*100)+'th', '0th','100th','Mark: 70th pctile = elevated volatility'],
+    ['Volatility (pctile)','realizedVolPercentile', v=>v*100, [70], v=>v>0.7?'warn':'ok', v=>ord(Math.round(v*100)), '0th','100th','Mark: 70th pctile = elevated volatility'],
     ['Drawdown from high','drawdownFromHighPct', v=>Math.min(100,Math.abs(v)/80*100), [37], v=>v<-30?'warn':'ok', v=>v+'%', '0%','-80%','Mark: -30% = deep drawdown'],
     ['DeepBook depth','deepbookTopDepthUsd', v=>Math.min(100,v/200000*100), [10], v=>v<20000?'warn':'ok', v=>'$'+Math.round(v/1000)+'k', '$0','$200k','Mark: $20k = thin-liquidity floor'],
     ['Spread','spreadBps', v=>Math.min(100,v/60*100), [83], v=>v>50?'warn':'ok', v=>v+'bps', '0','60 bps','Mark: 50 bps = wide spread'],
@@ -442,7 +446,7 @@ function renderPriceChart(d){
     + '<circle class="mark" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="5"/>'
     + '<line id="xhair" class="cross" x1="0" y1="'+pad+'" x2="0" y2="'+(H-pad)+'" style="display:none"/>'
     + '<circle id="xfocus" class="focus" cx="0" cy="0" r="4" style="display:none"/>';
-  $('#priceCap').innerHTML = 'SUI · daily closes · as-of '+asOf+'. <b>No forecast — nothing is drawn to the right of now.</b> Hover any point for that day’s price.';
+  $('#priceCap').innerHTML = 'SUI · daily closes'+(asOf?' · as-of '+asOf:'')+'. <b>No forecast — nothing is drawn to the right of now.</b> Hover any point for that day’s price.';
   _chart = {s, ma, n, lo, rng, base, dec};                 // state for the hover crosshair
   if(!_chartBound){
     const svg=$('#priceSvg');
@@ -474,7 +478,8 @@ function _chartMove(e){
     html += ' <span class="mav">MA $'+mav.toFixed(c.dec)+'</span>'
       + '<br><span class="chg '+(dv>=0?'up':'dn')+'">'+(dv>=0?'+':'')+dv.toFixed(1)+'% vs 20-day avg</span>'; }
   const tip=$('#priceTip'); tip.innerHTML=html; tip.hidden=false;
-  tip.style.left=Math.max(64,Math.min(r.width-64, px/W*r.width))+'px';
+  const _half=(tip.offsetWidth||128)/2;   // clamp by the tip's real half-width so it never clips at the edges (incl. present mode)
+  tip.style.left=Math.max(_half,Math.min(r.width-_half, px/W*r.width))+'px';
 }
 function _chartLeave(){ const a=$('#xhair'),b=$('#xfocus'),t=$('#priceTip');
   if(a)a.style.display='none'; if(b)b.style.display='none'; if(t)t.hidden=true; }
