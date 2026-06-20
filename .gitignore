@@ -26,3 +26,14 @@ venv/
 
 # Vendored reference (codeplain's own example repo, not our work)
 plainlang-examples/
+
+# Codeplain rendered output (build artifacts — regenerated from .plain, never committed)
+/web/
+/plain_modules/
+/build/
+/conformance_tests/
+/dist_conformance_tests/
+/.tmp/
+codeplain.log
+.claude/
+skills-lock.json

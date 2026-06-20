@@ -1,0 +1,4 @@
+# Codeplain config for the glassbox.plain frontend module.
+# Renders the React dashboard into ./web (a gitignored build artifact).
+template-dir: template
+build-dest: web
