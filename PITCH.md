@@ -3,7 +3,7 @@
 **Tamper-evident accountability for AI financial decisions.**
 
 > Team "The Start of a Joke" — Supavich + Orestis · Encode Vibe Coding Hackathon, London
-> Format: 2–3 min pitch + judge Q&A · Live demo against real services (FastAPI + Gemini 2.5 Flash + Sui/Walrus)
+> Format: 2–3 min pitch + judge Q&A · Live demo against real services (FastAPI + Gemini 2.5 Flash + Walrus/Sui + DeepBook + CoinGecko)
 
 ---
 
@@ -43,7 +43,7 @@ Delivered cold. No "Hi, we're team X." The judge should feel the gap before they
 
 ### [0:40–1:00] SOLUTION — *Supavich · slide: the one-sentence architecture*
 
-**S:** "Here's how it works in one sentence: an AI debate produces a decision, we **cryptographically sign it to prove origin**, store it on **Walrus**, and **anchor it on Sui** for an independent timestamp — so anyone can later verify the record is exactly what was produced, unaltered. Let me show you, live. Orestis."
+**S:** "Here's how it works in one sentence: an AI debate produces a decision, we **cryptographically sign it to prove origin** and store it on **Walrus** — which **registers it as a real on-chain object on Sui** — so anyone can later verify the record is exactly what was produced, unaltered. Let me show you, live. Orestis."
 
 *(hand-off — S steps back, O takes the keyboard)*
 
@@ -61,7 +61,7 @@ Delivered cold. No "Hi, we're team X." The judge should feel the gap before they
 
 ### [1:25–2:05] DEMO PART 2 — the wow · *Orestis driving, this is the moment*
 
-**O:** "Now the part that matters. I click **Prove it**. GlassBox hashes the full decision, **signs it with an ed25519 key** — that proves *GlassBox* produced it — writes it to **Walrus**, and drops an **anchor on Sui** for an independent timestamp."
+**O:** "Now the part that matters. I click **Prove it**. GlassBox hashes the full decision, **signs it with an ed25519 key** — that proves *GlassBox* produced it — and writes it to **Walrus**, which **registers it as a real object on Sui** you can open on the explorer."
 
 *(beat)*
 
@@ -69,11 +69,11 @@ Delivered cold. No "Hi, we're team X." The judge should feel the gap before they
 
 *(let MATCH land — pause)*
 
-**O:** "Now I'm a bad actor. I'll **alter the record** — change the verdict from HOLD to BUY, the way someone might quietly doctor a log after a loss. Verify again..."
+**O:** "Now I'm a bad actor. Here's the actual signed record — I'll **edit just one character of it**, the way someone might quietly doctor a log after a loss."
 
-*(beat — let the screen turn)*
+*(edit a character — let the fingerprint turn red)*
 
-**O:** "**MISMATCH.** The chain catches it. The tampering is *evident* — instantly, and on a network the firm doesn't control."
+**O:** "**TAMPER DETECTED** — instantly. Its fingerprint no longer matches what's anchored on Sui. One character, and it's caught — on a network the firm doesn't control."
 
 **O:** "And you don't have to take my word for it —"
 
@@ -83,7 +83,7 @@ Delivered cold. No "Hi, we're team X." The judge should feel the gap before they
 
 ### [2:05–2:25] PROOF FOR THE ROOM — *Supavich · slide: QR code, big*
 
-**S:** "— scan this QR. It pulls the record we just created straight off Walrus, and you can verify the signature and the Sui anchor **yourselves**, right now, from your phones. We're not asking you to trust us. That's the entire point of the product."
+**S:** "— scan this QR. It pulls the record we just created straight off Walrus, and you can verify the signature and the on-chain Sui object **yourselves**, right now, from your phones. We're not asking you to trust us. That's the entire point of the product."
 
 ---
 
@@ -114,8 +114,8 @@ The whole pipeline — debate, sign, store, anchor, verify — runs **live, end 
 4. **THE SOLUTION** — one-sentence flow: *Debate → Sign → Walrus → Anchor on Sui → Verify.* (5 icons, arrow)
 5. **HOW IT DECIDES** — "Bull vs Bear, one rebuttal, Risk Arbiter → verdict + Signal Strength + counterfactual + blind-spots." (visual of the debate)
 6. **[LIVE DEMO]** — single word "DEMO" / black slide. Get out of the demo's way.
-7. **THE WOW** — "MATCH → alter the record → **MISMATCH.** The chain catches it." (the two states, side by side)
-8. **WHAT THE PROOF MEANS** — "Signature = origin. Sui anchor = non-alteration + independent timestamp." (and the honest caveat, one line, smaller)
+7. **THE WOW** — "VERIFIED → edit one character → **TAMPER DETECTED.** The fingerprint breaks live." (the two states, side by side)
+8. **WHAT THE PROOF MEANS** — "Signature = origin. On-chain Sui object = non-alteration + an independent reference." (and the honest caveat, one line, smaller)
 9. **THE METRIC / SCAN IT** — big QR. "Verify this exact record yourself — right now." (the one memorable proof)
 10. **WHY NOW + ASK** — "Designed to map to SEC 17a-4 + MiFID II RTS 6. The evidence layer every AI-in-finance team is about to need." + one line each: built on **Sui + DeepBook + Walrus**, **codeplain** spec-first, transparency-first for **BGA**. Close on the one line.
 
@@ -129,7 +129,7 @@ The whole pipeline — debate, sign, store, anchor, verify — runs **live, end 
 A log file lives on a server the auditee controls and can rewrite silently; the Sui anchor gives an *independent* timestamp on a network they *don't* control — that independence is the whole product, and it's exactly what an auditor needs.
 
 **"Is this real, or is the demo faked?"**
-Fully real and end-to-end live — the debate runs on Gemini 2.5 Flash, the signature is real ed25519, the record is on Walrus and anchored on Sui; scan the QR and verify it from your own phone, that's why we built the verify path for *you*, not us.
+Fully real and end-to-end live — the debate runs on Gemini 2.5 Flash over **live CoinGecko + DeepBook** market data, the signature is real ed25519, and the record is stored on Walrus which **registers it as a real on-chain Sui object**; scan the QR and verify it from your own phone — that's why we built the verify path for *you*, not us.
 
 **"What's actually novel here?"**
 Plenty of people are validating AI models; we're the first to treat the *decision record* as the regulated artifact — a tamper-evident, independently-timestamped evidence layer for AI financial decisions, mapped to audit rules that already exist.
@@ -147,14 +147,14 @@ The decision is the expensive part and it's just an API call; signing and anchor
 The anchor proves the record wasn't *altered* and *when it existed* — it does **not** prove the inputs were truthful or the decision correct; we say "tamper-**evident**," never "tamper-proof," and that honesty is exactly what makes it credible to an auditor.
 
 **"What would you do with another week?"**
-Wire it onto DeepBook order data for live SUI/USDC execution context, add a batch-anchoring mode for high-frequency decision streams, and ship a one-click auditor export that maps each record to the specific 17a-4 / RTS 6 clause it satisfies.
+We already read live **DeepBook** depth/spread — next is an *audited* DeepBook execution path (manual-confirm, capped), a batch-anchoring mode for high-frequency decision streams, and a one-click auditor export that maps each record to the specific 17a-4 / RTS 6 clause it satisfies.
 
 ---
 
 ## Claim-discipline checklist (for the speakers — internalize, never break on stage)
 
 - Say **"tamper-evident"** — never "tamper-proof," "provable to anyone," or "impossible to fake."
-- **Signature = origin** ("GlassBox produced this"). **Sui anchor = non-alteration + independent timestamp.** Independence comes from *the chain*, not the key.
+- **Signature = origin** ("GlassBox produced this"). **The on-chain Sui object = non-alteration + an independent on-chain reference (a Sui epoch).** Independence comes from *the chain*, not the key.
 - It's an **evidence layer** — not model validation, not a compliance *guarantee*. Say "**designed to map to**" 17a-4 / RTS 6.
 - **Never** pitch returns / PnL / "it makes money." Pitch transparency + accountability.
 - State the caveat, don't hide it: anchor proves non-alteration + timestamp, **not** that inputs were truthful or the decision correct.

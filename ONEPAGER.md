@@ -11,12 +11,12 @@
 AI is starting to make financial calls. When a model says **BUY** and it goes wrong, no one can prove *what the AI actually said*, *whether the record was changed afterward*, or *why* it decided that. Logs live in a database the operator can quietly edit. Regulators already demand trustworthy, time-ordered records (**SEC Rule 17a-4** audit-trail, **MiFID II RTS 6** algo-trading records) — an AI black box with an editable log doesn't meet that bar.
 
 ### The solution
-GlassBox is an **evidence layer**, not a better trader. You enter a plain-English goal for **SUI/USDC** + a risk band. A **Bull** and a **Bear** agent debate over **5 computed market features** (trend, RSI, realized-vol percentile, DeepBook liquidity/spread, drawdown) with **one rebuttal round**; a **Risk Arbiter** resolves a **verdict** (BUY/HOLD/AVOID), a mechanical **Signal Strength**, a suggested size, a **counterfactual**, and explicit **blind-spots**. The decision is then **hashed → ed25519-signed (origin) → written to Walrus on Sui → anchored on-chain (independent timestamp + non-alteration).** The agents *reason*; deterministic Python *scores* every gameable number.
+GlassBox is an **evidence layer**, not a better trader. You enter a plain-English goal for **SUI/USDC** + a risk band. A **Bull** and a **Bear** agent debate over **5 computed market features** (trend, RSI, realized-vol percentile, DeepBook liquidity/spread, drawdown) with **one rebuttal round**; a **Risk Arbiter** resolves a **verdict** (BUY/HOLD/AVOID), a mechanical **Signal Strength**, a suggested size, a **counterfactual**, and explicit **blind-spots**. The decision is then **hashed → ed25519-signed (origin) → written to Walrus on Sui → registered as a real on-chain Sui object (an independent, explorer-verifiable anchor).** The agents *reason*; deterministic Python *scores* every gameable number.
 
 ### The demo (60-second wow)
 1. Type a goal → the Bull and Bear **argue on screen**, each citing the same frozen numbers; the Arbiter picks a side and names what it can't see.
 2. Click **Verify** → re-fetch the record independently from Walrus → green **MATCH**.
-3. Click **Try to alter it** → flip one field → red **MISMATCH**, the two diverging fingerprints shown side by side. *The record fought back — you cannot quietly rewrite history.*
+3. **Edit the signed record yourself** — change even one character → red **TAMPER DETECTED** as its fingerprint breaks live; Reset → green **VERIFIED**. *The record fought back — you cannot quietly rewrite history.*
 
 ### Why it wins
 - **A real, undeniable wow** that maps to a real compliance need: legible AI reasoning **plus** a record that proves it wasn't altered.
@@ -27,12 +27,12 @@ GlassBox is an **evidence layer**, not a better trader. You enter a plain-Englis
 ### Tech stack
 - **Brain:** Python **FastAPI**; multi-agent debate (Bull/Bear/Risk Arbiter); deterministic scoring in `decision.py`.
 - **LLM:** provider-agnostic switch — **gemini | openrouter | ollama** (currently **Gemini 2.5-flash**).
-- **Crypto/chain:** SHA-256 + **ed25519** + AES-GCM (`cryptography`); **Walrus testnet** blob storage; **Sui** on-chain anchor (Tier 2).
-- **Frontend:** a served **demo UI** (verdict-hero, staged reveal, the MISMATCH climax with a fingerprint diff, full accessibility) — the working reference + demo fallback; **codeplain** spec-first (`glassbox.plain` → React, spec is source of truth) is the generated path, with `resources/ui_reference.md` as the design brief.
+- **Crypto/chain:** SHA-256 + **ed25519** + AES-GCM (`cryptography`); **Walrus testnet** storage that registers an **on-chain Sui object** (the anchor); **live DeepBook** depth/spread (public mainnet indexer).
+- **Frontend:** a served **demo UI** (verdict-hero, staged reveal, the **interactive tamper** demo, full accessibility) — the working reference + demo fallback; **codeplain** spec-first (`glassbox.plain` → React, spec is source of truth) is the generated path, with `resources/ui_reference.md` as the design brief.
 
 ### What's real vs roadmap
-**Real & proven live (end-to-end):** `analyze → ed25519 sign → Walrus write (real blob) → verify (MATCH) → tamper (MISMATCH)`, reproducible via `python3 -m glassbox.audit_smoke`. On top of it: a **FastAPI server + redesigned demo UI**, a **standalone independent verifier** (`verify_cli` — verifies a record straight from Walrus with *no GlassBox server in the loop*, validated live), an instant **demo-mode cache** for the pitch, and **67 tests + CI** (all mocked).
-**Roadmap:** real DeepBook depth/spread (the price-derived features are already a **live CoinGecko closed-candle feed** in `market.py`, with a deterministic fallback), the Sui on-chain anchor wired from Tier-2 to default-on, mainnet, and the generated codeplain UI over the proven brain.
+**Real & proven live (end-to-end):** `analyze → ed25519 sign → Walrus write (real blob + on-chain Sui object) → verify (MATCH) → tamper (MISMATCH)`. On top of it: a **FastAPI server + redesigned demo UI** (interactive tamper), **live CoinGecko + DeepBook** market feeds, an **on-chain Sui object** anchor per record (via Walrus, explorer-verifiable), a **relevance gate** (off-topic input redirected), a **standalone independent verifier** (`verify_cli`), an instant **demo-mode cache**, and **100 tests + CI** (all mocked).
+**Roadmap:** an optional *dedicated* Sui anchor transaction (each record already registers an on-chain Sui object via Walrus), Walrus mainnet, and the generated codeplain UI over the proven brain.
 
 ### Honest caveats
 Tamper-**evident**, not tamper-proof. Signature = **origin**; anchor = **non-alteration + timestamp** — it does **not** prove the inputs were true or the call correct. **Testnet, not mainnet. Not financial advice.** Designed to *map to* SEC 17a-4 / MiFID II RTS 6 record-keeping — an evidence layer, not a compliance guarantee.

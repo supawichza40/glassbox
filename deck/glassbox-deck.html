@@ -130,7 +130,7 @@ after edit  <span class="red">c0114d… a9f1</span>   ← the record fought back
       <ul style="font-size:23px">
         <li><strong>ed25519 signature</strong> → proves <em>origin</em></li>
         <li><strong>Walrus (Sui)</strong> → real testnet blob storage</li>
-        <li><strong>Sui anchor</strong> → <em>non-alteration + timestamp</em></li>
+        <li><strong>On-chain Sui object</strong> → <em>non-alteration + independent reference</em></li>
         <li><strong>verify_cli</strong> → a third party checks a record <strong>straight from Walrus, with no GlassBox server in the loop</strong></li>
       </ul>
     </div>
@@ -139,7 +139,7 @@ after edit  <span class="red">c0114d… a9f1</span>   ← the record fought back
       <ul style="font-size:23px">
         <li>Real Walrus-testnet write (live <code>blobId</code>)</li>
         <li>Provider-agnostic LLM · <code>gemini · openrouter · ollama</code></li>
-        <li><strong>67 tests + CI</strong>, repair-retry, safe fallbacks</li>
+        <li><strong>100 tests + CI</strong>, repair-retry, safe fallbacks</li>
         <li>Spec-first frontend via <strong>codeplain</strong></li>
       </ul>
     </div>
@@ -153,7 +153,7 @@ after edit  <span class="red">c0114d… a9f1</span>   ← the record fought back
   <h2>We're precise about what this proves — that's the point.</h2>
   <ul>
     <li><strong>Tamper-<em>evident</em>, not tamper-<em>proof</em>.</strong> We make alteration <em>detectable</em>, not impossible.</li>
-    <li>Signature = <strong>origin</strong>; Sui anchor = <strong>non-alteration + timestamp</strong>. It does <strong>not</strong> prove the inputs were true or the call correct.</li>
+    <li>Signature = <strong>origin</strong>; the on-chain Sui object = <strong>non-alteration + an independent reference</strong>. It does <strong>not</strong> prove the inputs were true or the call correct.</li>
     <li><strong>Signal Strength is not a probability of profit.</strong> We never pitch returns or PnL.</li>
     <li>PII-free anchored record + an AES-GCM <strong>crypto-erasable</strong> store for the goal text (GDPR).</li>
   </ul>
@@ -167,7 +167,7 @@ after edit  <span class="red">c0114d… a9f1</span>   ← the record fought back
   <h2>One product, stacked across the bounties.</h2>
   <table>
     <tr><th>Bounty</th><th>How GlassBox lands it</th></tr>
-    <tr><td><strong>Sui</strong></td><td>Real Walrus blob per decision · DeepBook depth drives a manipulation flag · on-chain anchor</td></tr>
+    <tr><td><strong>Sui</strong></td><td>Walrus storage that registers an <strong>on-chain Sui object</strong> · <strong>live DeepBook</strong> depth/spread drives the liquidity feature + manipulation flag</td></tr>
     <tr><td><strong>BGA</strong></td><td>Transparency <strong>not PnL</strong> — explainable, auditable, signed reasoning + a mechanical signal</td></tr>
     <tr><td><strong>codeplain</strong></td><td>Spec-first: <code>glassbox.plain</code> is the source of truth, generated code is a build artifact</td></tr>
     <tr><td><strong>Main finale</strong></td><td>A working product with a hard, <strong>provable</strong> wow (MATCH → MISMATCH)</td></tr>
@@ -202,7 +202,7 @@ after edit  <span class="red">c0114d… a9f1</span>   ← the record fought back
     <li>Design distilled to <strong>resources/ui_reference.md</strong> from a 4-lens review (visual/UX · usability · HCI/a11y · first-user).</li>
     <li>Change the product by editing the spec and re-rendering — reproducible and fast to evolve.</li>
   </ul>
-  <p class="small">Public repo · <code>.plain</code> specs · 67 tests + CI · provider-agnostic LLM</p>
+  <p class="small">Public repo · <code>.plain</code> specs · 100 tests + CI · provider-agnostic LLM</p>
   <div class="pageno">9</div>
 </section>
 

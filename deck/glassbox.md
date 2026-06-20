@@ -135,7 +135,7 @@ after edit  c0114d… a9f1   ← the record fought back
 **The proof stack**
 - **ed25519 signature** → proves *origin*
 - **Walrus (Sui)** → real testnet blob storage
-- **Sui anchor** → *non-alteration + independent timestamp*
+- **On-chain Sui object** → *non-alteration + independent reference*
 - **`verify_cli`** → a third party checks a record **straight from Walrus, with no GlassBox server in the loop**
 
 </div>
@@ -144,7 +144,7 @@ after edit  c0114d… a9f1   ← the record fought back
 **Engineered, not faked**
 - Real Walrus-testnet write (live `blobId`)
 - Provider-agnostic LLM · `gemini · openrouter · ollama`
-- **67 tests + CI**, repair-retry, safe fallbacks
+- **100 tests + CI**, repair-retry, safe fallbacks
 - Spec-first frontend via **codeplain**
 
 </div>
@@ -159,7 +159,7 @@ after edit  c0114d… a9f1   ← the record fought back
 ## We're precise about what this proves — that's the point.
 
 - **Tamper-*evident*, not tamper-*proof*.** We make alteration *detectable*, not impossible.
-- Signature = **origin**; Sui anchor = **non-alteration + timestamp**. It does **not** prove the inputs were true or the call correct.
+- Signature = **origin**; the on-chain Sui object = **non-alteration + an independent reference**. It does **not** prove the inputs were true or the call correct.
 - **Signal Strength is not a probability of profit.** We never pitch returns or PnL.
 - PII-free anchored record + an AES-GCM **crypto-erasable** store for the goal text (GDPR).
 
@@ -175,7 +175,7 @@ after edit  c0114d… a9f1   ← the record fought back
 
 | Bounty | How GlassBox lands it |
 |---|---|
-| **Sui** | Real Walrus blob per decision · DeepBook depth drives a manipulation flag · on-chain anchor |
+| **Sui** | Walrus storage that registers an **on-chain Sui object** · **live DeepBook** depth/spread drives the liquidity feature + manipulation flag |
 | **BGA** | Transparency **not PnL** — explainable, auditable, signed reasoning + a mechanical signal |
 | **codeplain** | Spec-first: `glassbox.plain` is the source of truth, generated code is a build artifact |
 | **Main finale** | A working product with a hard, **provable** wow (MATCH → MISMATCH) |
@@ -208,7 +208,7 @@ after edit  c0114d… a9f1   ← the record fought back
 - Design distilled to **`resources/ui_reference.md`** from a 4-lens review (visual/UX · usability · HCI/a11y · first-user).
 - Change the product by editing the spec and re-rendering — reproducible and fast to evolve.
 
-<span class="small">Public repo · `.plain` specs · 67 tests + CI · provider-agnostic LLM</span>
+<span class="small">Public repo · `.plain` specs · 100 tests + CI · provider-agnostic LLM</span>
 
 <!-- For the codeplain judges: 2/3 of the score is spec quality + presentation, both fully in our control. -->
 

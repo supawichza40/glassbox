@@ -8,12 +8,15 @@ v3 folds in a 10-expert red-team (9 lenses + a financial-regulatory counsel) and
 ## ✅ Build status (current — supersedes the planning-stack specifics below)
 The spec below is the locked design *intent*. What is **built and proven live** as of submission:
 - **Shipped in Python, not Node/TS** — a FastAPI brain + a served demo UI (`server/`). Provider-agnostic LLM (`LLM_PROVIDER = gemini | openrouter | ollama`, currently `gemini-2.5-flash`), replacing the planned Anthropic Haiku/Sonnet split. JSON is validated + repair-retried in Python (not Zod); agents have safe-HOLD fallbacks.
-- **Tier 1 = DONE, end-to-end live:** `analyze → ed25519 sign → Walrus testnet write (real blob) → verify (MATCH) → tamper (MISMATCH)`. Bull/Bear/Arbiter rebuttal debate, cite-only-inputs, deterministic Signal Strength + size in `decision.py`.
-- **Independence shipped:** a standalone `verify_cli` reproduces hashMatch + signatureValid straight from Walrus with **no GlassBox server in the loop** (acceptance #6, minus the Sui-timestamp half — see below).
-- **Endpoints live:** `/api/health`, `/api/pubkey`, `/api/analyze`, `/api/audit`, `/api/verify/{id}`, `/api/rehash`. Pydantic input validation (min-length, risk enum).
-- **Demo-safety:** `DEMO_MODE` cache (canonical question instant + deterministic) + `DEMO.md` run-sheet + `?present` stage mode + a 4-lens-reviewed UI (`resources/ui_reference.md`). **67 tests + CI**, all mocked.
-- **Live market feed shipped:** price-derived features (trend/RSI/realized-vol-percentile/drawdown) now come from a **live CoinGecko closed-candle feed** (`market.py`) with a deterministic fallback; only DeepBook depth/spread remain modeled.
-- **Still Tier-2 / roadmap:** the **Sui on-chain anchor** (`ANCHOR=none` today — signature + Walrus give origin + storage; the on-chain *timestamp* half of acceptance #5/#6 awaits a funded wallet + pysui), the DeepBook `/api/execute` intent-token path, real DeepBook depth/spread, and end-to-end GDPR crypto-erase wiring. The recorded fallback video is the user's to capture.
+- **Tier 1 = DONE, end-to-end live:** `analyze → ed25519 sign → Walrus write (real blob + on-chain Sui object) → verify (MATCH) → tamper (MISMATCH)`. Bull/Bear/Arbiter rebuttal debate, cite-only-inputs, deterministic Signal Strength (clamped 0–100) + size in `decision.py`.
+- **On-chain Sui anchor shipped (no wallet):** writing to Walrus registers a real **on-chain Sui object**; `/api/audit` returns its `suiObjectId` + `anchorEpoch` (explorer-verifiable). That is the independent on-chain reference — done without a funded wallet. A *dedicated* anchor transaction (`ANCHOR=sui` + a funded `SUI_PRIVATE_KEY`, `anchor.py`) is an optional extra.
+- **Live market feeds shipped:** price features from a **CoinGecko** closed-candle feed AND order-book **depth/spread from the public DeepBook v3 mainnet indexer** — both frozen per analysis, both with deterministic fallbacks.
+- **Relevance gate shipped:** off-topic/greeting input → `422 {outOfScope}` friendly redirect (`guard.py`), never a fabricated verdict.
+- **Interactive tamper shipped:** the UI shows the signed record in an editable field + a live in-browser SHA-256 vs the anchored fingerprint → VERIFIED / TAMPER DETECTED on any single-character change (`/api/audit` returns `recordCanonical`).
+- **Independence shipped:** a standalone `verify_cli` reproduces hashMatch + signatureValid straight from Walrus with **no GlassBox server in the loop**.
+- **Endpoints live:** `/api/health`, `/api/pubkey`, `/api/analyze` (422 outOfScope for off-topic), `/api/audit` (+ `suiObjectId`, `anchorEpoch`, `recordCanonical`), `/api/verify/{id}`, `/api/rehash`. Pydantic validation.
+- **Demo-safety + quality:** `DEMO_MODE` cache + `DEMO.md` run-sheet + `?present` mode + a 4-lens-reviewed UI (`resources/ui_reference.md`) + a 10-slide pitch deck (`deck/`). **100 tests + CI** (all mocked) + a live use-case gallery (`glassbox.usecases`).
+- **Still roadmap:** an optional *dedicated* Sui anchor transaction, the DeepBook `/api/execute` intent-token path, end-to-end GDPR crypto-erase wiring, Walrus mainnet, and the generated codeplain UI. The recorded fallback video is the user's to capture.
 
 ## Claim discipline (read first — never violate)
 - Say **"tamper-evident"** and **"can't be altered after signing,"** NEVER "tamper-proof" / "provable to anyone" / "impossible to fake" (in app, slides, README, Devpost, or speech).
@@ -25,7 +28,7 @@ The spec below is the locked design *intent*. What is **built and proven live** 
 A retail-legible app: user enters a plain-English goal for SUI/USDC + risk. The server computes 5 real market features (closed candles, no lookahead), freezes them, and a Bull + Bear agent argue using ONLY those numbers; a Risk agent resolves into a Decision (verdict, vol-targeted size, a mechanical Signal Strength, a counterfactual, named blind-spots). The server hashes a PII-free record, signs it (ed25519), anchors the hash on Sui (independent timestamp) + stores the blob on Walrus, and exposes an offline verifier. The same record is what a fund hands its auditor (B2B line).
 
 ## Wow moment (network-free, local)
-Watch the AI argue → it decides → "Try to alter it" → re-verify → loud red MISMATCH + fingerprint diff. *"I change one word; it's caught. No one can rewrite an AI's decision after the fact — not even the fund being audited. We're not selling that the AI was right; we're selling that no one can quietly edit what it decided."*
+Watch the AI argue → it decides → **edit the signed record** (even one character) → its fingerprint breaks live into a loud red TAMPER DETECTED; Reset → VERIFIED. *"I change one word; it's caught. No one can rewrite an AI's decision after the fact — not even the fund being audited. We're not selling that the AI was right; we're selling that no one can quietly edit what it decided."*
 
 ## Architecture
 codeplain builds the React frontend (with the served `static/index.html` as the working reference + fallback); a **Python FastAPI** backend hosts agents + integrations behind env switches. Keys stay server-side.
@@ -36,7 +39,7 @@ flowchart TD
   B -->|POST /api/analyze| C["Freeze 5 computed features (closed candles)"]
   C --> D["Bull + Bear (parallel) + one rebuttal round -> Risk Arbiter synth (provider-agnostic; currently gemini-2.5-flash)"]
   D --> E["Decision (cites ONLY frozen inputs)"]
-  E -->|POST /api/audit| F["PII-free AnchoredDecision -> canonical hash -> ed25519 sign -> Walrus blob -> Sui anchor event"]
+  E -->|POST /api/audit| F["PII-free AnchoredDecision -> canonical hash -> ed25519 sign -> Walrus blob -> on-chain Sui object"]
   E --> G["ErasableRecord (encrypted goal text, crypto-erasable) - off chain"]
   B -->|GET /api/verify/:id| H["Server: rehash + check sig (origin) + read Sui checkpoint ts (independence)"]
   E -.->|/api/execute/intent -> confirm -> /api/execute| I["DeepBook order: manual-confirm, $100 cap, idempotent. Audited event, not auto-trader."]
@@ -106,8 +109,8 @@ Monotone non-increasing in risk by construction (`d/dv = -a <= 0`); high vol -> 
 ## Backend endpoints
 | Path | Notes |
 |---|---|
-| `POST /api/analyze` | Freeze 5 features -> Bull+Bear (parallel) + one rebuttal round -> Risk Arbiter synth (provider-agnostic). Pydantic input validation; JSON validate + 1 repair retry; safe-HOLD fallback. Goal text delimited + injection-guarded. Cite-only-inputs enforced. |
-| `POST /api/audit` | Build PII-free AnchoredDecision (scrub free text) -> canonical hash -> ed25519 sign -> Walrus `deletable=false`+epochs -> emit Sui anchor event {recordHash,pubkey,blobId}. Store ErasableRecord (encrypted) separately. |
+| `POST /api/analyze` | Relevance gate (off-topic -> `422 {outOfScope}`). Freeze 5 features (**live CoinGecko + DeepBook**) -> Bull+Bear (parallel) + one rebuttal round -> Risk Arbiter synth (provider-agnostic). Pydantic validation; JSON validate + 1 repair retry; safe-HOLD fallback. Goal text delimited + injection-guarded. Cite-only-inputs enforced. |
+| `POST /api/audit` | Build PII-free AnchoredDecision -> canonical hash -> ed25519 sign -> Walrus write (**registers an on-chain Sui object**) -> return {recordHash, signature, blobId, `suiObjectId`, `anchorEpoch`, `recordCanonical`}. ErasableRecord (encrypted) stored separately. |
 | `GET /api/verify/:id` | Server: refetch blob, recompute hash, check signature (origin), resolve anchorTxDigest on Sui + read checkpoint timestamp (independence). Returns {hashMatch, signatureValid, anchorTimestamp, anchorValid}. |
 | `POST /api/execute/intent` | Returns {intentToken, clampedSizeUsd, asset, expiresAt:+60s}. UI shows confirm modal. |
 | `POST /api/execute` | Requires valid unused intentToken. Hard cap MAX_EXEC_USD=100 (reject if over). Single-use-token idempotency. Anchor must exist first. Testnet only. |
@@ -139,7 +142,7 @@ Keep the real DeepBook order in the demo (Sui real-world + BGA), but frame it as
 2. **Install Node + verify codeplain renders a buildable React app (<=2h) or fall back to Vite+React.**
 3. `/api/health` + `cors()` + frontend base-URL handshake.
 4. `/api/analyze` (freeze inputs, Bull/Bear parallel Haiku + Risk Sonnet, Zod-validate, scrub, classify-to-enum). Target <12s.
-5. `/api/audit` (PII-free object, sign, Walrus `deletable=false`, **Sui anchor event**) + `/api/verify` + offline `verify-cli`.
+5. `/api/audit` (PII-free object, sign, Walrus write → **on-chain Sui object**) + `/api/verify` + offline `verify-cli`.
 6. `/api/execute` LAST: pre-built BalanceManager, simulated default, two-phase intent token, $100 cap.
 
 - **Tier 1 (must work):** analyze (grounded+validated) + audit (signed + Walrus + Sui anchor) + verify + offline verifier + cached demo + local MATCH/MISMATCH. Wins BGA + Sui + finale.

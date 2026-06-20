@@ -7,7 +7,7 @@ Pairs with `PITCH.md` (the spoken script). Goal: the live demo **cannot fail on 
 - [ ] **Bake the demo cache:** `cd server && python3 -m glassbox.seed_demo` (re-run if you changed the canonical question or the model). Confirm `demo_cache.json` updated.
 - [ ] **Pre-write a real Walrus blob** for the proof story (optional but nice): run `python3 -m glassbox.audit_smoke` once on good Wi-Fi so a real on-chain record exists you can point to.
 - [ ] **Start the server in present + demo mode:**
-      `cd server && DEMO_MODE=1 python3 -m uvicorn glassbox.main:app --port 8787`
+      `cd server && source .venv/bin/activate && DEMO_MODE=1 python3 -m uvicorn glassbox.main:app --port 8787`
       then open **http://localhost:8787/?present** (bigger type for the projector).
 - [ ] **Record the fallback video** (see below) and have it open in a background tab + on your phone.
 - [ ] Phone hotspot ready as a network backup. Laptop on mains power. Notifications off.
@@ -16,9 +16,9 @@ Pairs with `PITCH.md` (the spoken script). Goal: the live demo **cannot fail on 
 ## The golden path (what you click — ~75s of demo)
 1. **Question is pre-filled** ("Should I hold SUI for the next 2 weeks? moderate risk"). Hit **Analyze** (or ⌘↵). With `DEMO_MODE=1` the result is **instant** — the debate + verdict paint in under a second.
 2. Gesture across **Bull vs Bear** → land on the **64px verdict** + Signal Strength. *"The AI argued both sides and gave a call — and showed why."*
-3. Click **🔒 Prove it** → the **receipt** appears (fingerprint, signature, the **Walrus · Sui** chip). *"It signed this exact decision and wrote it on-chain."*
-4. Click **Verify** → big green **VERIFIED**. *"Reads it back — byte-for-byte identical."*
-5. Click **Try to alter it** → big red **TAMPER DETECTED** + the **hash diff** (anchored vs tampered, tampered glowing red). **This is the wow.** *"I change one thing the AI decided — and the chain catches it. No one can quietly rewrite it after the fact."*
+3. Click **🔒 Prove it** → the **receipt** appears (fingerprint, signature, the **Walrus · Sui** chip, and a clickable **on-chain Sui object** link). *"It signed this exact decision and registered it on Sui — here's the object on the explorer."*
+4. Click **Verify** → big green **VERIFIED**. *"Reads it back from Walrus — byte-for-byte identical."*
+5. **Edit the record** in the box (or click **Try to alter it** for a one-character change) → the fingerprint recomputes live and flips to big red **TAMPER DETECTED**, the differing hash characters highlighted; **Reset** → green **VERIFIED**. **This is the wow.** *"I change one character of what the AI decided — and it's caught. No one can quietly rewrite it after the fact."*
 6. (Optional) QR to the live Walrus record so a judge can verify it themselves.
 
 ## Cut list (if time/network is bad, drop in this order)

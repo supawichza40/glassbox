@@ -2,7 +2,7 @@
 
 Diagrams for the v3 architecture (see `SPEC.md` for the contract). Mermaid renders in GitHub, Notion, and slides. Claim discipline applies here too: **tamper-evident**, never "tamper-proof"; signature proves **origin**, the Sui anchor proves **non-alteration + an independent timestamp**.
 
-> **Status (see `SPEC.md` → Build status):** shipped today over a **Python FastAPI** brain with a provider-agnostic LLM (currently `gemini-2.5-flash`) = `analyze`, `audit` (ed25519 sign + Walrus), `verify`, and the offline `verify-cli`. The **Sui on-chain anchor** and **DeepBook execute** shown below are **Tier-2 / roadmap** (`ANCHOR=none`, `EXECUTION=simulated` today). The served `server/glassbox/static/index.html` is the working frontend + demo fallback; codeplain-rendered React is the spec-first path.
+> **Status (see `SPEC.md` → Build status):** shipped today over a **Python FastAPI** brain (provider-agnostic LLM, currently `gemini-2.5-flash`) = `analyze` (relevance gate + **live CoinGecko + DeepBook** feeds), `audit` (ed25519 sign + Walrus, which **registers a real on-chain Sui object** = the anchor), `verify`, the offline `verify-cli`, and an **interactive tamper** demo. Only a *dedicated* anchor transaction and **DeepBook execute** remain Tier-2 (`EXECUTION=simulated`). The served `static/index.html` is the working frontend + demo fallback; codeplain-rendered React is the spec-first path. 100 tests + CI.
 
 ---
 
@@ -51,17 +51,17 @@ sequenceDiagram
     Note over BE: build PII-free AnchoredDecision · canonical hash · ed25519 sign
     BE->>WAL: PUT blob (deletable=false)
     WAL-->>BE: blobId
-    BE->>SUI: emit anchor event {hash, pubkey, blobId}
-    SUI-->>BE: anchorTxDigest + checkpoint timestamp
+    BE->>SUI: Walrus registers the blob as an on-chain Sui object
+    SUI-->>BE: suiObjectId + epoch (the anchor)
     BE-->>FE: AuditRecord {hash, signature, blobId, anchor}
     end
 
     rect rgb(255,240,240)
     Note over U,SUI: 3 — VERIFY (the wow)
-    U->>FE: "Verify" / "Try to alter it"
+    U->>FE: "Verify" / edit the record (tamper)
     FE->>BE: GET /api/verify/:id
     BE->>WAL: fetch blob → recompute hash
-    BE->>SUI: read checkpoint timestamp (independent)
+    BE->>SUI: read the Sui object + epoch (independent)
     BE-->>FE: {hashMatch, signatureValid, anchorTimestamp}
     FE-->>U: MATCH ✅  (or MISMATCH ❌ if altered)
     end
@@ -89,12 +89,12 @@ flowchart TB
     FE --> VE
     FE --> EX
 
-    AN --> MK["Market feed (closed candles)"]
+    AN --> MK["Market feed: CoinGecko + DeepBook (live)"]
     AN --> LLM["LLM: Gemini / OpenRouter / Ollama (switchable)"]
 
     subgraph PUBLIC["PUBLIC · anchored · PII-FREE"]
         WAL["Walrus blob (deletable=false)"]
-        ANC["Sui anchor event (independent timestamp)"]
+        ANC["on-chain Sui object (independent anchor)"]
     end
 
     subgraph PRIVATE["PRIVATE · PII · encrypted · crypto-erasable"]

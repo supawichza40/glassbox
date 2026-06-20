@@ -5,7 +5,7 @@ Design brief for the GlassBox frontend, distilled from a 4-lens design review (v
 ## Goals the UI must serve
 1. **3-second read on a projector** — judges at the back of the room must read the verdict and the wow.
 2. **Trustworthy fintech, not a toy** — restrained, credible; no decorative emoji as load-bearing semantics.
-3. **The MISMATCH is the climax** — the tamper demo must be the biggest, brightest, most-animated moment.
+3. **The tamper moment is the climax** — editing the record and watching its fingerprint break must be the biggest, brightest, most-animated moment (and the judge can do it themselves).
 
 ## Design tokens
 ```
@@ -22,10 +22,11 @@ space  4px grid (4/8/12/16/24/32) · radius 8/12/16
 ## Layout & flow (top to bottom)
 - **Header:** "GlassBox" + a live "AI online · <provider>" pill (never a bare "…"). Benefit tagline: *"An AI Bull and Bear debate your trade — then we lock the verdict so it can't be quietly rewritten."* A 3-step stepper: **1. Ask → 2. Get a verdict → 3. Prove it can't be faked.**
 - **Ask card:** a pre-filled example question (lowers "what do I type"), Asset shown as a static **chip** "SUI/USDC · more soon" (NOT a disabled dropdown — reads as broken), risk select, Analyze button (⌘↵ also submits; textarea autofocused).
+- **Off-topic input (relevance gate):** if the question isn't an investing question (greeting, small talk, unrelated), show a short friendly redirect in the status line — **never a fabricated verdict**.
 - **Loading (6–10s):** a two-column **shimmer skeleton** + a **stepping caption** that advances ("agents debating…", "scoring conviction…"). Never a static spinner — dead air loses the room.
 - **Decision card (verdict-first):** the **VERDICT is the hero** (64px BUY/HOLD/AVOID with a ▲/■/▼ glyph so meaning survives color loss), then the Signal Strength chip ("rule-based, not a profit forecast") and suggested size ("X% of your portfolio"). Below: the "<side> wins the argument" line, then the **Bull/Bear debate** (color-coded top borders + square glyphs, NO animal emoji), each with 2 points + a rebuttal + conviction (word-labelled: "4/5 (strong)"). Counterfactual / blind-spots / risk live behind a **"Why you should doubt this"** expander. A clean, readable **disclaimer panel** (not buried fine print).
-- **Proof card:** a plain-English why-line ("…wrote its fingerprint to Walrus on Sui; if a single character changes, it won't match"), a **receipt panel** (fingerprint, signature "proves origin", a "● Walrus · Sui" provenance chip — hashes in ink, not grey), then **Verify** and **Try to alter it**.
-- **The climax:** Verify → big green **VERIFIED** banner. "Try to alter it" → 46px red **TAMPER DETECTED** banner (dashed border + glow + shake) and a **hash diff** showing the anchored fingerprint vs the tampered one (tampered glowing red). This must be the brightest, only-animating thing on screen at that beat.
+- **Proof card:** a plain-English why-line ("…wrote its fingerprint to Walrus on Sui; if a single character changes, it won't match"), a **receipt panel** (fingerprint, signature "proves origin", a "● Walrus · Sui" chip, and a clickable **on-chain Sui object** link — hashes in ink, not grey). Below it, the **interactive tamper**: the signed record in an **editable** field + its **live fingerprint** (recomputed in-browser via Web Crypto) next to the **anchored fingerprint**; plus **Try to alter it**, **Reset**, and **Re-verify on Walrus**.
+- **The climax (interactive):** while the record is unedited, a green **VERIFIED** banner. Change **even one character** of the editable record → the live fingerprint recomputes and the banner flips to a 46px red **TAMPER DETECTED** (dashed border + glow + shake), with the **differing hash characters highlighted**. Reset → back to VERIFIED. This is the brightest, only-animating thing on screen — and the judge can break it themselves.
 
 ## Staging (the demo arc)
 Idle → (Analyze) skeleton+caption → debate rises in → **verdict pops ~0.5s later** (its own moment) → (Prove) receipt → (Verify) MATCH glow → (Alter) MISMATCH slam+shake + hash diff. Nothing else animates during the MISMATCH.
@@ -43,7 +44,7 @@ Idle → (Analyze) skeleton+caption → debate rises in → **verdict pops ~0.5s
 Loading + disabled + error states on **all** of Analyze / Prove / Verify / Alter. Guard `if(!audit) return` before Verify/Alter. After Prove succeeds, lock the button (no double-fire). Use the goal captured *at analyze time* for the audit (don't read a possibly-edited textarea). Map raw HTTP errors to plain language.
 
 ## Claim discipline (copy)
-Always "**tamper-evident**", never "tamper-proof / provable to anyone". Signature = origin; on-chain anchor = non-alteration + timestamp. "Evidence layer", not "compliance guarantee". Never imply a profit forecast. Keep the honest disclaimer prominent — for compliance-minded judges that *increases* trust.
+Always "**tamper-evident**", never "tamper-proof / provable to anyone". Signature = origin; the Walrus-registered **on-chain Sui object** = non-alteration + an independent on-chain reference (a Sui epoch). "Evidence layer", not "compliance guarantee". Never imply a profit forecast. Keep the honest disclaimer prominent — for compliance-minded judges that *increases* trust.
 
 ## `body.present` (stage mode)
 Add `?present` to the URL (or `class="present"`) to bump type for the live pitch.

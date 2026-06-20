@@ -27,8 +27,8 @@ You type a plain-English goal for **SUI/USDC** ("Should I hold SUI for 2 weeks? 
 1. **Computes 5 market features** from a frozen, closed-candle snapshot — trend vs 20-day MA, RSI(14), realized-volatility percentile, order-book liquidity/spread (DeepBook), and drawdown from high. These exact bytes are what the agents see and what later gets hashed.
 2. **Runs a structured debate.** A **Bull** and a **Bear** agent each open with two evidence-cited points, then get **one rebuttal round** where each addresses the other's strongest argument and revises its conviction. Agents may use *only* the numbers in the inputs — every claim must cite a field.
 3. **Resolves with a Risk Arbiter** into a **verdict** (BUY / HOLD / AVOID), a mechanical **Signal Strength** (Low / Medium / High), a suggested position size capped by risk band, a **counterfactual** ("I'd change my call if ___"), and explicit **blind-spots** (e.g. "does not include news, sentiment, or events").
-4. **Seals the decision.** The decision object is canonicalized → **SHA-256 hashed** → **ed25519-signed** (proves *origin*) → written to **Walrus** on Sui as a real blob → (Tier 2) anchored on-chain for an **independent timestamp** and non-alteration guarantee.
-5. **Lets anyone verify.** "Verify" re-fetches the bytes from Walrus, recomputes the hash, and checks the signature → **MATCH**. Change a single character of the record → **MISMATCH**, instantly and provably.
+4. **Seals the decision.** The decision object is canonicalized → **SHA-256 hashed** → **ed25519-signed** (proves *origin*) → written to **Walrus** on Sui, which **registers it as a real on-chain Sui object** — an independent, explorer-verifiable anchor.
+5. **Lets anyone verify — and try to break it.** The signed record is shown in an **editable** field next to its anchored fingerprint, with its hash recomputed live in the browser: identical → **VERIFIED**; change a single character → **TAMPER DETECTED**, instantly. "Re-verify on Walrus" re-fetches the bytes independently and re-checks the signature.
 
 > **Signal Strength is not a probability of profit.** It's a mechanical measure of *how decisive the evidence and the debate were* — wide conviction gap, low volatility, healthy liquidity → High; a coin-flip in a thin, choppy market → Low. It is monotone non-increasing in risk and in volatility by construction.
 
@@ -41,7 +41,7 @@ You type a plain-English goal for **SUI/USDC** ("Should I hold SUI for 2 weeks? 
 - The Bull and Bear genuinely disagree on screen, each citing the same frozen numbers.
 - The Arbiter picks a side, states *why*, and names what it can't see.
 - Hit **Verify** → green **MATCH** (re-fetched independently from Walrus).
-- Hit **Try to alter it** → flip one field → red **MISMATCH**, with the two diverging fingerprints shown side by side.
+- **Edit the signed record yourself** — change even one character → red **TAMPER DETECTED** as its fingerprint breaks live (the differing hash characters highlighted); Reset → green **VERIFIED**.
 
 That last beat is the pitch: *the record fought back.* You cannot quietly rewrite history.
 
@@ -63,7 +63,7 @@ analyze  →  ed25519 sign  →  Walrus write (real blob)  →  verify (MATCH)  
 
 Run `python3 -m glassbox.audit_smoke` to reproduce all five steps yourself (see "Run it").
 
-On top of the brain: a **FastAPI server + a redesigned demo UI** (verdict-hero, staged reveal, the MISMATCH climax with a visible fingerprint diff, full accessibility), a **standalone independent verifier** (`verify_cli` — checks a record straight from Walrus with *no GlassBox server in the loop*), an instant **demo-mode cache**, and **67 tests + CI** (all LLM/network mocked).
+On top of the brain: a **FastAPI server + a redesigned demo UI** (verdict-hero, staged reveal, the **interactive tamper** demo, full accessibility); **live DeepBook** order-book depth/spread; an **on-chain Sui object** anchor for every record (via Walrus, explorer-verifiable); a **relevance gate** (off-topic input is redirected, never given a fabricated verdict); a standalone independent verifier (`verify_cli` — checks a record straight from Walrus with *no GlassBox server in the loop*); an instant **demo-mode cache**; and **100 tests + CI** (all LLM/network mocked).
 
 ---
 
@@ -80,16 +80,17 @@ On top of the brain: a **FastAPI server + a redesigned demo UI** (verdict-hero, 
          ┌────────────────────▼─────────────────────┐
          │        The Brain — Python FastAPI         │
          │                                           │
-         │  market.py   5 frozen market features     │
-         │  agents.py   Bull · Bear · Risk Arbiter   │   provider switch:
-         │  decision.py Signal Strength + size (code)│   gemini | openrouter | ollama
-         │  crypto.py   canonical · SHA-256 · ed25519│   (currently Gemini 2.5-flash)
-         │  audit.py    sign + Walrus write          │
-         │  verify.py   re-fetch + hash + sig check  │
+         │  market.py   live CoinGecko + DeepBook    │
+         │  guard.py    off-topic relevance gate     │   provider switch:
+         │  agents.py   Bull · Bear · Risk Arbiter   │   gemini | openrouter | ollama
+         │  decision.py Signal Strength + size (code)│   (currently Gemini 2.5-flash)
+         │  crypto.py   canonical · SHA-256 · ed25519│
+         │  audit.py    sign + Walrus + Sui object   │
+         │  verify.py / verify_cli  re-fetch + check │
          └──────┬──────────────────────────┬─────────┘
                 │                          │
-        ed25519 signature           Walrus blob (Sui)  ── Tier 2: on-chain anchor
-        (proves ORIGIN)             (proves NON-ALTERATION + independent timestamp)
+        ed25519 signature        Walrus blob + on-chain Sui object
+        (proves ORIGIN)          (storage + an independent, explorer-verifiable anchor)
 ```
 
 **Separation of concerns that matters here:** the LLM agents *reason only*. Every number that could be gamed — Signal Strength, position size, the rule-based baseline-verdict cross-check, numeric-grounding warnings — is computed in deterministic Python (`decision.py`), never by the model. The agents argue; the code scores.
@@ -139,12 +140,14 @@ python3 -m glassbox.audit_smoke
 cd server && uvicorn glassbox.main:app --reload --port 8787
 #  open http://localhost:8787/            full demo UI  (add ?present for projector type)
 #  GET  /api/health                       provider + pipeline switches
-#  GET  /api/pubkey                        published ed25519 verifying key
-#  POST /api/analyze       goalText, asset, risk  → Decision
-#  POST /api/audit         decision               → recordHash, signature, blobId
-#  GET  /api/verify/{recordId}            → hashMatch, signatureValid
-#  POST /api/rehash        decision               → recordHash  (powers the tamper MISMATCH)
+#  GET  /api/pubkey                       published ed25519 verifying key
+#  POST /api/analyze       goalText, asset, risk  → Decision  (422 {outOfScope} for off-topic input)
+#  POST /api/audit         decision    → recordHash, signature, blobId, suiObjectId, recordCanonical
+#  GET  /api/verify/{recordId}         → hashMatch, signatureValid
+#  POST /api/rehash        decision    → recordHash
 ```
+
+> Tip: to avoid Python-version/path issues, use a venv — `python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt` (dev/test extras: `requirements-dev.txt`).
 
 **Demo mode** — instant, deterministic canonical run for the live pitch (no ~8s wait):
 
@@ -159,13 +162,14 @@ DEMO_MODE=1 uvicorn glassbox.main:app --port 8787
 python3 -m glassbox.verify_cli <blobId> <signature_hex> [pubkey_hex]   # → AUTHENTIC / not
 ```
 
-**Run the tests** (67, all mocked; same suite as CI):
+**Run the tests** (100, all mocked; same suite as CI), and **watch real use-cases** against a running server:
 
 ```bash
-cd server && python3 -m pytest -q
+cd server && python3 -m pytest -q          # 100 unit + integration tests
+python3 -m glassbox.usecases               # live gallery: many real queries -> real outputs
 ```
 
-> The price-derived features come from a **live CoinGecko closed-candle feed** (`market.py`), frozen per analysis so the audit bytes stay reproducible, and it falls back to a deterministic snapshot on any error. DeepBook depth/spread are still modeled — the next single-function swap.
+> Market data is **live**: price-derived features from a **CoinGecko closed-candle feed**, and order-book **depth/spread from the public DeepBook v3 mainnet indexer** — each frozen per analysis (so the audit bytes stay reproducible) and each with a deterministic fallback if a feed is unreachable. The demo never breaks.
 
 ---
 
@@ -181,7 +185,7 @@ The frontend is built **spec-first** with [codeplain](https://codeplain.ai): **`
 
 | Bounty | How GlassBox targets it |
 |---|---|
-| **Sui (DeepBook + Walrus)** | Real Walrus-testnet blob storage for every decision; DeepBook order-book depth/spread is one of the 5 features and drives a manipulation flag; Tier-2 on-chain anchor for an independent timestamp. |
+| **Sui (DeepBook + Walrus)** | Every decision is stored on **Walrus**, which registers an **on-chain Sui object** (explorer-verifiable — an independent anchor); **live DeepBook** order-book depth/spread drives the liquidity feature + manipulation flag. |
 | **BGA — AI Trading & Strategy** | Optimizes for **transparency, not PnL**: an explainable, auditable, signed reasoning trail with a mechanical Signal Strength — explicitly *not* a profit predictor. |
 | **codeplain (spec-first)** | Frontend generated from `glassbox.plain`; the spec is the source of truth, generated code is an artifact. |
 | **Main finale** | A working, demoable end-to-end product with a hard, provable wow moment (MATCH → MISMATCH). |
@@ -195,11 +199,11 @@ The frontend is built **spec-first** with [codeplain](https://codeplain.ai): **`
 We are deliberately precise about what this does and does **not** prove.
 
 - **Tamper-*evident*, not tamper-*proof*.** GlassBox makes alteration *detectable*, not impossible.
-- The signature proves **origin** (GlassBox produced this record). The Sui anchor proves **non-alteration + an independent timestamp**. Together: *this exact decision existed at this time and has not been changed.*
+- The signature proves **origin** (GlassBox produced this record). The **Walrus-registered Sui object** is the anchor — an independent, explorer-verifiable on-chain reference (registered at a Sui epoch). Together: *this exact decision existed by then and has not been changed.*
 - It does **not** prove the **inputs were true** or that the **decision was correct** — garbage in is still garbage in, just provably so.
 - **Signal Strength is not a probability of profit.** GlassBox never pitches returns or PnL.
-- Running on **Walrus testnet, not mainnet**; the on-chain anchor is the Tier-2 step.
-- Price features use a live CoinGecko feed (with a deterministic fallback); DeepBook depth/spread are still modeled.
+- Running on **Walrus testnet**; each record registers an on-chain Sui object (the anchor). A *dedicated* anchor transaction (our own wallet) is an optional extra, not required. DeepBook is read from **mainnet** (read-only) for real liquidity.
+- Price features (CoinGecko) and DeepBook depth/spread are **live reads**, each with a deterministic fallback if a feed is unreachable.
 - **Not financial advice.** GlassBox produces structured, auditable analysis — a human (or an upstream policy) owns the trade.
 
 ---
