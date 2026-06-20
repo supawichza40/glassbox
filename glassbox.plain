@@ -1,0 +1,69 @@
+---
+description: 'GlassBox - tamper-evident accountability for AI financial decisions (frontend dashboard)'
+import:
+  - typescript-react-app-template # https://github.com/Codeplain-ai/codeplain/blob/main/standard_template_library/
+requires:
+  - typescript-react-app-boilerplate # https://github.com/Codeplain-ai/codeplain/blob/main/standard_template_library/
+---
+
+***definitions***
+
+- :User: is the user of :App:. :User: is a retail investor or a fund / compliance analyst.
+
+- :Goal: is :User:'s plain-English investing question. :Goal: has the following attributes
+  - Text - the question. This is a required attribute. The text must be at least 5 characters long.
+  - Asset - the market to analyze. For this version the only valid :Asset: is "SUI/USDC".
+  - Risk Tolerance - one of "low", "moderate", or "high".
+
+- :Decision: is what GlassBox returns for a :Goal:. :Decision: has the following attributes
+  - Inputs - the computed market numbers the analysis is based on (price, RSI, volatility, liquidity). The analysis may reference only these numbers.
+  - Bull Case - a list of exactly 2 short points arguing to buy. Must not restate :User:'s :Goal: text.
+  - Bear Case - a list of exactly 2 short points arguing against buying. Must not restate :User:'s :Goal: text.
+  - Winning Side - which side the verdict resolves to ("bull" or "bear") and a one-line reason it outweighs the other.
+  - Risk Note - one line on the main risk and a suggested position size as a percentage.
+  - Verdict - one of "BUY", "HOLD", or "AVOID".
+  - Signal Strength - a percentage from 0 to 100 with a band of "Low", "Medium", or "High". This is a mechanical score, NOT a probability of profit.
+  - Counterfactual - a sentence of the form "I would change my call if ...".
+  - Blind Spots - a list of things the analysis does NOT consider (e.g. "does not include news or social media").
+
+- :AuditRecord: is the tamper-evident proof of a :Decision:. :AuditRecord: has the following attributes
+  - Record Hash - a hash of the decision record.
+  - Signature - proves GlassBox produced the record (origin).
+  - Sui Anchor - a Sui on-chain timestamp proving the record was not altered after signing (independence). May show the anchor transaction and its timestamp.
+  - Walrus Blob Id - where the record is stored, or empty when stored locally.
+
+- :EvidenceCount: is the number of audit-grade records :User: has retained. Initially :EvidenceCount: is 0 and increases by 1 each time a :Decision: is proved.
+
+- :AnalyzeEndpoint: is "POST /api/analyze" that turns a :Goal: into a :Decision:.
+- :AuditEndpoint: is "POST /api/audit" that turns a :Decision: into an :AuditRecord:.
+- :VerifyEndpoint: is "GET /api/verify/{Record Id}" that returns the stored :Decision: and whether it still matches.
+
+***implementation reqs***
+> Implementation requirements are defined in 'typescript-react-app-template'.
+
+- The backend base URL must be read from the environment variable "VITE_API_BASE_URL" and default to "http://localhost:8787".
+
+***test reqs***
+> Test requirements are defined in 'typescript-react-app-template'.
+
+***functional specs***
+
+- Show the header of :App: with the name "GlassBox" and the tagline "Explainable to you. Tamper-evident for anyone.". Also show :EvidenceCount: as "Evidence records: N retained".
+
+- Show a standing disclaimer beneath every :Decision: with this exact text: "GlassBox is an educational and analytical tool. It does not provide personalised or financial advice. SUI/USDC is high-risk and largely unregulated; you could lose all the money you put in. 'Signal strength' is a mechanical score, not a probability of profit. You are solely responsible for any order you place."
+
+- :User: should be able to enter a :Goal: (Text, Asset fixed to "SUI/USDC", Risk Tolerance from the three options) and submit it. Only a valid :Goal: can be submitted. If the Text is shorter than 5 characters, show an inline error and do not submit.
+
+- On submit, call :AnalyzeEndpoint: and show a "GlassBox is thinking" loading state. When the :Decision: returns, render it as: the Bull Case and the Bear Case side by side (the debate); then the Winning Side line that resolves the debate; then the Inputs the analysis used; then the Risk Note; then the Verdict; then the Signal Strength as a band ("Low"/"Medium"/"High") labelled "not a probability of profit"; then the Counterfactual; then the Blind Spots.
+
+- :User: should be able to click a "Prove it" button on a :Decision:. This calls :AuditEndpoint:, increases :EvidenceCount: by 1, and shows the resulting :AuditRecord: (the Record Hash, that it was signed, and the Sui Anchor).
+
+- :User: should be able to click a "Verify" button on an :AuditRecord:. This calls :VerifyEndpoint: and shows whether the stored record still matches, as "MATCH" or "MISMATCH", together with the Sui Anchor timestamp.
+
+- :User: should be able to click an "Alter the record" button that changes one value in a local copy of the :Decision: and re-runs verification, which must then show a clear "MISMATCH" with the changed value highlighted.
+
+- Never use the words "tamper-proof" or "provable to anyone" anywhere in :App:. Use "tamper-evident" and "verify".
+
+- Every call to :AnalyzeEndpoint:, :AuditEndpoint:, and :VerifyEndpoint: must show a loading state while in progress, an empty state before it runs, and a clear error state if it fails. The application must never show a blank screen on failure.
+
+> see https://www.plainlang.org/ for more information on ***plain
