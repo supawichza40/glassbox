@@ -1,0 +1,26 @@
+# Render Blueprint — deploys the GlassBox FastAPI backend (dashboard + verifier + API).
+# In Render: New → Blueprint → connect this repo → it reads this file and prompts for the
+# two secret env vars below (sync:false). Free plan spins down when idle (~30s cold start).
+services:
+  - type: web
+    name: glassbox
+    runtime: python
+    plan: free
+    branch: feature/explore-feature2
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd server && python -m uvicorn glassbox.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.5"
+      # Stable ed25519 signing key so the published pubkey keeps matching across restarts.
+      # Paste the value from:  cat /tmp/glassbox_sk.hex   (kept off this repo / chat)
+      - key: GLASSBOX_ED25519_SK_HEX
+        sync: false
+      - key: LLM_PROVIDER
+        value: gemini
+      # Your Gemini key (or switch LLM_PROVIDER=openrouter + set OPENROUTER_API_KEY).
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: AUDIT_SINK
+        value: walrus
