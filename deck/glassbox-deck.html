@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>GlassBox — pitch deck</title>
+<style>
+  :root{
+    --bg:#090c12; --surface:#121821; --line:#2a3543;
+    --ink:#eef3fa; --ink2:#c0cbda; --muted:#8a97a8;
+    --brand:#7c5cff; --bull:#2ed573; --bear:#ff4d5e; --warn:#ffc24d; --accent:#21d4c4;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#05070b;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif}
+  body{scroll-snap-type:y mandatory;overflow-y:scroll}
+  .slide{
+    position:relative;width:1280px;height:720px;margin:22px auto;padding:54px 64px;
+    background:
+      radial-gradient(900px 420px at 50% -10%, #16203055 0%, transparent 60%), var(--bg);
+    border:1px solid var(--line);border-radius:16px;scroll-snap-align:center;
+    box-shadow:0 14px 50px rgba(0,0,0,.5);overflow:hidden;display:flex;flex-direction:column}
+  .slide.center{justify-content:center}
+  h1{font-size:64px;letter-spacing:-.02em;margin:0 0 10px}
+  h2{font-size:38px;letter-spacing:-.01em;margin:0 0 16px}
+  h3{color:var(--accent);font-size:22px;text-transform:uppercase;letter-spacing:.12em;margin:0 0 20px}
+  p{font-size:26px;line-height:1.5;margin:.4em 0}
+  strong{color:#fff}
+  em{color:var(--ink2);font-style:italic}
+  ul{font-size:26px;line-height:1.5;margin:.3em 0;padding-left:26px}
+  li{margin:.34em 0}
+  code{background:#0e141d;color:var(--accent);padding:1px 7px;border-radius:6px;font-size:.82em;
+    font-family:ui-monospace,Menlo,monospace}
+  .kicker{color:var(--brand);font-weight:700;letter-spacing:.07em;text-transform:uppercase;font-size:18px;margin-bottom:10px}
+  .lead{color:var(--ink2);font-size:30px;line-height:1.45}
+  .small{font-size:19px;color:var(--muted)}
+  .tag{display:inline-block;background:#19212e;border:1px solid var(--line);color:var(--ink2);
+    border-radius:999px;padding:5px 15px;font-size:18px;margin:8px 6px 0 0}
+  .bull{color:var(--bull)} .bear{color:var(--bear)} .buy{color:var(--bull)} .warn{color:var(--warn)}
+  .pageno{position:absolute;right:22px;bottom:16px;color:var(--muted);font-size:14px}
+  .flow{display:flex;gap:10px;align-items:stretch;margin:22px 0;font-size:19px}
+  .flow .b{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:14px 12px;text-align:center}
+  .flow .b small{color:var(--muted);display:block;font-size:14px;margin-top:5px}
+  .flow .arr{align-self:center;color:var(--muted);font-size:24px}
+  .match{color:var(--bull);border-color:var(--bull)!important}
+  .mismatch{color:var(--bear);border-color:var(--bear)!important;border-style:dashed!important}
+  blockquote{border-left:3px solid var(--brand);margin:18px 0;padding:6px 0 6px 20px;
+    color:var(--ink2);font-size:28px;font-style:italic}
+  pre{background:#0e141d;border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+    font:20px/1.7 ui-monospace,Menlo,monospace;color:var(--ink);margin:14px 0}
+  pre .red{color:var(--bear)}
+  .cols{display:flex;gap:34px}.cols>div{flex:1}
+  table{font-size:21px;border-collapse:collapse;margin-top:6px;width:100%}
+  td,th{border:1px solid var(--line);padding:9px 13px;text-align:left}
+  th{color:var(--accent)}
+  .hint{position:fixed;left:14px;bottom:12px;color:#3a4655;font-size:13px;z-index:10}
+  @media print{
+    @page{size:1280px 720px;margin:0}
+    html,body{background:#090c12;overflow:visible}
+    .slide{margin:0;border:0;border-radius:0;box-shadow:none;page-break-after:always;width:1280px;height:720px}
+    .hint{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- 1 — TITLE -->
+<section class="slide center">
+  <div class="kicker">Encode Vibe Coding Hackathon · London</div>
+  <h1>GlassBox</h1>
+  <h2>Tamper-evident accountability for AI financial decisions</h2>
+  <p class="lead">Watch two AI agents argue an investing call — then prove the decision they signed <strong>can't be rewritten</strong> after the fact.</p>
+  <p class="small" style="margin-top:28px"><strong>The Start of a Joke</strong> — Supavich Aussawaauschariyakul · Orestis Kap</p>
+</section>
+
+<!-- 2 — PROBLEM -->
+<section class="slide">
+  <h3>The problem</h3>
+  <h2>AI is starting to make financial calls. When it's wrong, three questions have no answer.</h2>
+  <ul>
+    <li><strong>Did the AI actually say that?</strong> — logs live in a database the operator can quietly edit.</li>
+    <li><strong>Was the record changed afterward?</strong> — a screenshot proves nothing; a mutable log proves nothing.</li>
+    <li><strong>Why</strong> did it decide that — and what did it <strong>miss</strong>?</li>
+  </ul>
+  <p>Regulators already demand trustworthy, time-ordered records — <strong>SEC Rule 17a-4</strong>, <strong>MiFID II RTS 6</strong>. An AI black box with an editable log doesn't meet that bar.</p>
+  <div class="pageno">2</div>
+</section>
+
+<!-- 3 — WHAT IT DOES -->
+<section class="slide">
+  <h3>What GlassBox does</h3>
+  <h2>The agents reason. The code computes the numbers. The chain keeps it honest.</h2>
+  <div class="flow">
+    <div class="b"><span class="bull">Bull</span> vs <span class="bear">Bear</span><small>debate + 1 rebuttal</small></div>
+    <div class="arr">→</div>
+    <div class="b"><span class="buy">VERDICT</span><small>+ Signal Strength</small></div>
+    <div class="arr">→</div>
+    <div class="b">Sign<small>ed25519 (origin)</small></div>
+    <div class="arr">→</div>
+    <div class="b">Walrus · Sui<small>stored + anchored</small></div>
+    <div class="arr">→</div>
+    <div class="b match">Verify ✓<small>byte-for-byte</small></div>
+  </div>
+  <p>Two agents argue over <strong>5 computed market features</strong> (trend, RSI, volatility, DeepBook liquidity, drawdown) — citing <strong>only</strong> those numbers. A Risk Arbiter resolves a <strong>BUY / HOLD / AVOID</strong>, a <em>mechanical</em> Signal Strength, a counterfactual, and named blind-spots.</p>
+  <div class="pageno">3</div>
+</section>
+
+<!-- 4 — THE WOW -->
+<section class="slide center">
+  <h3>The wow — live</h3>
+  <h2>Change one character, and the chain catches it.</h2>
+  <div class="flow">
+    <div class="b match" style="flex:1.4">VERIFIED ✓<small>re-fetched from Walrus — byte-for-byte identical</small></div>
+    <div class="arr">then</div>
+    <div class="b mismatch" style="flex:1.4">TAMPER DETECTED ✗<small>flip one field → the fingerprint no longer matches</small></div>
+  </div>
+  <pre>anchored    3f9a1c… 7b2e
+after edit  <span class="red">c0114d… a9f1</span>   ← the record fought back</pre>
+  <blockquote>"I change one thing the AI decided — and it's caught. No one can quietly rewrite an AI's decision after the fact, not even the fund being audited."</blockquote>
+  <div class="pageno">4</div>
+</section>
+
+<!-- 5 — WHY IT'S REAL -->
+<section class="slide">
+  <h3>Why it's real</h3>
+  <h2>Proven live, end-to-end — and verifiable without us.</h2>
+  <div class="cols">
+    <div>
+      <p><strong>The proof stack</strong></p>
+      <ul style="font-size:23px">
+        <li><strong>ed25519 signature</strong> → proves <em>origin</em></li>
+        <li><strong>Walrus (Sui)</strong> → real testnet blob storage</li>
+        <li><strong>Sui anchor</strong> → <em>non-alteration + timestamp</em></li>
+        <li><strong>verify_cli</strong> → a third party checks a record <strong>straight from Walrus, with no GlassBox server in the loop</strong></li>
+      </ul>
+    </div>
+    <div>
+      <p><strong>Engineered, not faked</strong></p>
+      <ul style="font-size:23px">
+        <li>Real Walrus-testnet write (live <code>blobId</code>)</li>
+        <li>Provider-agnostic LLM · <code>gemini · openrouter · ollama</code></li>
+        <li><strong>67 tests + CI</strong>, repair-retry, safe fallbacks</li>
+        <li>Spec-first frontend via <strong>codeplain</strong></li>
+      </ul>
+    </div>
+  </div>
+  <div class="pageno">5</div>
+</section>
+
+<!-- 6 — HONEST -->
+<section class="slide">
+  <h3>Honest by construction</h3>
+  <h2>We're precise about what this proves — that's the point.</h2>
+  <ul>
+    <li><strong>Tamper-<em>evident</em>, not tamper-<em>proof</em>.</strong> We make alteration <em>detectable</em>, not impossible.</li>
+    <li>Signature = <strong>origin</strong>; Sui anchor = <strong>non-alteration + timestamp</strong>. It does <strong>not</strong> prove the inputs were true or the call correct.</li>
+    <li><strong>Signal Strength is not a probability of profit.</strong> We never pitch returns or PnL.</li>
+    <li>PII-free anchored record + an AES-GCM <strong>crypto-erasable</strong> store for the goal text (GDPR).</li>
+  </ul>
+  <blockquote>An <strong>evidence layer</strong> — <em>designed to map to</em> 17a-4 / RTS 6 record-keeping — <strong>not</strong> a compliance guarantee or model validation.</blockquote>
+  <div class="pageno">6</div>
+</section>
+
+<!-- 7 — WHY IT WINS -->
+<section class="slide">
+  <h3>Why it wins</h3>
+  <h2>One product, stacked across the bounties.</h2>
+  <table>
+    <tr><th>Bounty</th><th>How GlassBox lands it</th></tr>
+    <tr><td><strong>Sui</strong></td><td>Real Walrus blob per decision · DeepBook depth drives a manipulation flag · on-chain anchor</td></tr>
+    <tr><td><strong>BGA</strong></td><td>Transparency <strong>not PnL</strong> — explainable, auditable, signed reasoning + a mechanical signal</td></tr>
+    <tr><td><strong>codeplain</strong></td><td>Spec-first: <code>glassbox.plain</code> is the source of truth, generated code is a build artifact</td></tr>
+    <tr><td><strong>Main finale</strong></td><td>A working product with a hard, <strong>provable</strong> wow (MATCH → MISMATCH)</td></tr>
+  </table>
+  <div style="margin-top:14px">
+    <span class="tag">Solvimon — B2B evidence/compliance line</span>
+    <span class="tag">FLock — provider-agnostic / sovereign</span>
+  </div>
+  <div class="pageno">7</div>
+</section>
+
+<!-- 8 — BUSINESS -->
+<section class="slide">
+  <h3>The business</h3>
+  <h2>Every fund running AI will have to prove its decisions weren't a reckless black box.</h2>
+  <ul>
+    <li><strong>Customer:</strong> funds, fintechs & AI-trading desks that must keep auditable records of <em>what was decided, on what inputs, by which model, and when</em>.</li>
+    <li><strong>Today</strong> they hand-roll brittle logs no auditor trusts.</li>
+    <li><strong>GlassBox</strong> is the decision-evidence layer — <strong>per-analyst seat + evidence-retention tier + audit-export pack</strong>.</li>
+    <li>SKU = <strong>"Evidence Retention," never "Compliance."</strong> It produces the evidence; it doesn't validate your model.</li>
+  </ul>
+  <div class="pageno">8</div>
+</section>
+
+<!-- 9 — CODEPLAIN -->
+<section class="slide">
+  <h3>Built with codeplain · spec-first</h3>
+  <h2>The product <em>is</em> the spec.</h2>
+  <ul>
+    <li><strong>glassbox.plain</strong> generates the React frontend — the spec is the source of truth, generated code is a gitignored artifact.</li>
+    <li>A hand-proven <strong>Python FastAPI brain</strong> stays a stable service the frontend calls over HTTP.</li>
+    <li>Design distilled to <strong>resources/ui_reference.md</strong> from a 4-lens review (visual/UX · usability · HCI/a11y · first-user).</li>
+    <li>Change the product by editing the spec and re-rendering — reproducible and fast to evolve.</li>
+  </ul>
+  <p class="small">Public repo · <code>.plain</code> specs · 67 tests + CI · provider-agnostic LLM</p>
+  <div class="pageno">9</div>
+</section>
+
+<!-- 10 — CLOSE -->
+<section class="slide center">
+  <div class="kicker">The line that closes it</div>
+  <h1 style="font-size:54px">We're not selling that the AI is right.</h1>
+  <h2 style="font-size:42px">We're selling that <strong>no one can quietly edit what it decided.</strong></h2>
+  <p class="lead" style="margin-top:24px">GlassBox — watch the AI argue, then prove it can't be rewritten.</p>
+  <p class="small" style="margin-top:28px"><strong>The Start of a Joke</strong> · Encode Vibe Coding Hackathon, London · live demo + open repo</p>
+</section>
+
+<div class="hint">↓ / Space to advance · Cmd+P → “Save as PDF” (enable Background graphics) to export</div>
+<script>
+  const slides=[...document.querySelectorAll('.slide')];let i=0;
+  function go(n){i=Math.max(0,Math.min(slides.length-1,n));slides[i].scrollIntoView({behavior:'smooth'});}
+  addEventListener('keydown',e=>{
+    if(['ArrowDown','ArrowRight',' ','PageDown'].includes(e.key)){e.preventDefault();go(i+1);}
+    if(['ArrowUp','ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();go(i-1);}
+  });
+</script>
+</body>
+</html>
