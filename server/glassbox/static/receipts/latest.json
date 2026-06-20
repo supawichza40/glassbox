@@ -1,0 +1,68 @@
+{
+  "recordId": "1fa7f4150fb53178",
+  "blobId": "Aupye_vpOPpz-UN8Oani1p5SBRofQnAJ7LZM55CIibQ",
+  "recordHash": "1fa7f4150fb53178a469d83cba7a03a9b617f6156e52be3fad35521b963fd469",
+  "signature": "8f03455724f14ce82d39660a3777e8f25f0cb7f93c6fcdafec14e50fbb360bfbc5871975337e5e036c13c8954466a479796e68febf5ab0fdb9791d3f6bac7f00",
+  "pubkey": "c0eac67421c64b3328727a1649a38ba5d90c1267ccedbf0f3aa55d1c3a6263ab",
+  "suiObjectId": "0x44d8c645c67a02e5243a9499aadc0fe2f7ec5d1b6775ac5fc9043b1605e0c06e",
+  "anchorEpoch": 434,
+  "anchorNetwork": "sui:testnet",
+  "sink": "walrus",
+  "walrusAggregator": "https://aggregator.walrus-testnet.walrus.space",
+  "suiExplorer": "https://suiscan.xyz/testnet",
+  "recordCanonical": "{\"asset\":\"SUI/USDC\",\"bear\":{\"convictionRevised\":1.0,\"points\":[\"The asset has experienced a significant drawdownFromHighPct of -62.6%, indicating substantial long-term price depreciation and a lack of sustained recovery.\",\"The price is currently trading -7.6% below its 20-day moving average, as indicated by trendPctVs20MA, suggesting a prevailing short-term downtrend.\"],\"rebuttal\":\"While the asset is down 62.6% from its all-time high (drawdownFromHighPct), its RSI14 is a neutral 52.6, not indicating an oversold condition that typically signals an imminent rebound from such a discount.\"},\"blindSpots\":[\"Does not include news, social sentiment, or events\"],\"bull\":{\"convictionRevised\":5.0,\"points\":[\"SUI/USDC is trading at a significant discount, being down 62.6% from its all-time high, presenting a strong potential for capital appreciation (drawdownFromHighPct).\",\"The current price is 7.6% below its 20-day moving average, indicating a potential dip that could offer an attractive entry point for buyers (trendPctVs20MA).\"],\"rebuttal\":\"Despite the significant drawdownFromHighPct of -62.6%, the asset's current realizedVolPercentile of 0.15 indicates exceptionally low volatility, aligning with its moderate riskBand and suggesting a period of consolidation.\"},\"counterfactual\":\"I would change my call to BUY if the RSI14 indicated an oversold condition, signaling a potential rebound from the current discount.\",\"flags\":{\"baselineVerdict\":\"AVOID\",\"groundingWarnings\":[],\"llmOverrodeSignals\":false},\"inputs\":{\"asOfIso\":\"2026-06-20T14:11:50+00:00\",\"deepbookTopDepthUsd\":57944.0,\"drawdownFromHighPct\":-62.6,\"goalCategory\":\"growth\",\"horizonDays\":14,\"priceUsd\":0.7134,\"realizedVolPercentile\":0.15,\"riskBand\":\"moderate\",\"rsi14\":52.6,\"spreadBps\":7.0,\"trendPctVs20MA\":-7.6},\"provenance\":{\"fastModel\":\"gemini-2.5-flash\",\"provider\":\"gemini\",\"smartModel\":\"gemini-2.5-flash\"},\"riskNote\":\"The asset is still trading -62.6% below its all-time high (drawdownFromHighPct), indicating significant long-term depreciation and potential for continued underperformance.\",\"signalBand\":\"High\",\"signalStrengthPct\":68,\"suggestedSizePct\":13,\"timestampIso\":\"2026-06-20T14:11:50+00:00\",\"verdict\":\"HOLD\",\"whyResolved\":\"The bull's revised conviction of 6 significantly outweighs the bear's revised conviction of 1, indicating a stronger overall case for the asset's current stability and potential value.\",\"winningSide\":\"bull\"}",
+  "decision": {
+    "asset": "SUI/USDC",
+    "timestampIso": "2026-06-20T14:11:50+00:00",
+    "inputs": {
+      "priceUsd": 0.7134,
+      "trendPctVs20MA": -7.6,
+      "rsi14": 52.6,
+      "realizedVolPercentile": 0.15,
+      "deepbookTopDepthUsd": 57944.0,
+      "spreadBps": 7.0,
+      "drawdownFromHighPct": -62.6,
+      "asOfIso": "2026-06-20T14:11:50+00:00",
+      "riskBand": "moderate",
+      "horizonDays": 14,
+      "goalCategory": "growth"
+    },
+    "bull": {
+      "points": [
+        "SUI/USDC is trading at a significant discount, being down 62.6% from its all-time high, presenting a strong potential for capital appreciation (drawdownFromHighPct).",
+        "The current price is 7.6% below its 20-day moving average, indicating a potential dip that could offer an attractive entry point for buyers (trendPctVs20MA)."
+      ],
+      "convictionRevised": 5.0,
+      "rebuttal": "Despite the significant drawdownFromHighPct of -62.6%, the asset's current realizedVolPercentile of 0.15 indicates exceptionally low volatility, aligning with its moderate riskBand and suggesting a period of consolidation."
+    },
+    "bear": {
+      "points": [
+        "The asset has experienced a significant drawdownFromHighPct of -62.6%, indicating substantial long-term price depreciation and a lack of sustained recovery.",
+        "The price is currently trading -7.6% below its 20-day moving average, as indicated by trendPctVs20MA, suggesting a prevailing short-term downtrend."
+      ],
+      "convictionRevised": 1.0,
+      "rebuttal": "While the asset is down 62.6% from its all-time high (drawdownFromHighPct), its RSI14 is a neutral 52.6, not indicating an oversold condition that typically signals an imminent rebound from such a discount."
+    },
+    "winningSide": "bull",
+    "whyResolved": "The bull's revised conviction of 6 significantly outweighs the bear's revised conviction of 1, indicating a stronger overall case for the asset's current stability and potential value.",
+    "verdict": "HOLD",
+    "riskNote": "The asset is still trading -62.6% below its all-time high (drawdownFromHighPct), indicating significant long-term depreciation and potential for continued underperformance.",
+    "suggestedSizePct": 13,
+    "signalStrengthPct": 68,
+    "signalBand": "High",
+    "counterfactual": "I would change my call to BUY if the RSI14 indicated an oversold condition, signaling a potential rebound from the current discount.",
+    "blindSpots": [
+      "Does not include news, social sentiment, or events"
+    ],
+    "flags": {
+      "llmOverrodeSignals": false,
+      "baselineVerdict": "AVOID",
+      "groundingWarnings": []
+    },
+    "provenance": {
+      "provider": "gemini",
+      "fastModel": "gemini-2.5-flash",
+      "smartModel": "gemini-2.5-flash"
+    }
+  }
+}

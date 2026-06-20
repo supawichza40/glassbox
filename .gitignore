@@ -37,3 +37,9 @@ plainlang-examples/
 codeplain.log
 .claude/
 skills-lock.json
+.gstack/
+
+# Runtime-generated verify receipts (from "Prove it"); keep only the baked demo records
+server/glassbox/static/receipts/*.json
+!server/glassbox/static/receipts/latest.json
+!server/glassbox/static/receipts/1fa7f4150fb53178.json

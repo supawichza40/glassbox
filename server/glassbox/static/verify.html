@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Verify it yourself — GlassBox</title>
+<meta name="description" content="Independently re-verify a GlassBox AI decision record on your own device — recompute the hash and check the ed25519 signature against a published key and the Walrus blob on Sui."/>
+<style>
+  :root{
+    --bg:#090c12; --surface-1:#121821; --surface-2:#19212e; --line:#2a3543;
+    --ink:#eef3fa; --ink-2:#c0cbda; --muted:#8a97a8; --faint:#aab6c6;
+    --brand:#7c5cff; --action:#2563eb; --accent2:#21d4c4;
+    --ok:#2ed573; --bear:#ff4d5e; --warn:#ffc24d;
+    --fs-base:17px; --r-sm:8px; --r-md:12px; --r-lg:16px;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,"JetBrains Mono",monospace;
+    --ease:cubic-bezier(.2,.9,.2,1);
+  }
+  body.present{ --fs-base:20px }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -12%, #16203046 0%, var(--bg) 60%);
+       color:var(--ink);font:var(--fs-base)/1.55 var(--sans)}
+  .wrap{max-width:760px;margin:0 auto;padding:26px 20px 90px}
+  body.present .wrap{max-width:1040px}
+  a{color:var(--accent2)}
+  header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  h1{font-size:24px;margin:0;letter-spacing:-.02em}
+  .tag{font-size:13px;color:var(--accent2);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
+  .netpill{font-size:13px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
+  .netpill .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:7px;vertical-align:1px}
+  .netpill.online{color:var(--ok)} .netpill.online .dot{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  .netpill.offline{color:var(--warn)} .netpill.offline .dot{background:var(--warn)}
+  .lead{color:var(--ink-2);font-size:16px;margin:12px 0 0}
+  .card{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-lg);
+        padding:22px;margin-top:18px;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px}
+  .muted{color:var(--muted)} .mono{font-family:var(--mono);word-break:break-all}
+  .dec-verdict{font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .dec-verdict .g{margin-right:8px}
+  .v-BUY{color:var(--ok)} .v-HOLD{color:var(--warn)} .v-AVOID{color:var(--bear)}
+  .dec-meta{color:var(--ink-2);margin-top:12px;font-size:15px}
+
+  /* verify checklist */
+  .checks{display:flex;flex-direction:column;gap:10px;margin:6px 0 2px}
+  .chk{display:flex;align-items:center;gap:12px;font-size:16px;color:var(--ink-2);
+       padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);
+       opacity:.45;transition:opacity .3s var(--ease)}
+  .chk.active{opacity:1}
+  .chk .ic{width:24px;height:24px;flex:0 0 24px;border-radius:50%;border:2px solid var(--muted);
+       display:grid;place-items:center;font-weight:800;font-size:14px;color:var(--muted)}
+  .chk.pass .ic{border-color:var(--ok);color:var(--ok)}
+  .chk.fail .ic{border-color:var(--bear);color:var(--bear)}
+  .chk.warn .ic{border-color:var(--warn);color:var(--warn)}
+  .chk.spin .ic{border-color:var(--accent2);border-top-color:transparent;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .chk b{color:var(--ink)} .chk small{display:block;color:var(--muted);font-size:13px}
+
+  /* the big state banner */
+  .state{margin-top:18px;border-radius:var(--r-md);padding:26px 22px;text-align:center;font-weight:800;
+         border:2px solid;display:none}
+  .state .big{font-size:40px;line-height:1.05;letter-spacing:-.02em}
+  .state .glyph{font-size:30px;vertical-align:-2px;margin-right:8px}
+  .state small{display:block;font:500 15px/1.45 var(--sans);color:var(--ink-2);margin-top:8px}
+  .state.ok{color:var(--ok);border-color:var(--ok);background:rgba(46,213,115,.13);box-shadow:0 0 26px rgba(46,213,115,.28)}
+  .state.bad{color:var(--bear);border:2px dashed var(--bear);background:rgba(255,77,94,.16);box-shadow:0 0 30px rgba(255,77,94,.42)}
+  .state.ok .big::before{content:"✓ "} .state.bad .big::before{content:"✗ "}
+
+  .note{font-size:13.5px;color:var(--faint);margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);
+        padding:12px 14px;background:#0e141d}
+  .note b{color:var(--ink-2)}
+  .warnpill{display:inline-block;font-size:12.5px;color:var(--warn);border:1px solid var(--warn);
+        border-radius:999px;padding:2px 10px;margin-bottom:8px}
+
+  /* record + tamper */
+  .recordbox{width:100%;min-height:150px;background:#0e141d;border:1px solid var(--line);border-radius:8px;
+    color:var(--ink-2);font:13px/1.6 var(--mono);padding:13px;resize:vertical;white-space:pre-wrap;word-break:break-all;outline:none}
+  .recordbox:focus{outline:2px solid var(--accent2);outline-offset:2px}
+  .fp{display:flex;gap:12px;align-items:baseline;margin-top:10px;flex-wrap:wrap}
+  .fp .lbl{color:var(--muted);font-size:13px;min-width:200px}
+  .fp .val{font:14px/1.6 var(--mono);word-break:break-all;flex:1;min-width:180px}
+  .fp .val .d{color:var(--bear);font-weight:800;text-shadow:0 0 10px rgba(255,77,94,.55)}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  button{background:var(--action);color:#fff;border:0;border-radius:var(--r-sm);padding:12px 18px;
+       font:600 var(--fs-base)/1 var(--sans);cursor:pointer;min-height:46px;transition:filter .15s,transform .05s}
+  button:hover{filter:brightness(1.1)} button:active{transform:translateY(1px)}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  :focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+
+  /* forensics diff */
+  #forensics{display:none;margin-top:16px;border:1px solid var(--bear);border-radius:var(--r-md);
+       background:rgba(255,77,94,.07);padding:16px}
+  #forensics h3{margin:0 0 10px;font-size:14px;color:var(--bear);letter-spacing:.02em}
+  .diffrow{display:grid;grid-template-columns:1fr;gap:4px;padding:9px 0;border-top:1px dashed var(--line);font-size:15px}
+  .diffrow:first-of-type{border-top:0}
+  .diffrow .field{color:var(--muted);font:12px var(--sans);text-transform:uppercase;letter-spacing:.05em}
+  .diffrow .change b.old{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--bear)}
+  .diffrow .change b.new{color:var(--bear)}
+  .diffrow .change .arr{color:var(--muted);margin:0 8px}
+
+  /* on-chain + qr */
+  .kv{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;margin:8px 0;font-size:14.5px}
+  .kv .k{color:var(--muted);min-width:190px}
+  .chainchip{display:inline-flex;align-items:center;gap:6px;color:var(--accent2);border:1px solid var(--accent2);
+       border-radius:999px;padding:2px 10px;font-size:13px}
+  .qrwrap{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  #qr{background:#fff;padding:10px;border-radius:10px;line-height:0}
+  #qr img{display:block;width:150px;height:150px;image-rendering:pixelated}
+  .qrcta b{color:var(--ink)}
+
+  .reveal{animation:rise .45s var(--ease) both}
+  .pop{animation:pop .5s var(--ease) both}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+  .shake{animation:pop .35s var(--ease) both, shake .42s .12s}
+  @media(max-width:640px){.fp .lbl,.kv .k{min-width:100%}.state .big{font-size:34px}}
+  @media (prefers-reduced-motion: reduce){*{animation:none !important}.chk{opacity:1}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>GlassBox</h1>
+    <span class="tag">Independent verification</span>
+    <span class="netpill" id="netpill"><span class="dot"></span><span id="netTxt">checking connection…</span></span>
+  </header>
+  <p class="lead">This is a signed record of a decision an AI made. You're about to re-check — <b>on your own device, against GlassBox's published key and the Walrus blob (not a green check from our server)</b> — that it's authentic and hasn't been altered since it was signed.</p>
+
+  <section class="card" aria-labelledby="vh">
+    <h2 id="vh">Verifying against Walrus on Sui</h2>
+    <div class="checks" id="checks">
+      <div class="chk" id="c1"><span class="ic" aria-hidden="true">1</span><span><b>Fetch the record from Walrus</b><small id="c1s">decentralized storage — not our server</small></span></div>
+      <div class="chk" id="c2"><span class="ic" aria-hidden="true">2</span><span><b>Recompute the fingerprint (SHA-256)</b><small id="c2s">does the stored record still hash to the anchored fingerprint?</small></span></div>
+      <div class="chk" id="c3"><span class="ic" aria-hidden="true">3</span><span><b>Check the signature (ed25519)</b><small id="c3s">was it signed by GlassBox's published key?</small></span></div>
+    </div>
+    <div id="state" class="state" role="status" aria-live="assertive"></div>
+    <button class="ghost" id="retryBtn" style="display:none;margin-top:14px">↻ Retry verification</button>
+    <div class="note" id="provesNote">
+      <b>What this proves:</b> this record was signed by GlassBox's published key and is byte-for-byte unaltered — verified on your own device against the published key and the Walrus blob, so you are not trusting a checkmark from the GlassBox server. Tamper one byte and the signature fails.<br><br>
+      <b>What it does not prove:</b> that the inputs were truthful or the decision correct. The on-chain link below is the Walrus blob's <b>registration object + storage epoch</b> (a Sui epoch, not a precise wall-clock time, and not a dedicated anchor transaction). This is <b>tamper-evident</b>, not "tamper-proof".
+    </div>
+  </section>
+
+  <section class="card" id="decCard" aria-labelledby="dh" style="display:none">
+    <h2 id="dh">The decision being verified</h2>
+    <div class="dec-verdict" id="decVerdict"></div>
+    <div class="dec-meta" id="decMeta"></div>
+  </section>
+
+  <section class="card" aria-labelledby="th">
+    <h2 id="th">Try to break it — tamper with the record</h2>
+    <p class="lead" style="margin-top:0">Change <b>any single character</b> below. The fingerprint breaks instantly and you'll see exactly which field was rewritten. Put it back and it verifies again.</p>
+    <textarea id="record" class="recordbox" spellcheck="false" aria-label="The signed record — edit any character to tamper with it"></textarea>
+    <div class="fp"><span class="lbl">anchored fingerprint (sha-256)</span><div class="val mono" id="ancHash">—</div></div>
+    <div class="fp"><span class="lbl">this record's fingerprint</span><div class="val mono" id="liveHash">—</div></div>
+    <div class="btnrow">
+      <button id="tamperBtn">Alter one character for me</button>
+      <button class="ghost" id="resetBtn">Reset</button>
+    </div>
+    <div id="forensics" role="alert">
+      <h3>⚠ Rewritten after signing — what changed</h3>
+      <div id="diffList"></div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="ch">
+    <h2 id="ch">The on-chain record</h2>
+    <div class="kv"><span class="k">stored on</span><span><span class="chainchip" id="sinkChip">● —</span></span></div>
+    <div class="kv"><span class="k">Walrus blob id</span><span class="mono" id="blobId">—</span></div>
+    <div class="kv" id="objRow" style="display:none"><span class="k">Walrus blob registration object (Sui)</span><span><a id="objLink" href="#" target="_blank" rel="noopener" class="mono">—</a> <span class="muted" id="epoch"></span></span></div>
+    <div class="kv"><span class="k">published verifying key</span><span class="mono" id="pubkey">—</span></div>
+  </section>
+
+  <section class="card" aria-labelledby="qh">
+    <h2 id="qh">Verify it on your own phone</h2>
+    <div class="qrwrap">
+      <div id="qr" aria-label="QR code linking to this verification page"></div>
+      <div class="qrcta"><b>Scan it.</b><br><span class="muted">This page opens on your phone and runs the same independent check — fetch the blob from Walrus, recompute the hash, verify the signature against the published key — so you're trusting the math, not our server.</span></div>
+    </div>
+  </section>
+</main>
+
+<script src="/vendor/qrcode.js"></script>
+<script type="module">
+import * as ed from '/vendor/noble-ed25519.js';
+
+// The PUBLISHED verifying key. Trust comes from this key (published independently) + Walrus,
+// NOT from any value the page is handed. Filled by the bake step; falls back to the receipt's
+// own pubkey for local dev (a note is shown when that fallback is used).
+const PUBLISHED_PUBKEY = "c0eac67421c64b3328727a1649a38ba5d90c1267ccedbf0f3aa55d1c3a6263ab";
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(/[?&]present/.test(location.search)) document.body.classList.add('present');
+const sleep = ms => new Promise(r=>setTimeout(r, RM?0:ms));
+
+function setChk(el, cls, sub){ el.classList.add('active'); el.classList.remove('spin','pass','fail');
+  if(cls) el.classList.add(cls);
+  el.querySelector('.ic').textContent = cls==='pass'?'✓':cls==='fail'?'✗':cls==='warn'?'◐':el.querySelector('.ic').textContent;
+  if(sub!=null) el.querySelector('small').textContent = sub; }
+
+async function sha256hex(bytes){ const buf=await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+const enc = s => new TextEncoder().encode(s);
+const fromHex = h => Uint8Array.from(h.match(/.{1,2}/g).map(x=>parseInt(x,16)));
+
+let REC=null, PUBKEY=null, USING_FALLBACK_KEY=false, ONLINE_VERIFIED=false;
+
+async function loadReceipt(){
+  const m=location.pathname.match(/^\/r\/([^/]+)$/);
+  const id=(m && decodeURIComponent(m[1])) || new URLSearchParams(location.search).get('r');
+  const url = id ? `/receipts/${encodeURIComponent(id)}.json` : '/receipts/latest.json';
+  const r = await fetch(url, {cache:'no-store'});
+  if(!r.ok) throw new Error('no receipt found ('+url+')');
+  return r.json();
+}
+
+async function fetchWalrusBytes(rec){
+  // Independent fetch from the public Walrus aggregator. 3s timeout -> honest fallback to the
+  // canonical bytes embedded in the receipt (clearly labelled "from a local copy").
+  const agg = rec.walrusAggregator || 'https://aggregator.walrus-testnet.walrus.space';
+  if(rec.sink!=='walrus' || !rec.blobId){
+    return {bytes:enc(rec.recordCanonical), live:false, reason:'this record was stored locally (offline mode)'};
+  }
+  const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(), 4000);
+  try{
+    const r=await fetch(`${agg}/v1/blobs/${rec.blobId}`, {signal:ctrl.signal});
+    clearTimeout(t);
+    if(!r.ok) throw new Error('http '+r.status);
+    return {bytes:new Uint8Array(await r.arrayBuffer()), live:true};
+  }catch(e){ clearTimeout(t);
+    return {bytes:enc(rec.recordCanonical), live:false, reason:'live Walrus fetch timed out — showing the copy embedded in this page'};
+  }
+}
+
+function showState(ok, head, sub){
+  const s=$('#state'); s.style.display='block'; s.className='state '+(ok?'ok':'bad');
+  s.classList.remove('pop','shake'); void s.offsetWidth; s.classList.add(ok?'pop':'shake');
+  s.innerHTML=`<div class="big">${head}</div><small>${sub}</small>`;
+}
+function setNet(online){
+  const p=$('#netpill'); if(!p) return; p.classList.remove('online','offline');
+  if(online===true){ p.classList.add('online'); $('#netTxt').textContent='online · Walrus reachable'; }
+  else if(online===false){ p.classList.add('offline'); $('#netTxt').textContent='offline · waiting for internet'; }
+  else { $('#netTxt').textContent='local record'; }
+}
+function showWaiting(msg){
+  const s=$('#state'); s.style.display='block'; s.className='state'; void s.offsetWidth; s.classList.add('pop');
+  s.style.border='2px solid var(--warn)'; s.style.background='rgba(255,194,77,.10)'; s.style.color='var(--warn)';
+  s.innerHTML='<div class="big">⏳ WAITING FOR INTERNET</div><small>'+msg+'</small>';
+}
+
+async function runVerify(){
+  // Web Crypto (crypto.subtle) is only available in a secure context (HTTPS or localhost).
+  // On plain http://<ip> it's disabled, so be explicit instead of throwing a cryptic error.
+  if(!window.isSecureContext || !(window.crypto && window.crypto.subtle)){
+    setNet(null);
+    const s=$('#state'); s.style.display='block'; s.className='state'; void s.offsetWidth; s.classList.add('pop');
+    s.style.border='2px solid var(--warn)'; s.style.background='rgba(255,194,77,.10)'; s.style.color='var(--warn)';
+    s.innerHTML='<div class="big">NEEDS A SECURE (HTTPS) CONNECTION</div><small>Your browser only allows in-page cryptographic verification over HTTPS or on localhost — not plain http://'+location.host+'. Open this receipt over HTTPS (deploy it, or use a tunnel) and it will verify. The underlying record on Walrus is real either way.</small>';
+    ['c1','c2','c3'].forEach(id=>setChk($('#'+id),'warn'));
+    return;
+  }
+  REC = await loadReceipt();
+  PUBKEY = (PUBLISHED_PUBKEY && !PUBLISHED_PUBKEY.startsWith('__')) ? PUBLISHED_PUBKEY : REC.pubkey;
+  USING_FALLBACK_KEY = !(PUBLISHED_PUBKEY && !PUBLISHED_PUBKEY.startsWith('__'));
+
+  // populate on-chain panel + record + qr immediately
+  $('#blobId').textContent = REC.blobId || '—';
+  $('#pubkey').textContent = PUBKEY ? (PUBKEY.slice(0,32)+'…') : '—';
+  $('#ancHash').textContent = REC.recordHash;
+  $('#record').value = REC.recordCanonical || '';
+  $('#sinkChip').textContent = '● '+(REC.sink==='walrus'?'Walrus · Sui testnet':'local (offline)');
+  if(REC.suiObjectId){
+    const base=(REC.suiExplorer||'https://suiscan.xyz/testnet').replace(/\/$/,'');
+    $('#objRow').style.display='flex';
+    const a=$('#objLink'); a.href=`${base}/object/${REC.suiObjectId}`; a.textContent=REC.suiObjectId.slice(0,24)+'…';
+    if(REC.anchorEpoch!=null) $('#epoch').textContent='· storage epoch '+REC.anchorEpoch;
+  }
+  const d=REC.decision||{};
+  if(d.verdict){
+    const G={BUY:'▲',HOLD:'■',AVOID:'▼'};
+    const vEl=$('#decVerdict'); vEl.innerHTML='<span class="g" aria-hidden="true">'+(G[d.verdict]||'')+'</span>'+esc(d.verdict);
+    vEl.className='dec-verdict v-'+(G[d.verdict]?d.verdict:'');
+    $('#decMeta').innerHTML=esc(d.asset||'SUI/USDC')+' · Signal strength: <b>'+esc(d.signalBand||'—')+'</b> '+
+      (Number.isFinite(+d.signalStrengthPct)?(+d.signalStrengthPct)+'%':'')+
+      ' <span class="muted">(rule-based, not a profit forecast)</span>'+
+      (Number.isFinite(+d.suggestedSizePct)?' · suggested size <b>'+(+d.suggestedSizePct)+'%</b>':'');
+    $('#decCard').style.display='block';
+  }
+  renderQR();
+
+  // staged, earned reveal
+  setChk($('#c1'),'spin'); await sleep(420);
+  const w = await fetchWalrusBytes(REC);
+
+  // OFFLINE / Walrus unreachable: do NOT fake a verified-from-copy — the live cloud check IS the point.
+  if(!w.live){
+    if(REC.sink==='walrus'){
+      setNet(false);
+      setChk($('#c1'),'warn','can’t reach Walrus — waiting for an internet connection');
+      setChk($('#c2'),'warn','needs a connection to re-fetch the stored record');
+      setChk($('#c3'),'warn','needs a connection');
+      showWaiting('You appear to be offline. The record is loaded from this machine, but checking it against the Walrus copy needs an internet connection. You can still test tamper-detection below — that runs entirely on your device.');
+    }else{
+      setNet(null);
+      setChk($('#c1'),'warn','this record was stored locally, not anchored to Walrus');
+      setChk($('#c2'),'warn','no independent Walrus copy to compare against');
+      setChk($('#c3'),'warn','—');
+      showWaiting('This record was stored locally (offline mode) and never written to Walrus, so there is no independent copy to verify against. Tamper-detection below still works on your device.');
+    }
+    $('#retryBtn').style.display='inline-block';
+    initTamper();   // tamper demo works fully offline (local hashing)
+    return;
+  }
+
+  // ONLINE — the real, independent check.
+  setNet(true);
+  try{ REC.recordCanonical = new TextDecoder().decode(w.bytes); $('#record').value = REC.recordCanonical; }catch(e){}
+  setChk($('#c1'),'pass','fetched from the public Walrus aggregator');
+
+  setChk($('#c2'),'spin'); await sleep(380);
+  const h = await sha256hex(w.bytes);
+  const hashMatch = (h===REC.recordHash);
+  setChk($('#c2'), hashMatch?'pass':'fail', hashMatch?'the stored bytes hash to the anchored fingerprint':'the stored record does not match the anchored fingerprint');
+
+  setChk($('#c3'),'spin'); await sleep(380);
+  let sigValid=false;
+  try{ sigValid = await ed.verifyAsync(fromHex(REC.signature), w.bytes, fromHex(PUBKEY)); }catch(e){ sigValid=false; }
+  setChk($('#c3'), sigValid?'pass':'fail', sigValid ? (USING_FALLBACK_KEY
+      ? 'self-signed by the key inside this receipt (DEV — not the published key)'
+      : 'signed by the published GlassBox key') : 'signature did not verify');
+
+  await sleep(220);
+  if(hashMatch && sigValid && !USING_FALLBACK_KEY){
+    ONLINE_VERIFIED=true;
+    showState(true, 'VERIFIED', 'Authentic and unaltered — re-checked on your device against the published key and the Walrus blob.');
+  }else if(hashMatch && sigValid && USING_FALLBACK_KEY){
+    const s=$('#state'); s.style.display='block'; s.className='state'; void s.offsetWidth; s.classList.add('pop');
+    s.style.border='2px solid var(--warn)'; s.style.background='rgba(255,194,77,.12)'; s.style.color='var(--warn)';
+    s.innerHTML='<div class="big">⚠ DEV KEY ONLY</div><small>This deploy has no published key set, so it verified against the key carried inside the receipt — NOT an independent trust root. Publish/bake the key before relying on this.</small>';
+  }else{
+    showState(false, 'NOT VERIFIED', 'This record failed an independent check above.');
+  }
+  if(USING_FALLBACK_KEY){ $('#pubkey').insertAdjacentHTML('afterend',' <span class="muted">(dev: receipt key)</span>'); }
+  initTamper();
+}
+
+/* ---- tamper interaction + plain-English field diff ---- */
+function flatten(obj, prefix='', out={}){
+  if(obj===null || typeof obj!=='object'){ out[prefix]=obj; return out; }
+  if(Array.isArray(obj)){ obj.forEach((v,i)=>flatten(v, prefix?`${prefix}[${i}]`:`[${i}]`, out)); return out; }
+  for(const k of Object.keys(obj)){ flatten(obj[k], prefix?`${prefix}.${k}`:k, out); }
+  return out;
+}
+function prettyVal(v){ if(v===undefined) return '(absent)'; if(typeof v==='string') return v;
+  return JSON.stringify(v); }
+function fieldDiff(anchoredStr, currentStr){
+  const A=flatten(JSON.parse(anchoredStr)), B=flatten(JSON.parse(currentStr));
+  const keys=new Set([...Object.keys(A),...Object.keys(B)]); const rows=[];
+  for(const k of keys){ if(JSON.stringify(A[k])!==JSON.stringify(B[k])) rows.push({field:k, old:A[k], now:B[k]}); }
+  return rows;
+}
+function diffChars(a,b){ let o=''; for(let i=0;i<b.length;i++){ o += a[i]===b[i] ? b[i].replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])) : '<span class="d">'+b[i].replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</span>'; } return o; }
+
+async function onEdit(){
+  const cur=$('#record').value;
+  const h=await sha256hex(enc(cur));
+  $('#liveHash').innerHTML=diffChars(REC.recordHash, h);
+  const match=(h===REC.recordHash);
+  if(match){
+    if(ONLINE_VERIFIED){
+      showState(true,'VERIFIED','This record matches its anchored fingerprint, byte for byte.');
+    }else{
+      const s=$('#state'); s.style.display='block'; s.className='state'; void s.offsetWidth; s.classList.add('pop');
+      s.style.border='2px solid var(--warn)'; s.style.background='rgba(255,194,77,.10)'; s.style.color='var(--warn)';
+      s.innerHTML='<div class="big">MATCHES (OFFLINE)</div><small>Matches the anchored fingerprint on this device. Connect to the internet to re-check it against the Walrus copy.</small>';
+    }
+    $('#forensics').style.display='none';
+  }else{
+    showState(false,'TAMPER DETECTED','The fingerprint no longer matches what was anchored on Walrus.');
+    let rows=[]; let ok=true;
+    try{ rows=fieldDiff(REC.recordCanonical, cur); }catch(e){ ok=false; }
+    const f=$('#forensics'), list=$('#diffList');
+    if(ok && rows.length){
+      list.innerHTML=rows.slice(0,8).map(r=>`<div class="diffrow"><span class="field">${r.field.replace(/[&<>]/g,'')}</span>`+
+        `<span class="change"><b class="old">${prettyVal(r.old).replace(/[&<>]/g,'')}</b><span class="arr">→</span><b class="new">${prettyVal(r.now).replace(/[&<>]/g,'')}</b></span></div>`).join('');
+      f.style.display='block';
+    }else if(ok && !rows.length){
+      list.innerHTML='<div class="diffrow"><span class="change">Whitespace/formatting changed — the bytes differ, so the fingerprint no longer matches.</span></div>'; f.style.display='block';
+    }else{
+      list.innerHTML='<div class="diffrow"><span class="change">The record is no longer valid JSON — so it can’t be the record that was signed.</span></div>'; f.style.display='block';
+    }
+  }
+}
+function initTamper(){
+  $('#record').addEventListener('input', onEdit);
+  $('#tamperBtn').addEventListener('click', ()=>{ let v=$('#record').value;
+    const i=v.search(/[0-9]/); v = i>=0 ? v.slice(0,i)+(v[i]==='9'?'8':String(+v[i]+1))+v.slice(i+1)
+      : v.replace(/[A-Za-z]/, c=>c==='a'?'b':'a'); $('#record').value=v; onEdit(); });
+  $('#resetBtn').addEventListener('click', ()=>{ $('#record').value=REC.recordCanonical||''; $('#liveHash').innerHTML=REC.recordHash; onEdit(); });
+  $('#liveHash').textContent=REC.recordHash;
+}
+
+function renderQR(){
+  try{ const qr=qrcode(0,'M'); qr.addData(location.href); qr.make();
+    $('#qr').innerHTML=qr.createImgTag(4,0); }catch(e){ $('#qr').textContent='(QR unavailable)'; }
+}
+
+$('#retryBtn').addEventListener('click', ()=>location.reload());
+window.addEventListener('online', ()=>{ const t=$('#netTxt'); if(t){ t.textContent='connection restored · tap Retry'; } });
+window.addEventListener('offline', ()=>setNet(false));
+
+runVerify().catch(e=>{ showState(false,'COULD NOT LOAD','No record to verify: '+e.message);
+  ['c1','c2','c3'].forEach(id=>setChk($('#'+id),'fail')); });
+</script>
+</body>
+</html>

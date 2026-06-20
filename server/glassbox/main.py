@@ -5,12 +5,13 @@ Run from server/:
     uvicorn glassbox.main:app --reload --port 8787
     # then open http://localhost:8787/
 """
+import json
 import os
 from typing import Literal
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -26,6 +27,27 @@ app.add_middleware(
 
 # In-memory audit store for the demo (keyed by short record id).
 _AUDITS: dict = {}
+# Records are also persisted here so the standalone /verify page can open ANY record
+# (demo or freshly "Proved"), surviving restarts. Future: replace this file store with a DB.
+_RECEIPTS_DIR = os.path.join(os.path.dirname(__file__), "static", "receipts")
+
+
+def _persist_receipt(rid: str, a: dict, decision: dict) -> None:
+    """Best-effort: write a PII-free receipt JSON the verify page can load. Never breaks audit."""
+    try:
+        os.makedirs(_RECEIPTS_DIR, exist_ok=True)
+        receipt = {
+            "recordId": rid, "blobId": a.get("blobId"), "recordHash": a["recordHash"],
+            "signature": a["signature"], "pubkey": a["pubkey"],
+            "suiObjectId": a.get("suiObjectId"), "anchorEpoch": a.get("anchorEpoch"),
+            "anchorNetwork": a.get("anchorNetwork"), "sink": a.get("sink"),
+            "walrusAggregator": config.WALRUS_AGGREGATOR, "suiExplorer": config.SUI_EXPLORER,
+            "recordCanonical": a["_canonical"], "decision": decision,
+        }
+        with open(os.path.join(_RECEIPTS_DIR, f"{rid}.json"), "w") as f:
+            json.dump(receipt, f)
+    except Exception:
+        pass
 
 
 class AnalyzeReq(BaseModel):
@@ -69,6 +91,7 @@ def audit(req: AuditReq):
     a = audit_mod.write_audit(req.decision, goal_text=req.goalText)
     rid = a["recordHash"][:16]
     _AUDITS[rid] = a
+    _persist_receipt(rid, a, req.decision)   # make it openable in the standalone /verify page
     return {"recordId": rid, "recordHash": a["recordHash"], "signature": a["signature"],
             "pubkey": a["pubkey"], "sink": a["sink"], "blobId": a["blobId"],
             "anchorTxDigest": a["anchorTxDigest"],
@@ -91,7 +114,20 @@ def rehash(req: AuditReq):
     return {"recordHash": crypto.sha256_hex(crypto.canonical(req.decision))}
 
 
-# Serve the demo UI from /  (mounted last so /api/* takes precedence)
 _STATIC = os.path.join(os.path.dirname(__file__), "static")
+
+
+@app.get("/verify")
+@app.get("/r/{record_id}")
+def verify_page(record_id: str = ""):
+    """Standalone 'verify-it-yourself' receipt page (independent of the API/UI).
+
+    The page reads ?r=<id>; /r/<id> is a clean alias. It re-fetches the blob from Walrus
+    and re-checks hash + signature IN THE BROWSER — no GlassBox server in the trust path.
+    """
+    return FileResponse(os.path.join(_STATIC, "verify.html"))
+
+
+# Serve the demo UI from /  (mounted last so /api/* + explicit routes take precedence)
 if os.path.isdir(_STATIC):
     app.mount("/", StaticFiles(directory=_STATIC, html=True), name="ui")
