@@ -89,25 +89,35 @@ def _ollama(model, system, user, timeout=180):
     return r.json()["message"]["content"]
 
 
-def chat_json(system: str, user: str, role: str = "fast", timeout: int = 60) -> dict:
+def _dispatch(system: str, user: str, role: str, timeout: int) -> str:
     p = config.LLM_PROVIDER
     model = model_for(role)
     if p == "openrouter":
         if not config.OPENROUTER_API_KEY:
             raise LLMError("OPENROUTER_API_KEY is empty — paste it into .env")
-        content = _openai_compat(
+        return _openai_compat(
             "https://openrouter.ai/api/v1", config.OPENROUTER_API_KEY, model, system, user,
             headers_extra={"HTTP-Referer": "https://github.com/supawichza40/glassbox", "X-Title": "GlassBox"},
             timeout=timeout)
-    elif p == "gemini":
+    if p == "gemini":
         if not config.GEMINI_API_KEY:
             raise LLMError("GEMINI_API_KEY is empty — paste it into .env")
-        content = _gemini(config.GEMINI_API_KEY, model, system, user, timeout=timeout)
-    elif p == "ollama":
-        content = _ollama(model, system, user, timeout=max(timeout, 180))
-    else:
-        raise LLMError(f"unknown LLM_PROVIDER='{p}' (use openrouter | gemini | ollama)")
-    try:
-        return _parse_json(content)
-    except Exception as e:
-        raise LLMError(f"{model} returned non-JSON ({e}) | raw: {content[:200]}")
+        return _gemini(config.GEMINI_API_KEY, model, system, user, timeout=timeout)
+    if p == "ollama":
+        return _ollama(model, system, user, timeout=max(timeout, 180))
+    raise LLMError(f"unknown LLM_PROVIDER='{p}' (use openrouter | gemini | ollama)")
+
+
+def chat_json(system: str, user: str, role: str = "fast", timeout: int = 60) -> dict:
+    """Call the provider and parse JSON, with ONE repair retry on malformed output."""
+    last_err = None
+    for attempt in range(2):
+        u = user if attempt == 0 else (
+            user + "\n\nYour previous reply was not valid JSON. Reply with ONLY the JSON "
+            "object — no prose, no markdown fences.")
+        content = _dispatch(system, u, role, timeout)
+        try:
+            return _parse_json(content)
+        except Exception as e:  # noqa: BLE001 - retry once, then surface
+            last_err = e
+    raise LLMError(f"{model_for(role)} returned non-JSON after retry ({last_err})")

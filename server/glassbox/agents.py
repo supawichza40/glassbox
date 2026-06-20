@@ -66,18 +66,40 @@ def _arbiter(inputs: dict, bull: dict, bear: dict, risk_band: str, goal_text: st
     return llm.chat_json(PREAMBLE, user, role="smart")
 
 
+_ARB_FALLBACK = {
+    "winningSide": "bear", "whyResolved": "Analysis degraded; defaulting to caution.",
+    "verdict": "HOLD", "riskNote": "The analysis could not complete fully.",
+    "counterfactual": "I would change my call once a full analysis completes.",
+    "blindSpots": ["Does not include news, social sentiment, or events"],
+}
+
+
+def _safe(fn, *args, fallback):
+    """Run an agent call; on any failure (LLM down, bad JSON), return a safe fallback
+    so a single agent can never crash the whole analysis."""
+    try:
+        r = fn(*args)
+        return r if isinstance(r, dict) else fallback
+    except Exception:  # noqa: BLE001 - resilience by design
+        return fallback
+
+
 def run_debate(asset: str, inputs: dict, goal_text: str, risk_band: str) -> dict:
-    # Round 1 - openings (parallel)
+    # Round 1 - openings (parallel), each with a safe fallback
     with ThreadPoolExecutor(max_workers=2) as ex:
-        fb = ex.submit(_opening, "bull", asset, inputs, goal_text)
-        fr = ex.submit(_opening, "bear", asset, inputs, goal_text)
+        fb = ex.submit(_safe, _opening, "bull", asset, inputs, goal_text,
+                       fallback={"points": ["Buy-side analysis unavailable."], "convictionScore": 0})
+        fr = ex.submit(_safe, _opening, "bear", asset, inputs, goal_text,
+                       fallback={"points": ["Sell-side analysis unavailable."], "convictionScore": 0})
         bull_open, bear_open = fb.result(), fr.result()
     # Round 2 - rebuttals (parallel; each sees the other's opening)
     with ThreadPoolExecutor(max_workers=2) as ex:
-        fbr = ex.submit(_rebuttal, "bull", bear_open, inputs)
-        frr = ex.submit(_rebuttal, "bear", bull_open, inputs)
+        fbr = ex.submit(_safe, _rebuttal, "bull", bear_open, inputs,
+                        fallback={"rebuttal": "", "revisedConviction": bull_open.get("convictionScore", 0)})
+        frr = ex.submit(_safe, _rebuttal, "bear", bull_open, inputs,
+                        fallback={"rebuttal": "", "revisedConviction": bear_open.get("convictionScore", 0)})
         bull_reb, bear_reb = fbr.result(), frr.result()
     bull = {"opening": bull_open, "rebuttal": bull_reb}
     bear = {"opening": bear_open, "rebuttal": bear_reb}
-    arbiter = _arbiter(inputs, bull, bear, risk_band, goal_text)
+    arbiter = _safe(_arbiter, inputs, bull, bear, risk_band, goal_text, fallback=dict(_ARB_FALLBACK))
     return {"bull": bull, "bear": bear, "arbiter": arbiter}
