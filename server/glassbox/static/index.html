@@ -27,6 +27,10 @@
   .pill .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:7px;vertical-align:1px}
   .pill.online .dot{background:var(--bull);box-shadow:0 0 8px var(--bull)}
   .pill.off .dot{background:var(--bear)}
+  .pill.demo{color:var(--warn);border-color:var(--warn)} .pill.demo .dot{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+  .pill.live{color:var(--bull);border-color:var(--bull)} .pill.live .dot{background:var(--bull);box-shadow:0 0 8px var(--bull)}
+  .srctag{font-size:11px;margin-left:8px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);letter-spacing:.04em;vertical-align:2px}
+  .srctag.demo{color:var(--warn);border-color:var(--warn)} .srctag.live{color:var(--bull);border-color:var(--bull)}
   .lead{color:var(--ink-2);font-size:17px;margin:10px 0 0}
   .steps{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 2px;color:var(--muted);font-size:14px}
   .steps b{color:var(--ink)}
@@ -175,6 +179,7 @@
   <header>
     <h1>GlassBox</h1>
     <span class="pill" id="health"><span class="dot"></span><span id="healthTxt">connecting…</span></span>
+    <span class="pill" id="mode" title="LIVE = every question runs the full live pipeline. DEMO = the canonical pitch question is a pre-baked instant cache; other questions still run live."><span class="dot"></span><span id="modeTxt">mode…</span></span>
   </header>
   <p class="lead">An AI Bull and Bear debate your trade — then we lock the verdict so it <b>can't be quietly rewritten</b>.</p>
   <div class="steps"><span><b>1.</b> Ask</span><span>→</span><span><b>2.</b> Get a verdict</span><span>→</span><span><b>3.</b> Prove it can't be faked</span></div>
@@ -194,7 +199,7 @@
   <div id="skeleton"><div class="debate"><div class="sk"></div><div class="sk"></div></div></div>
 
   <section id="result" class="card hidden" aria-labelledby="decH" aria-live="polite">
-    <h2 id="decH" class="muted" style="font-size:13px;text-transform:uppercase;letter-spacing:.08em">Decision</h2>
+    <h2 id="decH" class="muted" style="font-size:13px;text-transform:uppercase;letter-spacing:.08em">Decision <span id="srcTag" class="srctag"></span></h2>
     <div class="hero" id="heroBlock">
       <div class="verdict" id="verdict"></div>
       <div id="strengthMeter" aria-label="Decision strength meter"></div>
@@ -264,7 +269,8 @@ async function api(path,opts){
 
 (async()=>{try{const h=await api('/api/health');
   $('#health').classList.add('online'); $('#healthTxt').textContent='AI online · '+h.provider;
-}catch(e){$('#health').classList.add('off');$('#healthTxt').textContent='AI offline';}})();
+  const dm=!!h.demoMode; $('#mode').classList.add(dm?'demo':'live'); $('#modeTxt').textContent=dm?'DEMO mode':'LIVE mode';
+}catch(e){$('#health').classList.add('off');$('#healthTxt').textContent='AI offline';$('#modeTxt').textContent='mode ?';}})();
 
 const STEPS=["Spinning up the Bull and Bear analysts…","The agents are debating both sides…",
              "Cross-examining and scoring conviction…","Resolving the verdict…"];
@@ -280,8 +286,11 @@ async function analyze(){
   $('#result').classList.add('hidden'); $('#auditCard').classList.add('hidden');
   $('#skeleton').style.display='block'; startSteps();
   try{
-    const d=await api('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
+    const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({goalText:goal,asset:'SUI/USDC',risk:$('#risk').value})});
+    if(!r.ok && r.status!==422) throw new Error("service busy — please try again");
+    S.source = r.headers.get('X-GlassBox-Source') || 'live';
+    const d=await r.json();
     if(d && d.outOfScope){ $('#status').textContent=d.message; return; }
     S.decision=d; render(d); $('#status').textContent='';
   }catch(e){$('#status').textContent='Could not analyze: '+e.message;}
@@ -304,6 +313,7 @@ function render(d){
   $('#counter').innerHTML='<b>Would change if:</b> '+esc(d.counterfactual||'');
   $('#blind').innerHTML='<b>Blind spots:</b> '+esc((d.blindSpots||[]).join('; '));
   renderStrength(d); renderEvidence(d); renderPriceChart(d);
+  const _c=S.source==='cache'; $('#srcTag').textContent=_c?'cached demo':'live'; $('#srcTag').className='srctag '+(_c?'demo':'live');
   $('#result').classList.remove('hidden');
   $('#debate').classList.remove('reveal'); void $('#debate').offsetWidth; $('#debate').classList.add('reveal');
   const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
