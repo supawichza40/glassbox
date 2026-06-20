@@ -219,3 +219,11 @@ def test_falls_back_to_opening_when_no_revised(base_inputs):
     deb["bull"]["rebuttal"].pop("revisedConviction")
     res = _assemble(base_inputs, deb)
     assert res["bull"]["convictionRevised"] == 4.0
+
+
+def test_out_of_range_conviction_is_clamped(base_inputs):
+    """The LLM sometimes returns conviction > 5; signal must stay a real 0-100%."""
+    deb = make_debate(bull_conv=5, bear_conv=0, bull_revised=7, bear_revised=0)
+    res = _assemble(base_inputs, deb)
+    assert res["bull"]["convictionRevised"] == 5.0          # clamped from 7
+    assert 0 <= res["signalStrengthPct"] <= 100

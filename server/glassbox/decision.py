@@ -15,9 +15,9 @@ _CAPS = {"low": 5, "moderate": 15, "high": 30}
 def _revised(side: dict) -> float:
     reb = side.get("rebuttal") or {}
     rc = reb.get("revisedConviction")
-    if isinstance(rc, (int, float)):
-        return float(rc)
-    return float((side.get("opening") or {}).get("convictionScore", 0) or 0)
+    if not isinstance(rc, (int, float)):
+        rc = (side.get("opening") or {}).get("convictionScore", 0) or 0
+    return max(0.0, min(5.0, float(rc)))   # clamp to the 0-5 scale the formula assumes
 
 
 def _points(side: dict) -> list:
@@ -57,7 +57,7 @@ def assemble_decision(asset: str, inputs: dict, debate: dict, risk_band: str) ->
     a = abs(bc - rc) / 5.0
     v = float(inputs.get("realizedVolPercentile", 0.5))
     m = _manipulation_flag(inputs)
-    signal_pct = round(100 * a * (1 - v) * (1 - m))
+    signal_pct = max(0, min(100, round(100 * a * (1 - v) * (1 - m))))   # always a real %
     band = "Low" if signal_pct < 33 else ("Medium" if signal_pct < 66 else "High")
 
     cap = _CAPS.get(risk_band, 15)
