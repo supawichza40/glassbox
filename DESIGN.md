@@ -25,13 +25,18 @@ sequenceDiagram
     BE->>MK: fetch 5 features (closed candles)
     MK-->>BE: price, RSI, vol%, depth, drawdown
     Note over BE: freeze inputs · classify goal to enums
-    par Bull and Bear in parallel (Haiku)
-        BE->>LLM: Bull case (cite ONLY inputs)
+    par Round 1 — openings (parallel, Haiku)
+        BE->>LLM: Bull opening (cite ONLY inputs)
     and
-        BE->>LLM: Bear case (cite ONLY inputs)
+        BE->>LLM: Bear opening (cite ONLY inputs)
     end
-    BE->>LLM: Risk synthesis (Sonnet, temp 0)
-    LLM-->>BE: verdict · signal strength · counterfactual
+    par Round 2 — rebuttals (parallel, Haiku)
+        BE->>LLM: Bull rebuts Bear + revised conviction
+    and
+        BE->>LLM: Bear rebuts Bull + revised conviction
+    end
+    BE->>LLM: Arbiter resolves (Sonnet, temp 0)
+    LLM-->>BE: verdict · counterfactual (numbers computed in code)
     Note over BE: Zod validate · scrub PII echo · compute Signal Strength
     BE-->>FE: Decision (grounded in frozen inputs)
     FE-->>U: debate · verdict · signal band · blind spots · disclaimer
