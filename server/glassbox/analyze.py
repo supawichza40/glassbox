@@ -1,5 +1,5 @@
 """Orchestrates one analysis: market inputs -> rebuttal debate -> Decision."""
-from . import market, agents, decision
+from . import agents, decision, market
 
 
 def analyze(goal_text: str, asset: str = "SUI/USDC", risk_band: str = "moderate",
