@@ -26,6 +26,10 @@
   header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   h1{font-size:24px;margin:0;letter-spacing:-.02em}
   .tag{font-size:13px;color:var(--accent2);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
+  .netpill{font-size:13px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
+  .netpill .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:7px;vertical-align:1px}
+  .netpill.online{color:var(--ok)} .netpill.online .dot{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  .netpill.offline{color:var(--warn)} .netpill.offline .dot{background:var(--warn)}
   .lead{color:var(--ink-2);font-size:16px;margin:12px 0 0}
   .card{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-lg);
         padding:22px;margin-top:18px;box-shadow:0 8px 30px rgba(0,0,0,.45)}
@@ -118,6 +122,7 @@
   <header>
     <h1>GlassBox</h1>
     <span class="tag">Independent verification</span>
+    <span class="netpill" id="netpill"><span class="dot"></span><span id="netTxt">checking connection…</span></span>
   </header>
   <p class="lead">This is a signed record of a decision an AI made. You're about to re-check — <b>on your own device, against GlassBox's published key and the Walrus blob (not a green check from our server)</b> — that it's authentic and hasn't been altered since it was signed.</p>
 
@@ -129,6 +134,7 @@
       <div class="chk" id="c3"><span class="ic" aria-hidden="true">3</span><span><b>Check the signature (ed25519)</b><small id="c3s">was it signed by GlassBox's published key?</small></span></div>
     </div>
     <div id="state" class="state" role="status" aria-live="assertive"></div>
+    <button class="ghost" id="retryBtn" style="display:none;margin-top:14px">↻ Retry verification</button>
     <div class="note" id="provesNote">
       <b>What this proves:</b> this record was signed by GlassBox's published key and is byte-for-byte unaltered — verified on your own device against the published key and the Walrus blob, so you are not trusting a checkmark from the GlassBox server. Tamper one byte and the signature fails.<br><br>
       <b>What it does not prove:</b> that the inputs were truthful or the decision correct. The on-chain link below is the Walrus blob's <b>registration object + storage epoch</b> (a Sui epoch, not a precise wall-clock time, and not a dedicated anchor transaction). This is <b>tamper-evident</b>, not "tamper-proof".
@@ -199,7 +205,7 @@ async function sha256hex(bytes){ const buf=await crypto.subtle.digest('SHA-256',
 const enc = s => new TextEncoder().encode(s);
 const fromHex = h => Uint8Array.from(h.match(/.{1,2}/g).map(x=>parseInt(x,16)));
 
-let REC=null, PUBKEY=null, USING_FALLBACK_KEY=false;
+let REC=null, PUBKEY=null, USING_FALLBACK_KEY=false, ONLINE_VERIFIED=false;
 
 async function loadReceipt(){
   const m=location.pathname.match(/^\/r\/([^/]+)$/);
@@ -233,8 +239,29 @@ function showState(ok, head, sub){
   s.classList.remove('pop','shake'); void s.offsetWidth; s.classList.add(ok?'pop':'shake');
   s.innerHTML=`<div class="big">${head}</div><small>${sub}</small>`;
 }
+function setNet(online){
+  const p=$('#netpill'); if(!p) return; p.classList.remove('online','offline');
+  if(online===true){ p.classList.add('online'); $('#netTxt').textContent='online · Walrus reachable'; }
+  else if(online===false){ p.classList.add('offline'); $('#netTxt').textContent='offline · waiting for internet'; }
+  else { $('#netTxt').textContent='local record'; }
+}
+function showWaiting(msg){
+  const s=$('#state'); s.style.display='block'; s.className='state'; void s.offsetWidth; s.classList.add('pop');
+  s.style.border='2px solid var(--warn)'; s.style.background='rgba(255,194,77,.10)'; s.style.color='var(--warn)';
+  s.innerHTML='<div class="big">⏳ WAITING FOR INTERNET</div><small>'+msg+'</small>';
+}
 
 async function runVerify(){
+  // Web Crypto (crypto.subtle) is only available in a secure context (HTTPS or localhost).
+  // On plain http://<ip> it's disabled, so be explicit instead of throwing a cryptic error.
+  if(!window.isSecureContext || !(window.crypto && window.crypto.subtle)){
+    setNet(null);
+    const s=$('#state'); s.style.display='block'; s.className='state'; void s.offsetWidth; s.classList.add('pop');
+    s.style.border='2px solid var(--warn)'; s.style.background='rgba(255,194,77,.10)'; s.style.color='var(--warn)';
+    s.innerHTML='<div class="big">NEEDS A SECURE (HTTPS) CONNECTION</div><small>Your browser only allows in-page cryptographic verification over HTTPS or on localhost — not plain http://'+location.host+'. Open this receipt over HTTPS (deploy it, or use a tunnel) and it will verify. The underlying record on Walrus is real either way.</small>';
+    ['c1','c2','c3'].forEach(id=>setChk($('#'+id),'warn'));
+    return;
+  }
   REC = await loadReceipt();
   PUBKEY = (PUBLISHED_PUBKEY && !PUBLISHED_PUBKEY.startsWith('__')) ? PUBLISHED_PUBKEY : REC.pubkey;
   USING_FALLBACK_KEY = !(PUBLISHED_PUBKEY && !PUBLISHED_PUBKEY.startsWith('__'));
@@ -267,9 +294,31 @@ async function runVerify(){
   // staged, earned reveal
   setChk($('#c1'),'spin'); await sleep(420);
   const w = await fetchWalrusBytes(REC);
-  setChk($('#c1'), w.live?'pass':'warn', w.live?'fetched from the public Walrus aggregator':(w.reason));
-  // Bind the tamper base to the ACTUAL fetched Walrus bytes, so "no longer matches Walrus" is literally true.
-  if(w.live){ try{ REC.recordCanonical = new TextDecoder().decode(w.bytes); $('#record').value = REC.recordCanonical; }catch(e){} }
+
+  // OFFLINE / Walrus unreachable: do NOT fake a verified-from-copy — the live cloud check IS the point.
+  if(!w.live){
+    if(REC.sink==='walrus'){
+      setNet(false);
+      setChk($('#c1'),'warn','can’t reach Walrus — waiting for an internet connection');
+      setChk($('#c2'),'warn','needs a connection to re-fetch the stored record');
+      setChk($('#c3'),'warn','needs a connection');
+      showWaiting('You appear to be offline. The record is loaded from this machine, but checking it against the Walrus copy needs an internet connection. You can still test tamper-detection below — that runs entirely on your device.');
+    }else{
+      setNet(null);
+      setChk($('#c1'),'warn','this record was stored locally, not anchored to Walrus');
+      setChk($('#c2'),'warn','no independent Walrus copy to compare against');
+      setChk($('#c3'),'warn','—');
+      showWaiting('This record was stored locally (offline mode) and never written to Walrus, so there is no independent copy to verify against. Tamper-detection below still works on your device.');
+    }
+    $('#retryBtn').style.display='inline-block';
+    initTamper();   // tamper demo works fully offline (local hashing)
+    return;
+  }
+
+  // ONLINE — the real, independent check.
+  setNet(true);
+  try{ REC.recordCanonical = new TextDecoder().decode(w.bytes); $('#record').value = REC.recordCanonical; }catch(e){}
+  setChk($('#c1'),'pass','fetched from the public Walrus aggregator');
 
   setChk($('#c2'),'spin'); await sleep(380);
   const h = await sha256hex(w.bytes);
@@ -285,9 +334,8 @@ async function runVerify(){
 
   await sleep(220);
   if(hashMatch && sigValid && !USING_FALLBACK_KEY){
-    showState(true, 'VERIFIED', w.live
-      ? 'Authentic and unaltered — re-checked on your device against the published key and the Walrus blob.'
-      : 'Authentic and unaltered (verified from the copy embedded in this page).');
+    ONLINE_VERIFIED=true;
+    showState(true, 'VERIFIED', 'Authentic and unaltered — re-checked on your device against the published key and the Walrus blob.');
   }else if(hashMatch && sigValid && USING_FALLBACK_KEY){
     const s=$('#state'); s.style.display='block'; s.className='state'; void s.offsetWidth; s.classList.add('pop');
     s.style.border='2px solid var(--warn)'; s.style.background='rgba(255,194,77,.12)'; s.style.color='var(--warn)';
@@ -295,7 +343,6 @@ async function runVerify(){
   }else{
     showState(false, 'NOT VERIFIED', 'This record failed an independent check above.');
   }
-  if(!w.live){ $('#provesNote').insertAdjacentHTML('afterbegin','<span class="warnpill">offline copy</span><br>'); }
   if(USING_FALLBACK_KEY){ $('#pubkey').insertAdjacentHTML('afterend',' <span class="muted">(dev: receipt key)</span>'); }
   initTamper();
 }
@@ -323,7 +370,13 @@ async function onEdit(){
   $('#liveHash').innerHTML=diffChars(REC.recordHash, h);
   const match=(h===REC.recordHash);
   if(match){
-    showState(true,'VERIFIED','This record matches its anchored fingerprint, byte for byte.');
+    if(ONLINE_VERIFIED){
+      showState(true,'VERIFIED','This record matches its anchored fingerprint, byte for byte.');
+    }else{
+      const s=$('#state'); s.style.display='block'; s.className='state'; void s.offsetWidth; s.classList.add('pop');
+      s.style.border='2px solid var(--warn)'; s.style.background='rgba(255,194,77,.10)'; s.style.color='var(--warn)';
+      s.innerHTML='<div class="big">MATCHES (OFFLINE)</div><small>Matches the anchored fingerprint on this device. Connect to the internet to re-check it against the Walrus copy.</small>';
+    }
     $('#forensics').style.display='none';
   }else{
     showState(false,'TAMPER DETECTED','The fingerprint no longer matches what was anchored on Walrus.');
@@ -354,6 +407,10 @@ function renderQR(){
   try{ const qr=qrcode(0,'M'); qr.addData(location.href); qr.make();
     $('#qr').innerHTML=qr.createImgTag(4,0); }catch(e){ $('#qr').textContent='(QR unavailable)'; }
 }
+
+$('#retryBtn').addEventListener('click', ()=>location.reload());
+window.addEventListener('online', ()=>{ const t=$('#netTxt'); if(t){ t.textContent='connection restored · tap Retry'; } });
+window.addEventListener('offline', ()=>setNet(false));
 
 runVerify().catch(e=>{ showState(false,'COULD NOT LOAD','No record to verify: '+e.message);
   ['c1','c2','c3'].forEach(id=>setChk($('#'+id),'fail')); });

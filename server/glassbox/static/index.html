@@ -275,6 +275,7 @@ async function prove(){
       (a.blobId?' &nbsp;<b>'+frag(a.blobId)+'…</b>':'')+
       (a.suiObjectId?'<br><span class="k">Walrus registration object (Sui)</span> &nbsp;<a href="https://suiscan.xyz/testnet/object/'+a.suiObjectId+'" target="_blank" rel="noopener"><b>'+frag(a.suiObjectId)+'…</b></a>'+(a.anchorEpoch!=null?' &nbsp;<span class="k">storage epoch</span> <b>'+a.anchorEpoch+'</b>':''):'');
     $('#recordEdit').value = a.recordCanonical || '';
+    $('#receipt').innerHTML += '<br><br><a href="/r/'+a.recordId+'" target="_blank" rel="noopener" style="display:inline-block;color:var(--accent2);font:600 15px var(--sans);text-decoration:none;border:1px solid var(--accent2);border-radius:8px;padding:9px 14px">🔍 Verify it yourself on your phone →</a>';
     $('#ancHash').textContent = a.recordHash;
     $('#walrusNote').textContent = '';
     _lastMatch = null;

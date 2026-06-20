@@ -21,6 +21,12 @@ _SK_PATH = _KEYS / "ed25519_sk.bin"
 
 
 def _load_or_create_sk() -> Ed25519PrivateKey:
+    # 1) Env var wins — REQUIRED on ephemeral hosts (Heroku/Render/Fly) whose disk is
+    #    wiped on every restart. Keeps the published pubkey stable so verification keeps working.
+    sk_hex = os.getenv("GLASSBOX_ED25519_SK_HEX", "").strip()
+    if sk_hex:
+        return Ed25519PrivateKey.from_private_bytes(bytes.fromhex(sk_hex))
+    # 2) Local persistent file (dev).
     _KEYS.mkdir(exist_ok=True)
     if _SK_PATH.exists():
         return Ed25519PrivateKey.from_private_bytes(_SK_PATH.read_bytes())

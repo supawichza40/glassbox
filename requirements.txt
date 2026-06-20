@@ -1,0 +1,2 @@
+# Heroku/Render/Fly build entrypoint — the real deps live in server/
+-r server/requirements.txt
