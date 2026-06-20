@@ -37,6 +37,17 @@ def base_inputs():
     return copy.deepcopy(_BASE_INPUTS)
 
 
+@pytest.fixture(autouse=True)
+def _offline_market(monkeypatch):
+    """Keep the suite offline + deterministic: market never hits CoinGecko.
+
+    Forces the deterministic stub snapshot so analyze() runs the same everywhere
+    (test_market patches the live path explicitly to exercise the real feed code).
+    """
+    from glassbox import market
+    monkeypatch.setattr(market, "_snapshot", lambda asset="SUI/USDC": dict(market._STUB))
+
+
 def make_debate(bull_conv=5, bear_conv=0, verdict="BUY",
                 bull_points=None, bear_points=None,
                 bull_revised=None, bear_revised=None, risk_note="A risk."):
