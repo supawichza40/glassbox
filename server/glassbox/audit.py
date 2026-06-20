@@ -22,21 +22,25 @@ def write_audit(decision: dict, goal_text: str = "", epochs: int = 5) -> dict:
     signature = crypto.sign_hex(body)
 
     sink = config.AUDIT_SINK
-    blob_id = None
+    blob_id = sui_object = anchor_epoch = walrus_tx = None
     if sink == "walrus":
         try:
             r = requests.put(f"{config.WALRUS_PUBLISHER}/v1/blobs?epochs={epochs}",
                              data=body, timeout=120)
             r.raise_for_status()
             j = r.json()
-            blob_id = (j.get("newlyCreated", {}).get("blobObject", {}).get("blobId")
-                       or j.get("alreadyCertified", {}).get("blobId"))
+            nc = j.get("newlyCreated", {}).get("blobObject", {})
+            ac = j.get("alreadyCertified", {})
+            blob_id = nc.get("blobId") or ac.get("blobId")
+            sui_object = nc.get("id")                                  # on-chain Sui object (anchor)
+            anchor_epoch = nc.get("certifiedEpoch") or nc.get("registeredEpoch") or ac.get("endEpoch")
+            walrus_tx = (ac.get("event") or {}).get("txDigest")        # cert tx when already-certified
             if not blob_id:
                 sink = "local"
         except Exception:
             sink = "local"  # graceful degrade — UI still shows the hash
 
-    anchor = anchor_mod.anchor_hash(record_hash) or {}   # Tier 2; None/{} when ANCHOR=none
+    anchor = anchor_mod.anchor_hash(record_hash) or {}   # Tier 2 dedicated tx; {} when ANCHOR=none
 
     return {
         "recordHash": record_hash,
@@ -44,9 +48,11 @@ def write_audit(decision: dict, goal_text: str = "", epochs: int = 5) -> dict:
         "pubkey": crypto.PUBKEY_HEX,
         "sink": sink,
         "blobId": blob_id,
-        "anchorTxDigest": anchor.get("anchorTxDigest"),
+        "suiObjectId": sui_object,                                     # Walrus-registered Sui object
+        "anchorEpoch": anchor_epoch,
+        "anchorTxDigest": anchor.get("anchorTxDigest") or walrus_tx,
         "anchorTimestamp": anchor.get("anchorTimestamp"),
-        "anchorNetwork": anchor.get("anchorNetwork"),
+        "anchorNetwork": anchor.get("anchorNetwork") or ("sui:testnet" if sui_object else None),
         "erasable": crypto.encrypt(goal_text) if goal_text else None,
         "_canonical": body.decode("utf-8"),           # kept for local verify/demo only
     }

@@ -39,3 +39,22 @@ def test_get_inputs_has_required_shape():
               "horizonDays", "asOfIso"):
         assert k in inp
     assert inp["riskBand"] == "high"
+
+
+def test_deepbook_computes_spread_and_depth(monkeypatch):
+    ob = {"bids": [["0.707", "100"], ["0.706", "200"]],
+          "asks": [["0.708", "150"], ["0.709", "250"]]}
+
+    class _R:
+        def raise_for_status(self): pass
+        def json(self): return ob
+    monkeypatch.setattr(market.requests, "get", lambda *a, **k: _R())
+    depth, spread = market._deepbook_safe("SUI/USDC")
+    assert spread > 0 and depth > 0
+
+
+def test_deepbook_falls_back_on_error(monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("indexer down")
+    monkeypatch.setattr(market.requests, "get", boom)
+    assert market._deepbook_safe("SUI/USDC") == (85000.0, 12.0)

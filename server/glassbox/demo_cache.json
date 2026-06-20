@@ -1,44 +1,44 @@
 {
   "should i hold sui for the next 2 weeks? i'm moderate risk.": {
     "asset": "SUI/USDC",
-    "timestampIso": "2026-06-20T12:30:32+00:00",
+    "timestampIso": "2026-06-20T14:11:50+00:00",
     "inputs": {
       "priceUsd": 0.7134,
       "trendPctVs20MA": -7.6,
       "rsi14": 52.6,
       "realizedVolPercentile": 0.15,
-      "deepbookTopDepthUsd": 85000.0,
-      "spreadBps": 12.0,
+      "deepbookTopDepthUsd": 57944.0,
+      "spreadBps": 7.0,
       "drawdownFromHighPct": -62.6,
-      "asOfIso": "2026-06-20T12:30:32+00:00",
+      "asOfIso": "2026-06-20T14:11:50+00:00",
       "riskBand": "moderate",
       "horizonDays": 14,
       "goalCategory": "growth"
     },
     "bull": {
       "points": [
-        "SUI/USDC is significantly down from its all-time high by -62.6%, as indicated by 'drawdownFromHighPct', suggesting a potential opportunity for recovery.",
-        "The 'realizedVolPercentile' at 0.15 indicates very low current volatility, which can sometimes precede a period of increased price movement and potential upside."
+        "SUI/USDC is trading at a significant discount, being down 62.6% from its all-time high, presenting a strong potential for capital appreciation (drawdownFromHighPct).",
+        "The current price is 7.6% below its 20-day moving average, indicating a potential dip that could offer an attractive entry point for buyers (trendPctVs20MA)."
       ],
-      "convictionRevised": 4.0,
-      "rebuttal": "While the asset is 7.6% below its 20-day moving average (trendPctVs20MA) and has experienced a 62.6% drawdown from its all-time high (drawdownFromHighPct), the realized volatility is exceptionally low at 0.15 (realizedVolPercentile), suggesting a potential stabilization rather than continued strong selling pressure. Furthermore, the RSI14 at 52.6 indicates the asset is not oversold, contradicting the notion of extreme weakness."
+      "convictionRevised": 5.0,
+      "rebuttal": "Despite the significant drawdownFromHighPct of -62.6%, the asset's current realizedVolPercentile of 0.15 indicates exceptionally low volatility, aligning with its moderate riskBand and suggesting a period of consolidation."
     },
     "bear": {
       "points": [
-        "The asset is currently in a significant downtrend, with its price 7.6% below the 20-day moving average (trendPctVs20MA), indicating strong selling pressure and a lack of immediate upward momentum.",
-        "SUI has experienced a substantial drawdown of 62.6% from its all-time high (drawdownFromHighPct), signaling significant long-term weakness and a high risk of continued underperformance or difficulty in recovery."
+        "The asset has experienced a significant drawdownFromHighPct of -62.6%, indicating substantial long-term price depreciation and a lack of sustained recovery.",
+        "The price is currently trading -7.6% below its 20-day moving average, as indicated by trendPctVs20MA, suggesting a prevailing short-term downtrend."
       ],
-      "convictionRevised": 0.0,
-      "rebuttal": "While SUI/USDC is significantly down from its all-time high by -62.6% ('drawdownFromHighPct'), the price is currently -7.6% below its 20-day moving average ('trendPctVs20MA'), suggesting a continued bearish short-term trend rather than an immediate recovery."
+      "convictionRevised": 1.0,
+      "rebuttal": "While the asset is down 62.6% from its all-time high (drawdownFromHighPct), its RSI14 is a neutral 52.6, not indicating an oversold condition that typically signals an imminent rebound from such a discount."
     },
     "winningSide": "bull",
-    "whyResolved": "The bear's revised conviction dropped to 0 after rebuttal, indicating a significant weakening of their case against the bull's points regarding low volatility and non-oversold RSI.",
+    "whyResolved": "The bull's revised conviction of 6 significantly outweighs the bear's revised conviction of 1, indicating a stronger overall case for the asset's current stability and potential value.",
     "verdict": "HOLD",
-    "riskNote": "The asset remains in a short-term downtrend, with its price 7.6% below the 20-day moving average, as indicated by 'trendPctVs20MA'.",
+    "riskNote": "The asset is still trading -62.6% below its all-time high (drawdownFromHighPct), indicating significant long-term depreciation and potential for continued underperformance.",
     "suggestedSizePct": 13,
     "signalStrengthPct": 68,
     "signalBand": "High",
-    "counterfactual": "I would change my call to BUY if 'trendPctVs20MA' turned positive, indicating a shift in short-term momentum.",
+    "counterfactual": "I would change my call to BUY if the RSI14 indicated an oversold condition, signaling a potential rebound from the current discount.",
     "blindSpots": [
       "Does not include news, social sentiment, or events"
     ],

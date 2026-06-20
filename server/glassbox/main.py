@@ -72,6 +72,8 @@ def audit(req: AuditReq):
     return {"recordId": rid, "recordHash": a["recordHash"], "signature": a["signature"],
             "pubkey": a["pubkey"], "sink": a["sink"], "blobId": a["blobId"],
             "anchorTxDigest": a["anchorTxDigest"],
+            "suiObjectId": a.get("suiObjectId"), "anchorEpoch": a.get("anchorEpoch"),
+            "anchorNetwork": a.get("anchorNetwork"),
             "recordCanonical": a["_canonical"]}   # exact bytes that were hashed (PII-free)
 
 

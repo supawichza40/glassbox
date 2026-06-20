@@ -46,3 +46,8 @@ SUI_PRIVATE_KEY    = _g("SUI_PRIVATE_KEY")
 # Walrus testnet (verified working)
 WALRUS_PUBLISHER   = _g("WALRUS_PUBLISHER", "https://publisher.walrus-testnet.walrus.space")
 WALRUS_AGGREGATOR  = _g("WALRUS_AGGREGATOR", "https://aggregator.walrus-testnet.walrus.space")
+
+# DeepBook v3 public indexer (read-only, no key) — real SUI/USDC depth + spread
+DEEPBOOK_INDEXER   = _g("DEEPBOOK_INDEXER", "https://deepbook-indexer.mainnet.mystenlabs.com")
+DEEPBOOK_POOL      = _g("DEEPBOOK_POOL", "SUI_USDC")
+SUI_EXPLORER       = _g("SUI_EXPLORER", "https://suiscan.xyz/testnet")

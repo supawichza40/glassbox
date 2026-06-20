@@ -78,6 +78,27 @@ def test_audit_exposes_canonical_matching_hash(client, canned_chat_json, local_s
     assert hashlib.sha256(ab["recordCanonical"].encode("utf-8")).hexdigest() == ab["recordHash"]
 
 
+def test_audit_surfaces_sui_object_from_walrus(client, canned_chat_json, monkeypatch):
+    """When Walrus returns a blob object, the audit carries the Sui object id + epoch."""
+    from glassbox import audit
+    from glassbox import config as cfg
+    monkeypatch.setattr(cfg, "AUDIT_SINK", "walrus")
+
+    class _R:
+        def raise_for_status(self): pass
+        def json(self):
+            return {"newlyCreated": {"blobObject": {
+                "blobId": "BLOB123", "id": "0xabc", "registeredEpoch": 434, "certifiedEpoch": None}}}
+    monkeypatch.setattr(audit.requests, "put", lambda *a, **k: _R())
+
+    d = client.post("/api/analyze",
+                    json={"goalText": "grow my savings steadily", "risk": "moderate"}).json()
+    a = client.post("/api/audit", json={"decision": d, "goalText": ""}).json()
+    assert a["sink"] == "walrus" and a["blobId"] == "BLOB123"
+    assert a["suiObjectId"] == "0xabc" and a["anchorEpoch"] == 434
+    assert a["anchorNetwork"] == "sui:testnet"
+
+
 # --------------------------------------------------------------------------
 # /api/rehash on an ALTERED decision yields a different hash (tamper)
 # --------------------------------------------------------------------------

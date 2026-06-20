@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 
 import requests
 
+from . import config
+
 # Deterministic fallback snapshot (also the offline/demo value).
 _STUB = {
     "priceUsd": 3.42, "trendPctVs20MA": 4.1, "rsi14": 38.0,
@@ -39,6 +41,25 @@ def _rsi(closes, period: int = 14) -> float:
     return round(100 - 100 / (1 + rs), 1)
 
 
+def _deepbook_safe(asset):
+    """Real DeepBook order-book depth (USD) + spread (bps), or modeled fallback (85000 / 12)."""
+    try:
+        r = requests.get(f"{config.DEEPBOOK_INDEXER}/orderbook/{config.DEEPBOOK_POOL}",
+                         params={"level": 2, "depth": 50}, timeout=8)  # ~book depth, not just touch
+        r.raise_for_status()
+        ob = r.json()
+        bids = [(float(p), float(q)) for p, q in ob.get("bids", [])]
+        asks = [(float(p), float(q)) for p, q in ob.get("asks", [])]
+        if not bids or not asks:
+            raise ValueError("empty book")
+        mid = (bids[0][0] + asks[0][0]) / 2
+        spread = round((asks[0][0] - bids[0][0]) / mid * 1e4, 1)
+        depth = float(round(sum(p * q for p, q in bids) + sum(p * q for p, q in asks)))
+        return depth, spread
+    except Exception:
+        return 85000.0, 12.0   # graceful fallback — never breaks the analysis
+
+
 def _live_snapshot(asset: str) -> dict:
     cg = _CG_ID.get(asset, "sui")
     r = requests.get(
@@ -57,13 +78,14 @@ def _live_snapshot(asset: str) -> dict:
     hist = [statistics.pstdev(rets[i - win:i]) for i in range(win, len(rets) + 1)]
     pct = sum(1 for v in hist if v <= vol_now) / len(hist) if hist else 0.5
     high = max(closes)
+    depth, spread = _deepbook_safe(asset)        # real DeepBook, or modeled fallback
     return {
         "priceUsd": round(price, 4),
         "trendPctVs20MA": round((price - ma20) / ma20 * 100, 1),
         "rsi14": _rsi(closes, 14),
         "realizedVolPercentile": round(pct, 2),
-        "deepbookTopDepthUsd": 85000.0,   # TODO: real DeepBook depth (Sui RPC)
-        "spreadBps": 12.0,                # TODO: real DeepBook spread (Sui RPC)
+        "deepbookTopDepthUsd": depth,
+        "spreadBps": spread,
         "drawdownFromHighPct": round((price - high) / high * 100, 1),
     }
 
