@@ -6,7 +6,6 @@ Run from server/:
     # then open http://localhost:8787/
 """
 import os
-
 from typing import Literal
 
 from fastapi import FastAPI
@@ -14,7 +13,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import config, crypto, demo, analyze as analyze_mod, audit as audit_mod, verify as verify_mod
+from . import analyze as analyze_mod
+from . import audit as audit_mod
+from . import config, crypto, demo
+from . import verify as verify_mod
 
 app = FastAPI(title="GlassBox", version="0.1.0")
 app.add_middleware(

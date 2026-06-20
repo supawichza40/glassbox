@@ -6,6 +6,7 @@ Signature proves ORIGIN; the Sui anchor (Tier 2) proves non-alteration + timesta
 """
 import requests
 
+from . import anchor as anchor_mod
 from . import config, crypto
 
 
@@ -35,13 +36,17 @@ def write_audit(decision: dict, goal_text: str = "", epochs: int = 5) -> dict:
         except Exception:
             sink = "local"  # graceful degrade — UI still shows the hash
 
+    anchor = anchor_mod.anchor_hash(record_hash) or {}   # Tier 2; None/{} when ANCHOR=none
+
     return {
         "recordHash": record_hash,
         "signature": signature,
         "pubkey": crypto.PUBKEY_HEX,
         "sink": sink,
         "blobId": blob_id,
-        "anchorTxDigest": None,                       # Tier 2 (Sui anchor)
+        "anchorTxDigest": anchor.get("anchorTxDigest"),
+        "anchorTimestamp": anchor.get("anchorTimestamp"),
+        "anchorNetwork": anchor.get("anchorNetwork"),
         "erasable": crypto.encrypt(goal_text) if goal_text else None,
         "_canonical": body.decode("utf-8"),           # kept for local verify/demo only
     }

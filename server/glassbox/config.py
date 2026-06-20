@@ -1,6 +1,7 @@
 """Loads GlassBox config from the project-root .env (gitignored)."""
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # server/glassbox/config.py -> parents[2] == project root
