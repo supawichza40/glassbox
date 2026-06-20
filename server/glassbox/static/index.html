@@ -110,38 +110,43 @@
 
   /* === visualizations === */
   #strengthMeter{margin:14px 0 2px}
-  .sm-row{display:grid;grid-template-columns:58px 1fr 74px;align-items:center;gap:10px;margin:7px 0}
-  .sm-lbl{font-size:14px;color:var(--muted)}
-  .sm-lbl.bull{color:var(--bull)} .sm-lbl.bear{color:var(--bear)} .sm-lbl.sig{color:var(--ink-2)}
+  .sm-row{display:grid;grid-template-columns:60px 1fr 78px;align-items:center;gap:10px;margin:7px 0}
+  .sm-lbl{font-size:.82em;color:var(--muted)}
+  .sm-lbl.bull{color:var(--bull)} .sm-lbl.bear{color:var(--bear)}
   .sm-bar{position:relative;height:18px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
-  .sm-bar.ticks{background-image:repeating-linear-gradient(90deg,transparent 0,transparent calc(20% - 1px),var(--line) calc(20% - 1px),var(--line) 20%)}
   .sm-bar i{display:block;height:100%;width:0;border-radius:inherit;transition:width .6s var(--ease)}
   .sm-bar i.bull{background:var(--bull)}
   .sm-bar i.bear{background:var(--bear);background-image:repeating-linear-gradient(45deg,transparent 0,transparent 5px,rgba(0,0,0,.22) 5px,rgba(0,0,0,.22) 9px)}
-  .sm-bar i.v-BUY{background:var(--bull)} .sm-bar i.v-HOLD{background:var(--warn)} .sm-bar i.v-AVOID{background:var(--bear)}
-  .sm-val{font:14px var(--mono);color:var(--ink);text-align:right}
-  .sm-cap{font-size:13px;color:var(--muted);margin-top:8px}
+  .sm-val{font:.82em var(--mono);color:var(--ink);text-align:right}
+  .sm-conf{margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+  .sm-conf-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .sm-conf-top span{font-size:.78em;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .sm-conf-top b{font:.95em var(--mono);color:var(--ink)}
+  .sm-conf i{display:block;height:8px;width:0;border-radius:4px;margin-top:6px;transition:width .6s var(--ease)}
+  .sm-conf.v-BUY i{background:var(--bull)} .sm-conf.v-HOLD i{background:var(--warn)} .sm-conf.v-AVOID i{background:var(--bear)}
+  .sm-cap{font-size:.76em;color:var(--muted);margin-top:9px}
   .vchip{display:inline-block;padding:1px 8px;border-radius:6px;font-weight:700;font-size:.92em;border:1px solid currentColor}
   .vchip.v-BUY{color:var(--bull)} .vchip.v-HOLD{color:var(--warn)} .vchip.v-AVOID{color:var(--bear)}
-  .evidence-over{margin:16px 0 2px;font-size:16px;color:var(--ink-2)}
-  .evidence-over .arrow{color:var(--brand);font-weight:800;margin:0 5px} .evidence-over .agree{color:var(--bull)}
-  .gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:6px 0}
-  .gauge .glbl{font-size:13px;color:var(--muted);margin-bottom:4px}
+  .evidence-over{margin:16px 0 2px;font-size:1.05em;color:var(--ink);padding:11px 14px;
+    border-left:3px solid var(--brand);background:rgba(124,92,255,.07);border-radius:0 8px 8px 0}
+  .evidence-over .arrow{color:var(--brand);font-weight:800;margin:0 6px} .evidence-over .agree{color:var(--bull)}
+  .gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:12px;margin:6px 0}
+  .gauge .glbl{font-size:.76em;color:var(--muted);margin-bottom:4px}
   .gauge .grow{display:flex;align-items:center;gap:8px}
   .gtrack{position:relative;flex:1;height:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;overflow:hidden}
-  .gtrack .gt{position:absolute;top:-3px;width:2px;height:16px;background:var(--muted);opacity:.55}
+  .gtrack .gt{position:absolute;top:-3px;width:2px;height:16px;background:var(--ink-2);box-shadow:0 0 0 1px var(--bg)}
   .gfill{height:100%;border-radius:5px;transition:width .5s var(--ease)}
   .gfill.ok{background:var(--accent2)} .gfill.warn{background:var(--warn)}
-  .gval{font:13px var(--mono);color:var(--ink);min-width:56px;text-align:right}
-  .cap{font-size:13px;margin-top:8px}
+  .gval{font:.76em var(--mono);color:var(--ink);min-width:64px;text-align:right}
+  .gval.ok b{color:var(--accent2)} .gval.warn b{color:var(--warn)}
+  .cap{font-size:.76em;margin-top:8px}
   #priceSvg{width:100%;height:200px;display:block;margin-top:6px}
   #priceSvg polyline,#priceSvg line,#priceSvg circle{vector-effect:non-scaling-stroke}
   #priceSvg .price{fill:none;stroke:var(--ink-2);stroke-width:2}
   #priceSvg .ma{fill:none;stroke:var(--brand);stroke-width:2;stroke-dasharray:5 4}
-  #priceSvg .asof{stroke:var(--line);stroke-width:1.5}
-  #priceSvg .mark{stroke:#fff;stroke-width:1.5}
-  #priceSvg .mark.v-BUY{fill:var(--bull)} #priceSvg .mark.v-HOLD{fill:var(--warn)} #priceSvg .mark.v-AVOID{fill:var(--bear)}
-  #priceCap{font-size:13px;color:var(--muted);margin-top:8px}
+  #priceSvg .asof{stroke:var(--accent2);stroke-width:1.5;opacity:.7}
+  #priceSvg .mark{fill:none;stroke:var(--ink);stroke-width:2.5}
+  #priceCap{font-size:.76em;color:var(--muted);margin-top:8px}
 
   .reveal{animation:rise .45s var(--ease) both}
   .pop{animation:pop .5s var(--ease) both}
@@ -301,26 +306,31 @@ function render(d){
   renderStrength(d); renderEvidence(d); renderPriceChart(d);
   $('#result').classList.remove('hidden');
   $('#debate').classList.remove('reveal'); void $('#debate').offsetWidth; $('#debate').classList.add('reveal');
-  const hb=$('#heroBlock'); hb.style.opacity='0'; setTimeout(()=>{hb.style.opacity='';hb.classList.add('pop');growMeter();},520);
+  const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const hb=$('#heroBlock'); hb.style.opacity='0'; setTimeout(()=>{hb.style.opacity='';hb.classList.add('pop');growMeter();},rm?0:520);
   $('#prove').disabled=false; $('#prove').textContent='🔒 Prove it';
 }
 
 function renderStrength(d){
   const bull=+d.bull.convictionRevised||0, bear=+d.bear.convictionRevised||0;
-  const sig=+d.signalStrengthPct||0, band=d.signalBand||'', vd=d.verdict;
-  const row=(lbl,cls,w,tk,val)=>'<div class="sm-row"><span class="sm-lbl '+cls.split(' ')[0]+'">'+lbl+'</span>'
-    +'<div class="sm-bar'+tk+'"><i class="'+cls+'" data-w="'+w+'"></i></div>'
-    +'<span class="sm-val">'+val+'</span></div>';
+  const sig=+d.signalStrengthPct||0, band=d.signalBand||'', vd=d.verdict, i=d.inputs||{};
+  const net=bull-bear, lean=net>0?'Bull':net<0?'Bear':'a draw';
+  const bar=(lbl,cls,w,val)=>'<div class="sm-row"><span class="sm-lbl '+cls+'">'+lbl+'</span>'
+    +'<div class="sm-bar"><i class="'+cls+'" data-w="'+w+'"></i></div><span class="sm-val">'+val+'</span></div>';
+  const trips=[]; if(i.realizedVolPercentile>0.7)trips.push('high volatility');
+  if(i.spreadBps>50)trips.push('a wide spread'); if(i.deepbookTopDepthUsd<20000)trips.push('thin liquidity');
+  const disc=trips.length ? 'discounted for '+trips.join(' & ')
+    : 'calm market (vol '+Math.round((i.realizedVolPercentile||0)*100)+'th pctile, spread '+i.spreadBps+'bps)';
   $('#strengthMeter').innerHTML =
-    row('Bull','bull',bull/5*100,' ticks',bull+'/5')
-    + row('Bear','bear',bear/5*100,' ticks',bear+'/5')
-    + row('Signal','sig v-'+vd,sig,'','<b>'+sig+'%</b> '+band)
-    + '<div class="sm-cap">Bull '+bull+' − Bear '+bear+' = net '+Math.abs(bull-bear)
-      + ', discounted for volatility &amp; liquidity → <b>'+sig+'%</b>. Rule-based, not a profit forecast.</div>';
+    bar('Bull','bull',bull/5*100,bull+'/5')
+    + bar('Bear','bear',bear/5*100,bear+'/5')
+    + '<div class="sm-conf v-'+vd+'"><div class="sm-conf-top"><span>Confidence in '+vd+'</span><b>'+sig+'% · '+band+'</b></div><i data-w="'+sig+'"></i></div>'
+    + '<div class="sm-cap">Bull '+bull+' vs Bear '+bear+' → net '+(net>0?'+':'')+net+' toward '+lean
+      + '; '+disc+' → <b>'+sig+'% confident</b>. Rule-based, not a profit forecast.</div>';
   $('#strengthMeter').setAttribute('aria-label',
-    'Bull conviction '+bull+' of 5, Bear conviction '+bear+' of 5, signal strength '+sig+' percent '+band);
+    'Bull conviction '+bull+' of 5, Bear '+bear+' of 5; '+sig+' percent confidence in '+vd);
 }
-function growMeter(){ document.querySelectorAll('#strengthMeter .sm-bar i').forEach(i=>{ i.style.width=(i.dataset.w||0)+'%'; }); }
+function growMeter(){ document.querySelectorAll('#strengthMeter [data-w]').forEach(i=>{ i.style.width=(i.dataset.w||0)+'%'; }); }
 
 function renderEvidence(d){
   const i=d.inputs||{}, f=d.flags||{}, vd=d.verdict, base=f.baselineVerdict||'HOLD';
@@ -331,19 +341,19 @@ function renderEvidence(d){
     : 'Rule-based baseline leaned '+chip(base)+'<span class="arrow">→</span>the debate resolved '+chip(vd)+' <span class="muted">· a one-step nuance</span>';
   const G=[
     ['RSI (14)','rsi14', v=>v, [30,70], v=>(v>=70||v<=30)?'warn':'ok', v=>v],
-    ['Trend vs 20-day MA','trendPctVs20MA', v=>(v+20)/40*100, [50], v=>v>0?'ok':'warn', v=>(v>0?'+':'')+v+'%'],
+    ['Trend vs 20-day MA','trendPctVs20MA', v=>Math.max(0,Math.min(100,(v+20)/40*100)), [50], v=>v>=0?'ok':'warn', v=>(v>0?'+':'')+v+'%'],
     ['Volatility (pctile)','realizedVolPercentile', v=>v*100, [70], v=>v>0.7?'warn':'ok', v=>Math.round(v*100)+'th'],
-    ['Drawdown','drawdownFromHighPct', v=>(v+60)/60*100, [50], v=>v<-30?'warn':'ok', v=>v+'%'],
+    ['Drawdown from high','drawdownFromHighPct', v=>Math.min(100,Math.abs(v)/80*100), [37], v=>v<-30?'warn':'ok', v=>v+'%'],
     ['DeepBook depth','deepbookTopDepthUsd', v=>Math.min(100,v/200000*100), [10], v=>v<20000?'warn':'ok', v=>'$'+Math.round(v/1000)+'k'],
     ['Spread','spreadBps', v=>Math.min(100,v/60*100), [83], v=>v>50?'warn':'ok', v=>v+'bps'],
   ];
   $('#evidenceGauges').innerHTML = G.map(g=>{
     const v=i[g[1]]; if(v==null) return '';
-    const p=Math.max(0,Math.min(100,g[2](v)));
+    const p=Math.max(0,Math.min(100,g[2](v))), st=g[4](v), gl=st==='warn'?'!':'✓';
     const ticks=g[3].map(t=>'<span class="gt" style="left:'+t+'%"></span>').join('');
     return '<div class="gauge"><span class="glbl">'+g[0]+'</span><div class="grow">'
-      + '<div class="gtrack">'+ticks+'<i class="gfill '+g[4](v)+'" style="width:'+p+'%"></i></div>'
-      + '<span class="gval">'+g[5](v)+'</span></div></div>';
+      + '<div class="gtrack">'+ticks+'<i class="gfill '+st+'" style="width:'+p+'%"></i></div>'
+      + '<span class="gval '+st+'">'+g[5](v)+' <b>'+gl+'</b></span></div></div>';
   }).join('');
 }
 
@@ -353,7 +363,7 @@ function renderPriceChart(d){
   det.classList.remove('hidden');
   const W=600,H=180,pad=8, n=s.length;
   const lo=Math.min(...s), hi=Math.max(...s), rng=(hi-lo)||1;
-  const X=i=> pad + i*(W-2*pad)/(n-1);
+  const X=i=> pad + i*(W-pad-2)/(n-1);          // last point ends near the right edge (no forecast gap)
   const Y=v=> H-pad - (v-lo)/rng*(H-2*pad);
   const price = s.map((v,i)=> X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
   const ma=[]; for(let i=0;i<n;i++){ if(i<19){ma.push(null);continue;} let sum=0; for(let j=i-19;j<=i;j++) sum+=s[j]; ma.push(sum/20); }
@@ -363,10 +373,10 @@ function renderPriceChart(d){
     '<polyline class="ma" points="'+maPts+'"/>'
     + '<polyline class="price" points="'+price+'"/>'
     + '<line class="asof" x1="'+lx.toFixed(1)+'" y1="'+pad+'" x2="'+lx.toFixed(1)+'" y2="'+(H-pad)+'"/>'
-    + '<circle class="mark v-'+d.verdict+'" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="5"/>';
-  $('#priceCap').innerHTML = 'SUI · daily closes · as-of '+asOf+' · '+(GLYPH[d.verdict]||'')+' '+d.verdict
-    + ' pinned at the last close — frozen in the signed record. <b>No forecast.</b> '
-    + '<span style="color:var(--brand)">— —</span> 20-day average.';
+    + '<circle class="mark" cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="5"/>';
+  $('#priceCap').innerHTML = 'SUI · daily closes · as-of '+asOf+' · the ring is <b>now</b> (the last close), '
+    + 'frozen in the signed record. <b>No forecast — nothing is drawn to the right of now.</b> '
+    + '<span style="color:var(--brand)">– –</span> 20-day average.';
 }
 
 async function prove(){
