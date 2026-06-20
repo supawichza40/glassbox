@@ -63,6 +63,21 @@ def test_audit_then_verify_matches(client, canned_chat_json, local_sink):
     assert vb["source"] == "local"
 
 
+def test_audit_exposes_canonical_matching_hash(client, canned_chat_json, local_sink):
+    """recordCanonical is the exact bytes hashed: sha256(it) == recordHash.
+
+    Guarantees the browser-side tamper demo (which hashes recordCanonical with Web Crypto)
+    shows MATCH when unedited and MISMATCH on any single-character change.
+    """
+    import hashlib
+    decision = client.post(
+        "/api/analyze",
+        json={"goalText": "grow my savings steadily", "risk": "moderate"}).json()
+    ab = client.post("/api/audit", json={"decision": decision, "goalText": ""}).json()
+    assert "recordCanonical" in ab
+    assert hashlib.sha256(ab["recordCanonical"].encode("utf-8")).hexdigest() == ab["recordHash"]
+
+
 # --------------------------------------------------------------------------
 # /api/rehash on an ALTERED decision yields a different hash (tamper)
 # --------------------------------------------------------------------------

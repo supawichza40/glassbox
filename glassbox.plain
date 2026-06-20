@@ -63,9 +63,11 @@ requires:
 
 - :User: should be able to click a "Prove it" button on a :Decision:. This calls :AuditEndpoint:, increases :EvidenceCount: by 1, and shows the resulting :AuditRecord: as a labelled receipt: a plain-English line explaining that GlassBox signed this exact decision and wrote its fingerprint to Walrus on Sui, so a single changed character won't match; then the Record Hash, that it was signed (origin), the Walrus storage shown as a chip, and the Sui Anchor when present.
 
-- :User: should be able to click a "Verify" button on an :AuditRecord:. This calls :VerifyEndpoint: and shows whether the stored record still matches, as a clear "VERIFIED" (match) or "TAMPER DETECTED" (mismatch) banner that does not rely on colour alone, together with the Sui Anchor timestamp when present.
+- After "Prove it", :App: shows the signed record in an editable field together with two fingerprints: the **anchored fingerprint** (fixed) and **this record's fingerprint** (recomputed live from the editable field). While the two are identical, show a green "VERIFIED" state; the moment they differ, show a red "TAMPER DETECTED" state. Neither state may rely on colour alone (use words + an icon).
 
-- :User: should be able to click a "Try to alter it" button that changes one value in a local copy of the :Decision: and calls :RehashEndpoint:, which must then show a clear "TAMPER DETECTED" mismatch with the anchored fingerprint and the new altered fingerprint shown side by side so the divergence is visible. This is the key moment — make it the largest, most prominent state.
+- :User: should be able to edit the record — changing even a single character must immediately recompute this record's fingerprint and (because it now differs from the anchored fingerprint) show "TAMPER DETECTED", with the differing characters of the fingerprint highlighted. A "Reset" returns the record to its original bytes and the state returns to "VERIFIED". A "Try to alter it" button performs a one-character change on the user's behalf. This is the key moment — make the mismatch the largest, most prominent state.
+
+- :User: should be able to click a "Re-verify on Walrus" button that calls :VerifyEndpoint: to re-fetch the record from storage and confirm the anchored fingerprint is intact and the signature is valid, shown as a short confirmation line (with the Sui Anchor timestamp when present).
 
 - Never use the words "tamper-proof" or "provable to anyone" anywhere in :App:. Use "tamper-evident" and "verify".
 

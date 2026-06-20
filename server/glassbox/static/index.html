@@ -100,6 +100,13 @@
   .hashdiff{display:none;margin-top:14px;font:18px/1.7 var(--mono)}
   .hashdiff .lbl{color:var(--muted);font:13px var(--sans);letter-spacing:.04em}
   .hashdiff .a b{color:var(--ink)} .hashdiff .b b{color:var(--bear);text-shadow:0 0 12px rgba(255,77,94,.5)}
+  .recordbox{width:100%;min-height:118px;background:#0e141d;border:1px solid var(--line);border-radius:8px;
+    color:var(--ink2);font:13px/1.6 var(--mono);padding:12px;resize:vertical;white-space:pre-wrap;word-break:break-all}
+  .recordbox:focus{outline:2px solid var(--accent2);outline-offset:2px}
+  .fp{display:flex;gap:14px;align-items:baseline;margin-top:10px;flex-wrap:wrap}
+  .fp .lbl{color:var(--muted);font:13px var(--sans);letter-spacing:.04em;min-width:210px}
+  .fp .mono{font:15px/1.6 var(--mono);word-break:break-all;flex:1;min-width:200px}
+  .fp .mono .d{color:var(--bear);font-weight:800;text-shadow:0 0 10px rgba(255,77,94,.55)}
 
   .reveal{animation:rise .45s var(--ease) both}
   .pop{animation:pop .5s var(--ease) both}
@@ -174,13 +181,21 @@
     <h2 id="proofH">Proof — the on-chain record</h2>
     <p class="why-line">GlassBox signed this exact decision and wrote its fingerprint to Walrus on the Sui blockchain. Anyone can re-check it — and if a single character changes, the fingerprint won't match.</p>
     <div class="receipt" id="receipt"></div>
+
+    <h3 style="margin:20px 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Try it yourself — tamper with the record</h3>
+    <p class="why-line" style="margin-bottom:8px">Change <b>any single character</b> below and the fingerprint breaks. Put it back exactly and it verifies again.</p>
+    <textarea id="recordEdit" class="recordbox" spellcheck="false" aria-label="The signed record — edit to tamper with it" oninput="refreshHash()"></textarea>
+    <div class="fp"><span class="lbl">anchored fingerprint (sha-256)</span><div id="ancHash" class="mono"></div></div>
+    <div class="fp"><span class="lbl">this record's fingerprint</span><div id="liveHash" class="mono"></div></div>
+
     <div class="row">
-      <div style="flex:0 0 auto"><button id="vbtn" onclick="verify()">Verify</button></div>
-      <div style="flex:0 0 auto"><button class="ghost" id="abtn" onclick="alterRecord()">Try to alter it</button></div>
+      <div style="flex:0 0 auto"><button id="abtn" onclick="autoTamper()">Try to alter it</button></div>
+      <div style="flex:0 0 auto"><button class="ghost" id="resetBtn" onclick="resetRecord()">Reset</button></div>
+      <div style="flex:0 0 auto"><button class="ghost" id="vbtn" onclick="verify()">Re-verify on Walrus</button></div>
     </div>
     <div id="match" class="banner match" role="status" aria-live="assertive"></div>
     <div id="mismatch" class="banner mismatch" role="alert"></div>
-    <div id="hashdiff" class="hashdiff"></div>
+    <div id="walrusNote" class="why-line" style="margin-top:10px"></div>
   </section>
 </main>
 
@@ -258,43 +273,70 @@ async function prove(){
       '<span class="k">signature — proves origin</span> &nbsp;<b>'+frag(a.signature)+'…</b><br>'+
       '<span class="k">stored on</span> &nbsp;<span class="chainchip">● '+(a.sink==='walrus'?'Walrus · Sui':'local (offline)')+'</span>'+
       (a.blobId?' &nbsp;<b>'+frag(a.blobId)+'…</b>':'');
+    $('#recordEdit').value = a.recordCanonical || '';
+    $('#ancHash').textContent = a.recordHash;
+    $('#walrusNote').textContent = '';
+    _lastMatch = null;
+    await refreshHash();                 // initial state: matches -> green VERIFIED
     $('#auditCard').classList.remove('hidden'); $('#auditCard').classList.add('reveal');
-    $('#match').style.display='none'; $('#mismatch').style.display='none'; $('#hashdiff').style.display='none';
     $('#prove').textContent='✓ Proved'; $('#prove').disabled=true;
   }catch(e){$('#prove').disabled=false;$('#prove').textContent='🔒 Prove it';$('#status').textContent='Could not prove: '+e.message;}
 }
 
-async function verify(){
-  if(!S.audit) return;
-  $('#vbtn').disabled=true; $('#vbtn').textContent='Verifying against Walrus…';
-  try{
-    const v=await api('/api/verify/'+S.audit.recordId);
-    $('#mismatch').style.display='none'; $('#hashdiff').style.display='none';
-    const b=$('#match'); b.style.display='block'; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
-    b.innerHTML=(v.hashMatch&&v.signatureValid)
-      ?'✓ VERIFIED<small>Byte-for-byte identical — read back from '+(v.source==='walrus'?'Walrus on Sui':'the record')+'</small>'
-      :'⚠ Could not verify<small>Try again</small>';
-  }catch(e){const b=$('#mismatch');b.style.display='block';b.innerHTML='⚠ Verify failed<small>'+esc(e.message)+'</small>';}
-  finally{$('#vbtn').disabled=false;$('#vbtn').textContent='Verify';}
+async function sha256hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
 }
-
-async function alterRecord(){
+function diffHash(anc, cur){
+  let out='';
+  for(let i=0;i<cur.length;i++){ out += (anc[i]===cur[i]) ? esc(cur[i]) : '<span class="d">'+esc(cur[i])+'</span>'; }
+  return out;
+}
+let _lastMatch=null;
+async function refreshHash(){
   if(!S.audit) return;
-  $('#abtn').disabled=true;
-  try{
-    const altered=JSON.parse(JSON.stringify(S.decision));
-    altered.verdict = altered.verdict==='BUY' ? 'AVOID' : 'BUY';
-    const r=await api('/api/rehash',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({decision:altered})});
+  const cur = await sha256hex($('#recordEdit').value);
+  const anc = S.audit.recordHash;
+  $('#liveHash').innerHTML = diffHash(anc, cur);
+  const match = (cur===anc);
+  if(match===_lastMatch) return;         // only flip the banner on a state change (a11y + perf)
+  _lastMatch = match;
+  if(match){
+    $('#mismatch').style.display='none';
+    const b=$('#match'); b.style.display='block'; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+    b.innerHTML='✓ VERIFIED<small>This record matches its anchored fingerprint, byte for byte.</small>';
+  }else{
     $('#match').style.display='none';
     const b=$('#mismatch'); b.style.display='block'; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
-    b.innerHTML='✗ TAMPER DETECTED<small>I changed the verdict to "'+altered.verdict+'" — the fingerprint no longer matches what was anchored.</small>';
-    $('#hashdiff').style.display='block';
-    $('#hashdiff').innerHTML=
-      '<div class="lbl">anchored fingerprint</div><div class="a"><b>'+frag(S.audit.recordHash)+'…</b></div>'+
-      '<div class="lbl" style="margin-top:8px">after tampering</div><div class="b"><b>'+frag(r.recordHash)+'…</b></div>';
-  }catch(e){$('#mismatch').style.display='block';$('#mismatch').innerHTML='⚠ '+esc(e.message);}
-  finally{$('#abtn').disabled=false;}
+    b.innerHTML='✗ TAMPER DETECTED<small>The record changed — its fingerprint no longer matches what was anchored on Walrus.</small>';
+  }
+}
+function autoTamper(){
+  if(!S.audit) return;
+  let v=$('#recordEdit').value;
+  const i=v.search(/[0-9]/);             // flip one digit — a single-character change
+  if(i>=0){ v=v.slice(0,i)+(v[i]==='9'?'8':String(+v[i]+1))+v.slice(i+1); }
+  else { v=v.replace(/[A-Za-z]/, c=>(c==='a'?'b':'a')); }
+  $('#recordEdit').value=v;
+  refreshHash();
+}
+function resetRecord(){
+  if(!S.audit) return;
+  $('#recordEdit').value = S.audit.recordCanonical || '';
+  $('#walrusNote').textContent='';
+  refreshHash();
+}
+
+async function verify(){
+  if(!S.audit) return;
+  $('#vbtn').disabled=true; $('#vbtn').textContent='Re-fetching from Walrus…';
+  try{
+    const v=await api('/api/verify/'+S.audit.recordId);
+    $('#walrusNote').innerHTML=(v.hashMatch&&v.signatureValid)
+      ? '✓ Re-fetched from '+(v.source==='walrus'?'Walrus on Sui':'the stored record')+': the anchored fingerprint is intact and the signature is valid.'
+      : '⚠ Could not confirm against Walrus — try again.';
+  }catch(e){$('#walrusNote').textContent='Verify failed: '+e.message;}
+  finally{$('#vbtn').disabled=false;$('#vbtn').textContent='Re-verify on Walrus';}
 }
 
 $('#goal').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')analyze();});

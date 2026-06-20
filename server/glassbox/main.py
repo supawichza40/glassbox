@@ -71,7 +71,8 @@ def audit(req: AuditReq):
     _AUDITS[rid] = a
     return {"recordId": rid, "recordHash": a["recordHash"], "signature": a["signature"],
             "pubkey": a["pubkey"], "sink": a["sink"], "blobId": a["blobId"],
-            "anchorTxDigest": a["anchorTxDigest"]}
+            "anchorTxDigest": a["anchorTxDigest"],
+            "recordCanonical": a["_canonical"]}   # exact bytes that were hashed (PII-free)
 
 
 @app.get("/api/verify/{record_id}")
