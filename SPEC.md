@@ -12,7 +12,8 @@ The spec below is the locked design *intent*. What is **built and proven live** 
 - **Independence shipped:** a standalone `verify_cli` reproduces hashMatch + signatureValid straight from Walrus with **no GlassBox server in the loop** (acceptance #6, minus the Sui-timestamp half — see below).
 - **Endpoints live:** `/api/health`, `/api/pubkey`, `/api/analyze`, `/api/audit`, `/api/verify/{id}`, `/api/rehash`. Pydantic input validation (min-length, risk enum).
 - **Demo-safety:** `DEMO_MODE` cache (canonical question instant + deterministic) + `DEMO.md` run-sheet + `?present` stage mode + a 4-lens-reviewed UI (`resources/ui_reference.md`). **67 tests + CI**, all mocked.
-- **Still Tier-2 / roadmap:** the **Sui on-chain anchor** (`ANCHOR=none` today — signature + Walrus give origin + storage; the on-chain *timestamp* half of acceptance #5/#6 awaits a funded wallet + pysui), the DeepBook `/api/execute` intent-token path, the live market feed, and end-to-end GDPR crypto-erase wiring. The recorded fallback video is the user's to capture.
+- **Live market feed shipped:** price-derived features (trend/RSI/realized-vol-percentile/drawdown) now come from a **live CoinGecko closed-candle feed** (`market.py`) with a deterministic fallback; only DeepBook depth/spread remain modeled.
+- **Still Tier-2 / roadmap:** the **Sui on-chain anchor** (`ANCHOR=none` today — signature + Walrus give origin + storage; the on-chain *timestamp* half of acceptance #5/#6 awaits a funded wallet + pysui), the DeepBook `/api/execute` intent-token path, real DeepBook depth/spread, and end-to-end GDPR crypto-erase wiring. The recorded fallback video is the user's to capture.
 
 ## Claim discipline (read first — never violate)
 - Say **"tamper-evident"** and **"can't be altered after signing,"** NEVER "tamper-proof" / "provable to anyone" / "impossible to fake" (in app, slides, README, Devpost, or speech).

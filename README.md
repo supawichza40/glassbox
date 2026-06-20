@@ -165,7 +165,7 @@ python3 -m glassbox.verify_cli <blobId> <signature_hex> [pubkey_hex]   # → AUT
 cd server && python3 -m pytest -q
 ```
 
-> The market feed is currently a **deterministic dev snapshot** (frozen so the audit bytes are reproducible). Swapping in a live closed-candle CoinGecko/Binance + DeepBook feed is a single-function change in `market.py` — the rest of the pipeline is feed-agnostic.
+> The price-derived features come from a **live CoinGecko closed-candle feed** (`market.py`), frozen per analysis so the audit bytes stay reproducible, and it falls back to a deterministic snapshot on any error. DeepBook depth/spread are still modeled — the next single-function swap.
 
 ---
 
@@ -199,7 +199,7 @@ We are deliberately precise about what this does and does **not** prove.
 - It does **not** prove the **inputs were true** or that the **decision was correct** — garbage in is still garbage in, just provably so.
 - **Signal Strength is not a probability of profit.** GlassBox never pitches returns or PnL.
 - Running on **Walrus testnet, not mainnet**; the on-chain anchor is the Tier-2 step.
-- The market feed is currently a deterministic dev snapshot.
+- Price features use a live CoinGecko feed (with a deterministic fallback); DeepBook depth/spread are still modeled.
 - **Not financial advice.** GlassBox produces structured, auditable analysis — a human (or an upstream policy) owns the trade.
 
 ---

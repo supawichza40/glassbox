@@ -32,7 +32,7 @@ GlassBox is an **evidence layer**, not a better trader. You enter a plain-Englis
 
 ### What's real vs roadmap
 **Real & proven live (end-to-end):** `analyze → ed25519 sign → Walrus write (real blob) → verify (MATCH) → tamper (MISMATCH)`, reproducible via `python3 -m glassbox.audit_smoke`. On top of it: a **FastAPI server + redesigned demo UI**, a **standalone independent verifier** (`verify_cli` — verifies a record straight from Walrus with *no GlassBox server in the loop*, validated live), an instant **demo-mode cache** for the pitch, and **67 tests + CI** (all mocked).
-**Roadmap:** live closed-candle market feed (one function in `market.py`; currently a deterministic dev snapshot), the Sui on-chain anchor wired from Tier-2 to default-on, mainnet, and the generated codeplain UI over the proven brain.
+**Roadmap:** real DeepBook depth/spread (the price-derived features are already a **live CoinGecko closed-candle feed** in `market.py`, with a deterministic fallback), the Sui on-chain anchor wired from Tier-2 to default-on, mainnet, and the generated codeplain UI over the proven brain.
 
 ### Honest caveats
 Tamper-**evident**, not tamper-proof. Signature = **origin**; anchor = **non-alteration + timestamp** — it does **not** prove the inputs were true or the call correct. **Testnet, not mainnet. Not financial advice.** Designed to *map to* SEC 17a-4 / MiFID II RTS 6 record-keeping — an evidence layer, not a compliance guarantee.

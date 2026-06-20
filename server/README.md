@@ -58,7 +58,7 @@ cd server && python3 -m pytest -q     # or ./run_tests.sh
 glassbox/
   config.py      reads root .env; provider/model switch; pipeline flags (AUDIT_SINK, ANCHOR, EXECUTION, DEMO_MODE)
   llm.py         chat_json(system, user, role) over gemini | openrouter | ollama (+ JSON repair-retry)
-  market.py      5 frozen, closed-candle market features (deterministic dev snapshot)
+  market.py      5 market features from a live CoinGecko feed (closed candles); deterministic stub fallback
   agents.py      Bull · Bear · Risk Arbiter — opening + one rebuttal round, safe-fallbacks
   decision.py    Signal Strength + size + baseline cross-check (deterministic; never the LLM)
   crypto.py      canonical JSON · SHA-256 · ed25519 sign/verify · AES-GCM (crypto-erasure)
