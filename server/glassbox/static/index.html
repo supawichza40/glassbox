@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>GlassBox — tamper-evident AI decisions</title>
+<style>
+  :root{
+    --bg:#0a0d14; --card:#141a24; --card2:#1b2330; --line:#27313f;
+    --ink:#e7edf5; --muted:#8a97a8; --accent:#7c5cff; --accent2:#21d4c4;
+    --bull:#28c76f; --bear:#ff5b6e; --warn:#ffb84d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -10%, #161d2b 0%, var(--bg) 60%);
+       color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px}
+  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-size:26px;margin:0;letter-spacing:-.02em}
+  .tag{color:var(--muted)}
+  .pill{font-size:11px;color:var(--accent2);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px}
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+  textarea,select{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);
+       border-radius:10px;padding:11px 12px;font:inherit;outline:none}
+  textarea{resize:vertical;min-height:60px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;align-items:flex-end}
+  .row>div{flex:1;min-width:140px}
+  button{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 18px;
+       font:inherit;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  button:disabled{opacity:.5;cursor:default}
+  .debate{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+  .side{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--card2)}
+  .side h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.08em}
+  .bull h3{color:var(--bull)} .bear h3{color:var(--bear)}
+  .side ul{margin:0;padding-left:18px} .side li{margin-bottom:7px}
+  .reb{margin-top:10px;font-size:13px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+  .conv{font-size:11px;color:var(--muted);margin-top:8px}
+  .verdict{display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin:16px 0 6px}
+  .v-big{font-size:30px;font-weight:800;letter-spacing:-.02em}
+  .v-BUY{color:var(--bull)} .v-HOLD{color:var(--warn)} .v-AVOID{color:var(--bear)}
+  .meta{color:var(--muted);font-size:13px}
+  .band{display:inline-block;border:1px solid var(--line);border-radius:8px;padding:3px 8px;font-size:12px}
+  .kvs{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--muted);
+       word-break:break-all;line-height:1.7}
+  .kvs b{color:var(--ink)}
+  .disc{font-size:11px;color:#6f7c8d;margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+  .banner{margin-top:14px;border-radius:12px;padding:16px;text-align:center;font-size:22px;font-weight:800;
+          display:none;animation:pop .25s ease}
+  .match{background:rgba(40,199,111,.12);border:1px solid var(--bull);color:var(--bull)}
+  .mismatch{background:rgba(255,91,110,.12);border:1px solid var(--bear);color:var(--bear)}
+  @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+  .muted{color:var(--muted)} .hidden{display:none}
+  .spin{color:var(--accent2)}
+  @media(max-width:620px){.debate{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>GlassBox</h1>
+    <span class="tag">Explainable to you. <b>Tamper-evident</b> for anyone.</span>
+    <span class="pill" id="health">…</span>
+  </header>
+
+  <div class="card">
+    <label>Your investing question</label>
+    <textarea id="goal">Should I hold SUI for the next 2 weeks? I'm moderate risk.</textarea>
+    <div class="row">
+      <div>
+        <label>Asset</label>
+        <select id="asset" disabled><option>SUI/USDC</option></select>
+      </div>
+      <div>
+        <label>Risk tolerance</label>
+        <select id="risk"><option>low</option><option selected>moderate</option><option>high</option></select>
+      </div>
+      <div style="flex:0 0 auto">
+        <button id="go" onclick="analyze()">Analyze</button>
+      </div>
+    </div>
+    <div id="status" class="muted" style="margin-top:10px"></div>
+  </div>
+
+  <div id="result" class="card hidden">
+    <div class="debate">
+      <div class="side bull"><h3>🐂 Bull case</h3><ul id="bullPts"></ul>
+        <div class="reb" id="bullReb"></div><div class="conv" id="bullConv"></div></div>
+      <div class="side bear"><h3>🐻 Bear case</h3><ul id="bearPts"></ul>
+        <div class="reb" id="bearReb"></div><div class="conv" id="bearConv"></div></div>
+    </div>
+    <div class="meta" id="resolved" style="margin-top:12px"></div>
+    <div class="verdict">
+      <div class="v-big" id="verdict"></div>
+      <div>Signal strength: <span class="band" id="signal"></span>
+        <span class="meta">(mechanical, not a probability of profit)</span></div>
+      <div class="meta">Suggested size: <b id="size"></b></div>
+    </div>
+    <div class="meta" id="risknote"></div>
+    <div class="meta" id="counter" style="margin-top:6px"></div>
+    <div class="meta" id="blind" style="margin-top:6px"></div>
+    <div class="row"><div style="flex:0 0 auto"><button id="prove" onclick="prove()">🔏 Prove it</button></div></div>
+    <div class="disc" id="disc">GlassBox is an educational and analytical tool, not financial advice. SUI/USDC is high-risk and largely unregulated; you could lose all the money you put in. "Signal strength" is a mechanical score, not a probability of profit.</div>
+  </div>
+
+  <div id="auditCard" class="card hidden">
+    <label>On-chain audit record</label>
+    <div class="kvs" id="auditKvs"></div>
+    <div class="row">
+      <div style="flex:0 0 auto"><button onclick="verify()">✅ Verify</button></div>
+      <div style="flex:0 0 auto"><button class="ghost" onclick="alterRecord()">✂️ Alter the record</button></div>
+    </div>
+    <div id="match" class="banner match"></div>
+    <div id="mismatch" class="banner mismatch"></div>
+    <div class="kvs" id="tamperDetail" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<script>
+const $ = (s)=>document.querySelector(s);
+let S = { decision:null, audit:null };
+
+async function api(path, opts){
+  const r = await fetch(path, opts||{});
+  if(!r.ok && r.status!==422) throw new Error(path+" -> HTTP "+r.status);
+  return r.json();
+}
+function short(h){ return h ? h.slice(0,18)+"…"+h.slice(-6) : "—"; }
+
+(async ()=>{ try{ const h=await api('/api/health');
+  $('#health').textContent = h.provider+" · "+h.fastModel; }catch(e){ $('#health').textContent="offline"; } })();
+
+async function analyze(){
+  const goal=$('#goal').value.trim();
+  if(goal.length<5){ $('#status').textContent="Please enter a longer question."; return; }
+  $('#go').disabled=true; $('#status').innerHTML='<span class="spin">GlassBox is thinking — Bull vs Bear are arguing…</span>';
+  $('#result').classList.add('hidden'); $('#auditCard').classList.add('hidden');
+  try{
+    const d=await api('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({goalText:goal,asset:'SUI/USDC',risk:$('#risk').value})});
+    S.decision=d; renderDecision(d); $('#status').textContent='';
+  }catch(e){ $('#status').textContent='Error: '+e.message; }
+  finally{ $('#go').disabled=false; }
+}
+
+function li(arr){ return (arr||[]).map(p=>'<li>'+esc(p)+'</li>').join(''); }
+function esc(s){ return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+function renderDecision(d){
+  $('#bullPts').innerHTML=li(d.bull.points);
+  $('#bearPts').innerHTML=li(d.bear.points);
+  $('#bullReb').textContent=d.bull.rebuttal?('↳ '+d.bull.rebuttal):'';
+  $('#bearReb').textContent=d.bear.rebuttal?('↳ '+d.bear.rebuttal):'';
+  $('#bullConv').textContent='conviction '+d.bull.convictionRevised+'/5';
+  $('#bearConv').textContent='conviction '+d.bear.convictionRevised+'/5';
+  $('#resolved').innerHTML='<b>'+(d.winningSide==='bull'?'🐂 Bull':'🐻 Bear')+' side resolves it.</b> '+esc(d.whyResolved||'');
+  const v=$('#verdict'); v.textContent=d.verdict; v.className='v-big v-'+d.verdict;
+  $('#signal').textContent=d.signalBand+' · '+d.signalStrengthPct+'%';
+  $('#size').textContent=d.suggestedSizePct+'%';
+  $('#risknote').innerHTML='<b>Risk:</b> '+esc(d.riskNote||'');
+  $('#counter').innerHTML='<b>Counterfactual:</b> '+esc(d.counterfactual||'');
+  $('#blind').innerHTML='<b>Blind spots:</b> '+esc((d.blindSpots||[]).join('; '));
+  $('#result').classList.remove('hidden');
+  $('#prove').disabled=false; $('#prove').textContent='🔏 Prove it';
+}
+
+async function prove(){
+  $('#prove').disabled=true; $('#prove').textContent='Signing + writing to Walrus…';
+  try{
+    const a=await api('/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({decision:S.decision,goalText:$('#goal').value})});
+    S.audit=a;
+    $('#auditKvs').innerHTML =
+      'record hash &nbsp; <b>'+short(a.recordHash)+'</b><br>'+
+      'signature (origin) &nbsp; <b>'+short(a.signature)+'</b><br>'+
+      'public key &nbsp; <b>'+short(a.pubkey)+'</b><br>'+
+      'stored on &nbsp; <b>'+(a.sink==='walrus'?'Walrus (Sui)':'local')+'</b>'+
+      (a.blobId?' &nbsp; blob <b>'+short(a.blobId)+'</b>':'');
+    $('#auditCard').classList.remove('hidden');
+    $('#match').style.display='none'; $('#mismatch').style.display='none'; $('#tamperDetail').textContent='';
+  }catch(e){ $('#prove').textContent='Error: '+e.message; }
+  finally{ $('#prove').disabled=false; $('#prove').textContent='🔏 Proved'; }
+}
+
+async function verify(){
+  const v=await api('/api/verify/'+S.audit.recordId);
+  $('#mismatch').style.display='none';
+  const b=$('#match'); b.style.display='block';
+  b.textContent = (v.hashMatch && v.signatureValid)
+    ? '✅ MATCH — byte-for-byte identical, read back from '+(v.source==='walrus'?'Walrus':'the record')
+    : '⚠️ could not match';
+  $('#tamperDetail').textContent='';
+}
+
+async function alterRecord(){
+  const altered=JSON.parse(JSON.stringify(S.decision));
+  altered.verdict = altered.verdict==='BUY' ? 'AVOID' : 'BUY';      // change the AI's call
+  const r=await api('/api/rehash',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({decision:altered})});
+  $('#match').style.display='none';
+  const b=$('#mismatch'); b.style.display='block';
+  b.textContent='❌ MISMATCH — the chain catches it';
+  $('#tamperDetail').innerHTML =
+    'I changed the verdict to <b>'+altered.verdict+'</b> and re-hashed the record:<br>'+
+    'anchored hash &nbsp; <b>'+short(S.audit.recordHash)+'</b><br>'+
+    'altered record hash &nbsp; <b style="color:var(--bear)">'+short(r.recordHash)+'</b><br>'+
+    'They do not match — you cannot rewrite what the AI decided after it was anchored.';
+}
+</script>
+</body>
+</html>
