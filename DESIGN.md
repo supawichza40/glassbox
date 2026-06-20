@@ -2,6 +2,8 @@
 
 Diagrams for the v3 architecture (see `SPEC.md` for the contract). Mermaid renders in GitHub, Notion, and slides. Claim discipline applies here too: **tamper-evident**, never "tamper-proof"; signature proves **origin**, the Sui anchor proves **non-alteration + an independent timestamp**.
 
+> **Status (see `SPEC.md` → Build status):** shipped today over a **Python FastAPI** brain with a provider-agnostic LLM (currently `gemini-2.5-flash`) = `analyze`, `audit` (ed25519 sign + Walrus), `verify`, and the offline `verify-cli`. The **Sui on-chain anchor** and **DeepBook execute** shown below are **Tier-2 / roadmap** (`ANCHOR=none`, `EXECUTION=simulated` today). The served `server/glassbox/static/index.html` is the working frontend + demo fallback; codeplain-rendered React is the spec-first path.
+
 ---
 
 ## 1. Sequence — the golden path (decide → prove → verify)
@@ -12,9 +14,9 @@ Diagrams for the v3 architecture (see `SPEC.md` for the contract). Mermaid rende
 sequenceDiagram
     actor U as User
     participant FE as Frontend (codeplain/React)
-    participant BE as Brain Backend (Node/TS)
+    participant BE as Brain Backend (Python FastAPI)
     participant MK as Market Feed
-    participant LLM as LLM (Anthropic)
+    participant LLM as LLM (provider-agnostic; Gemini default)
     participant WAL as Walrus
     participant SUI as Sui
 
@@ -25,19 +27,19 @@ sequenceDiagram
     BE->>MK: fetch 5 features (closed candles)
     MK-->>BE: price, RSI, vol%, depth, drawdown
     Note over BE: freeze inputs · classify goal to enums
-    par Round 1 — openings (parallel, Haiku)
+    par Round 1 — openings (parallel)
         BE->>LLM: Bull opening (cite ONLY inputs)
     and
         BE->>LLM: Bear opening (cite ONLY inputs)
     end
-    par Round 2 — rebuttals (parallel, Haiku)
+    par Round 2 — rebuttals (parallel)
         BE->>LLM: Bull rebuts Bear + revised conviction
     and
         BE->>LLM: Bear rebuts Bull + revised conviction
     end
-    BE->>LLM: Arbiter resolves (Sonnet, temp 0)
+    BE->>LLM: Arbiter resolves (smart model)
     LLM-->>BE: verdict · counterfactual (numbers computed in code)
-    Note over BE: Zod validate · scrub PII echo · compute Signal Strength
+    Note over BE: validate JSON (1 repair retry) · scrub PII echo · compute Signal Strength
     BE-->>FE: Decision (grounded in frozen inputs)
     FE-->>U: debate · verdict · signal band · blind spots · disclaimer
     end
@@ -56,7 +58,7 @@ sequenceDiagram
 
     rect rgb(255,240,240)
     Note over U,SUI: 3 — VERIFY (the wow)
-    U->>FE: "Verify" / "Alter the record"
+    U->>FE: "Verify" / "Try to alter it"
     FE->>BE: GET /api/verify/:id
     BE->>WAL: fetch blob → recompute hash
     BE->>SUI: read checkpoint timestamp (independent)
@@ -75,7 +77,7 @@ sequenceDiagram
 flowchart TB
     U["User"] --> FE["Frontend — codeplain / React"]
 
-    subgraph BRAIN["Brain Backend (Node/TS) · ALL keys stay server-side"]
+    subgraph BRAIN["Brain Backend (Python FastAPI) · ALL keys stay server-side"]
         AN["/api/analyze"]
         AU["/api/audit  (hash · sign · anchor)"]
         VE["/api/verify"]
@@ -88,7 +90,7 @@ flowchart TB
     FE --> EX
 
     AN --> MK["Market feed (closed candles)"]
-    AN --> LLM["LLM: Anthropic / Gemini / FLock (switchable)"]
+    AN --> LLM["LLM: Gemini / OpenRouter / Ollama (switchable)"]
 
     subgraph PUBLIC["PUBLIC · anchored · PII-FREE"]
         WAL["Walrus blob (deletable=false)"]

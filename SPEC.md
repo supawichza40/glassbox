@@ -5,6 +5,15 @@
 Team: The Start of a Joke (Supavich + Orestis) · Encode Vibe Coding Hackathon · Submit Sun 21 Jun 12:00 BST.
 v3 folds in a 10-expert red-team (9 lenses + a financial-regulatory counsel) and 5 reconciled cross-lens conflicts. Locked decisions: primaries = **Sui + BGA + main finale**; FLock + Solvimon = narrative only; codeplain = frontend; lead = **retail-legible demo, B2B-compliance business line**.
 
+## ✅ Build status (current — supersedes the planning-stack specifics below)
+The spec below is the locked design *intent*. What is **built and proven live** as of submission:
+- **Shipped in Python, not Node/TS** — a FastAPI brain + a served demo UI (`server/`). Provider-agnostic LLM (`LLM_PROVIDER = gemini | openrouter | ollama`, currently `gemini-2.5-flash`), replacing the planned Anthropic Haiku/Sonnet split. JSON is validated + repair-retried in Python (not Zod); agents have safe-HOLD fallbacks.
+- **Tier 1 = DONE, end-to-end live:** `analyze → ed25519 sign → Walrus testnet write (real blob) → verify (MATCH) → tamper (MISMATCH)`. Bull/Bear/Arbiter rebuttal debate, cite-only-inputs, deterministic Signal Strength + size in `decision.py`.
+- **Independence shipped:** a standalone `verify_cli` reproduces hashMatch + signatureValid straight from Walrus with **no GlassBox server in the loop** (acceptance #6, minus the Sui-timestamp half — see below).
+- **Endpoints live:** `/api/health`, `/api/pubkey`, `/api/analyze`, `/api/audit`, `/api/verify/{id}`, `/api/rehash`. Pydantic input validation (min-length, risk enum).
+- **Demo-safety:** `DEMO_MODE` cache (canonical question instant + deterministic) + `DEMO.md` run-sheet + `?present` stage mode + a 4-lens-reviewed UI (`resources/ui_reference.md`). **67 tests + CI**, all mocked.
+- **Still Tier-2 / roadmap:** the **Sui on-chain anchor** (`ANCHOR=none` today — signature + Walrus give origin + storage; the on-chain *timestamp* half of acceptance #5/#6 awaits a funded wallet + pysui), the DeepBook `/api/execute` intent-token path, the live market feed, and end-to-end GDPR crypto-erase wiring. The recorded fallback video is the user's to capture.
+
 ## Claim discipline (read first — never violate)
 - Say **"tamper-evident"** and **"can't be altered after signing,"** NEVER "tamper-proof" / "provable to anyone" / "impossible to fake" (in app, slides, README, Devpost, or speech).
 - **Signature proves ORIGIN** ("GlassBox produced this"). **Sui anchor proves NON-ALTERATION + an independent TIMESTAMP** (a network/clock the auditee can't control). Independence comes from the chain, not the key.
@@ -15,16 +24,16 @@ v3 folds in a 10-expert red-team (9 lenses + a financial-regulatory counsel) and
 A retail-legible app: user enters a plain-English goal for SUI/USDC + risk. The server computes 5 real market features (closed candles, no lookahead), freezes them, and a Bull + Bear agent argue using ONLY those numbers; a Risk agent resolves into a Decision (verdict, vol-targeted size, a mechanical Signal Strength, a counterfactual, named blind-spots). The server hashes a PII-free record, signs it (ed25519), anchors the hash on Sui (independent timestamp) + stores the blob on Walrus, and exposes an offline verifier. The same record is what a fund hands its auditor (B2B line).
 
 ## Wow moment (network-free, local)
-Watch the AI argue → it decides → "Alter the record" → re-verify → loud red MISMATCH + diff. *"I change one word; it's caught. No one can rewrite an AI's decision after the fact — not even the fund being audited. We're not selling that the AI was right; we're selling that no one can quietly edit what it decided."*
+Watch the AI argue → it decides → "Try to alter it" → re-verify → loud red MISMATCH + fingerprint diff. *"I change one word; it's caught. No one can rewrite an AI's decision after the fact — not even the fund being audited. We're not selling that the AI was right; we're selling that no one can quietly edit what it decided."*
 
 ## Architecture
-codeplain builds the React frontend; a hand-wired Node/TS backend hosts agents + integrations behind env switches. Keys stay server-side.
+codeplain builds the React frontend (with the served `static/index.html` as the working reference + fallback); a **Python FastAPI** backend hosts agents + integrations behind env switches. Keys stay server-side.
 
 ```mermaid
 flowchart TD
   A["Goal + SUI/USDC + risk"] --> B["Frontend (codeplain/React)"]
   B -->|POST /api/analyze| C["Freeze 5 computed features (closed candles)"]
-  C --> D["Bull + Bear (parallel, Haiku) -> Risk synth (Sonnet, temp 0)"]
+  C --> D["Bull + Bear (parallel) + one rebuttal round -> Risk Arbiter synth (provider-agnostic; currently gemini-2.5-flash)"]
   D --> E["Decision (cites ONLY frozen inputs)"]
   E -->|POST /api/audit| F["PII-free AnchoredDecision -> canonical hash -> ed25519 sign -> Walrus blob -> Sui anchor event"]
   E --> G["ErasableRecord (encrypted goal text, crypto-erasable) - off chain"]
@@ -34,10 +43,11 @@ flowchart TD
 
 ## Failure-proof switches (`.env`)
 ```
-LLM_PROVIDER = anthropic | gemini    # anthropic default (Gemini billing-blocked + must be rotated)
-AUDIT_SINK   = walrus | local        # local = pre-written blob for the demo
-ANCHOR       = sui | tsa | none       # sui = on-chain timestamp (primary); tsa = RFC 3161 fallback
+LLM_PROVIDER = gemini | openrouter | ollama   # gemini default (currently gemini-2.5-flash)
+AUDIT_SINK   = walrus | local        # walrus default; local = offline fallback / pre-written blob
+ANCHOR       = sui | tsa | none       # none today (Tier-2: sui on-chain timestamp; tsa = RFC 3161 fallback)
 EXECUTION    = simulated | deepbook    # simulated default; NO auto-exec path exists at all
+DEMO_MODE    = 0 | 1                   # 1 = canonical pitch question served instant + deterministic
 ```
 
 ## Data model (two objects — GDPR-safe)
@@ -95,7 +105,7 @@ Monotone non-increasing in risk by construction (`d/dv = -a <= 0`); high vol -> 
 ## Backend endpoints
 | Path | Notes |
 |---|---|
-| `POST /api/analyze` | Freeze 5 features -> Bull+Bear (parallel Haiku) -> Risk synth (Sonnet, temp 0). Zod-validate, 1 repair retry, safe-HOLD fallback. Goal text delimited + injection-guarded + classified to enums server-side. Cite-only-inputs enforced. |
+| `POST /api/analyze` | Freeze 5 features -> Bull+Bear (parallel) + one rebuttal round -> Risk Arbiter synth (provider-agnostic). Pydantic input validation; JSON validate + 1 repair retry; safe-HOLD fallback. Goal text delimited + injection-guarded. Cite-only-inputs enforced. |
 | `POST /api/audit` | Build PII-free AnchoredDecision (scrub free text) -> canonical hash -> ed25519 sign -> Walrus `deletable=false`+epochs -> emit Sui anchor event {recordHash,pubkey,blobId}. Store ErasableRecord (encrypted) separately. |
 | `GET /api/verify/:id` | Server: refetch blob, recompute hash, check signature (origin), resolve anchorTxDigest on Sui + read checkpoint timestamp (independence). Returns {hashMatch, signatureValid, anchorTimestamp, anchorValid}. |
 | `POST /api/execute/intent` | Returns {intentToken, clampedSizeUsd, asset, expiresAt:+60s}. UI shows confirm modal. |

@@ -41,7 +41,7 @@ You type a plain-English goal for **SUI/USDC** ("Should I hold SUI for 2 weeks? 
 - The Bull and Bear genuinely disagree on screen, each citing the same frozen numbers.
 - The Arbiter picks a side, states *why*, and names what it can't see.
 - Hit **Verify** → green **MATCH** (re-fetched independently from Walrus).
-- Hit **Alter the record** → flip one field → red **MISMATCH**.
+- Hit **Try to alter it** → flip one field → red **MISMATCH**, with the two diverging fingerprints shown side by side.
 
 That last beat is the pitch: *the record fought back.* You cannot quietly rewrite history.
 
@@ -62,6 +62,8 @@ analyze  →  ed25519 sign  →  Walrus write (real blob)  →  verify (MATCH)  
 - **tamper** — alter one field of the record and re-verify → **MISMATCH** detected.
 
 Run `python3 -m glassbox.audit_smoke` to reproduce all five steps yourself (see "Run it").
+
+On top of the brain: a **FastAPI server + a redesigned demo UI** (verdict-hero, staged reveal, the MISMATCH climax with a visible fingerprint diff, full accessibility), a **standalone independent verifier** (`verify_cli` — checks a record straight from Walrus with *no GlassBox server in the loop*), an instant **demo-mode cache**, and **67 tests + CI** (all LLM/network mocked).
 
 ---
 
@@ -131,14 +133,36 @@ python3 -m glassbox.audit_smoke
 #  4) tamper ...         MISMATCH detected
 ```
 
-**Run the API** (what the frontend calls):
+**Run the server + demo UI** (the whole flow in a browser):
 
 ```bash
 cd server && uvicorn glassbox.main:app --reload --port 8787
-#  GET  /api/health             provider + pipeline switches
-#  POST /api/analyze            goalText, asset, risk  → Decision
-#  POST /api/audit              decision               → recordHash, signature, blobId
-#  GET  /api/verify/{recordId}  → hashMatch, signatureValid
+#  open http://localhost:8787/            full demo UI  (add ?present for projector type)
+#  GET  /api/health                       provider + pipeline switches
+#  GET  /api/pubkey                        published ed25519 verifying key
+#  POST /api/analyze       goalText, asset, risk  → Decision
+#  POST /api/audit         decision               → recordHash, signature, blobId
+#  GET  /api/verify/{recordId}            → hashMatch, signatureValid
+#  POST /api/rehash        decision               → recordHash  (powers the tamper MISMATCH)
+```
+
+**Demo mode** — instant, deterministic canonical run for the live pitch (no ~8s wait):
+
+```bash
+python3 -m glassbox.seed_demo                 # bake the canonical Decision
+DEMO_MODE=1 uvicorn glassbox.main:app --port 8787
+```
+
+**Verify a record independently** — no GlassBox server needed:
+
+```bash
+python3 -m glassbox.verify_cli <blobId> <signature_hex> [pubkey_hex]   # → AUTHENTIC / not
+```
+
+**Run the tests** (67, all mocked; same suite as CI):
+
+```bash
+cd server && python3 -m pytest -q
 ```
 
 > The market feed is currently a **deterministic dev snapshot** (frozen so the audit bytes are reproducible). Swapping in a live closed-candle CoinGecko/Binance + DeepBook feed is a single-function change in `market.py` — the rest of the pipeline is feed-agnostic.
@@ -149,7 +173,7 @@ cd server && uvicorn glassbox.main:app --reload --port 8787
 
 The frontend is built **spec-first** with [codeplain](https://codeplain.ai): **`glassbox.plain` is the source of truth, and the generated React is a build artifact.** You change the product by editing the spec and regenerating — not by hand-patching generated components. The Python brain stays a stable service the generated frontend calls over HTTP, so the spec describes *behavior and screens* while the proven backend handles cryptography and chain I/O.
 
-`SPEC.md`, `AGENTS.md`, and `DESIGN.md` at the repo root capture the locked product, the debate-agent contract, and the design system.
+`SPEC.md`, `AGENTS.md`, and `DESIGN.md` at the repo root capture the locked product, the debate-agent contract, and the design system. `resources/ui_reference.md` is the design brief the renderer reads (distilled from a 4-lens design review), and the served `static/index.html` is the working reference implementation + demo fallback. `DEMO.md` is the stage run-sheet.
 
 ---
 

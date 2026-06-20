@@ -29,7 +29,7 @@ requires:
 - :AuditRecord: is the tamper-evident proof of a :Decision:. :AuditRecord: has the following attributes
   - Record Hash - a hash of the decision record.
   - Signature - proves GlassBox produced the record (origin).
-  - Sui Anchor - a Sui on-chain timestamp proving the record was not altered after signing (independence). May show the anchor transaction and its timestamp.
+  - Sui Anchor - when present, a Sui on-chain timestamp proving the record was not altered after signing (independence); may show the anchor transaction and its timestamp. (Tier-2 — may be empty today, in which case rely on the Signature + Walrus Blob Id.)
   - Walrus Blob Id - where the record is stored, or empty when stored locally.
 
 - :EvidenceCount: is the number of audit-grade records :User: has retained. Initially :EvidenceCount: is 0 and increases by 1 each time a :Decision: is proved.
@@ -37,6 +37,7 @@ requires:
 - :AnalyzeEndpoint: is "POST /api/analyze" that turns a :Goal: into a :Decision:.
 - :AuditEndpoint: is "POST /api/audit" that turns a :Decision: into an :AuditRecord:.
 - :VerifyEndpoint: is "GET /api/verify/{Record Id}" that returns the stored :Decision: and whether it still matches.
+- :RehashEndpoint: is "POST /api/rehash" that hashes a (possibly altered) :Decision: and returns its Record Hash — used to demonstrate that altering the record changes its fingerprint.
 
 ***implementation reqs***
 > Implementation requirements are defined in 'typescript-react-app-template'.
@@ -48,19 +49,21 @@ requires:
 
 ***functional specs***
 
-- Show the header of :App: with the name "GlassBox" and the tagline "Explainable to you. Tamper-evident for anyone.". Also show :EvidenceCount: as "Evidence records: N retained".
+- Show the header of :App: with the name "GlassBox" and the tagline "An AI Bull and Bear debate your trade — then we lock the verdict so it can't be quietly rewritten.". Show a 3-step guide: "1. Ask → 2. Get a verdict → 3. Prove it can't be faked". Also show :EvidenceCount: as "Evidence records: N retained".
+
+> The visual design, layout, staging, and accessibility for all of the below are specified in "resources/ui_reference.md" (the design brief, distilled from a 4-lens design review). Follow it: projector-readable type, a staged reveal, the mismatch as the visual climax, and accessibility — screen-reader live regions for results and banners, visible keyboard focus, non-colour cues, and respect for reduced-motion. "server/glassbox/static/index.html" is the working reference implementation.
 
 - Show a standing disclaimer beneath every :Decision: with this exact text: "GlassBox is an educational and analytical tool. It does not provide personalised or financial advice. SUI/USDC is high-risk and largely unregulated; you could lose all the money you put in. 'Signal strength' is a mechanical score, not a probability of profit. You are solely responsible for any order you place."
 
 - :User: should be able to enter a :Goal: (Text, Asset fixed to "SUI/USDC", Risk Tolerance from the three options) and submit it. Only a valid :Goal: can be submitted. If the Text is shorter than 5 characters, show an inline error and do not submit.
 
-- On submit, call :AnalyzeEndpoint: and show a "GlassBox is thinking" loading state. When the :Decision: returns, render it as: the Bull Case and the Bear Case side by side (the debate); then the Winning Side line that resolves the debate; then the Inputs the analysis used; then the Risk Note; then the Verdict; then the Signal Strength as a band ("Low"/"Medium"/"High") labelled "not a probability of profit"; then the Counterfactual; then the Blind Spots.
+- On submit, call :AnalyzeEndpoint: and show a loading state that shows progress (not a static spinner) while the agents debate. When the :Decision: returns, render it leading with the Verdict as a large hero element, together with the Signal Strength band ("Low"/"Medium"/"High") labelled "rule-based, not a probability of profit" and the suggested position size labelled "of your portfolio"; then the Winning Side line that resolves the debate; then the Bull Case and Bear Case side by side (the debate); then, behind a "Why you should doubt this" expander, the Risk Note, the Counterfactual, and the Blind Spots, and the Inputs the analysis used. Reveal the debate first, then the verdict a moment later so it gets its own focus.
 
-- :User: should be able to click a "Prove it" button on a :Decision:. This calls :AuditEndpoint:, increases :EvidenceCount: by 1, and shows the resulting :AuditRecord: (the Record Hash, that it was signed, and the Sui Anchor).
+- :User: should be able to click a "Prove it" button on a :Decision:. This calls :AuditEndpoint:, increases :EvidenceCount: by 1, and shows the resulting :AuditRecord: as a labelled receipt: a plain-English line explaining that GlassBox signed this exact decision and wrote its fingerprint to Walrus on Sui, so a single changed character won't match; then the Record Hash, that it was signed (origin), the Walrus storage shown as a chip, and the Sui Anchor when present.
 
-- :User: should be able to click a "Verify" button on an :AuditRecord:. This calls :VerifyEndpoint: and shows whether the stored record still matches, as "MATCH" or "MISMATCH", together with the Sui Anchor timestamp.
+- :User: should be able to click a "Verify" button on an :AuditRecord:. This calls :VerifyEndpoint: and shows whether the stored record still matches, as a clear "VERIFIED" (match) or "TAMPER DETECTED" (mismatch) banner that does not rely on colour alone, together with the Sui Anchor timestamp when present.
 
-- :User: should be able to click an "Alter the record" button that changes one value in a local copy of the :Decision: and re-runs verification, which must then show a clear "MISMATCH" with the changed value highlighted.
+- :User: should be able to click a "Try to alter it" button that changes one value in a local copy of the :Decision: and calls :RehashEndpoint:, which must then show a clear "TAMPER DETECTED" mismatch with the anchored fingerprint and the new altered fingerprint shown side by side so the divergence is visible. This is the key moment — make it the largest, most prominent state.
 
 - Never use the words "tamper-proof" or "provable to anyone" anywhere in :App:. Use "tamper-evident" and "verify".
 

@@ -16,7 +16,7 @@ GlassBox is an **evidence layer**, not a better trader. You enter a plain-Englis
 ### The demo (60-second wow)
 1. Type a goal → the Bull and Bear **argue on screen**, each citing the same frozen numbers; the Arbiter picks a side and names what it can't see.
 2. Click **Verify** → re-fetch the record independently from Walrus → green **MATCH**.
-3. Click **Alter the record** → flip one field → red **MISMATCH**. *The record fought back — you cannot quietly rewrite history.*
+3. Click **Try to alter it** → flip one field → red **MISMATCH**, the two diverging fingerprints shown side by side. *The record fought back — you cannot quietly rewrite history.*
 
 ### Why it wins
 - **A real, undeniable wow** that maps to a real compliance need: legible AI reasoning **plus** a record that proves it wasn't altered.
@@ -28,10 +28,10 @@ GlassBox is an **evidence layer**, not a better trader. You enter a plain-Englis
 - **Brain:** Python **FastAPI**; multi-agent debate (Bull/Bear/Risk Arbiter); deterministic scoring in `decision.py`.
 - **LLM:** provider-agnostic switch — **gemini | openrouter | ollama** (currently **Gemini 2.5-flash**).
 - **Crypto/chain:** SHA-256 + **ed25519** + AES-GCM (`cryptography`); **Walrus testnet** blob storage; **Sui** on-chain anchor (Tier 2).
-- **Frontend:** **codeplain** spec-first — `glassbox.plain` → React (spec is source of truth, generated code is a build artifact).
+- **Frontend:** a served **demo UI** (verdict-hero, staged reveal, the MISMATCH climax with a fingerprint diff, full accessibility) — the working reference + demo fallback; **codeplain** spec-first (`glassbox.plain` → React, spec is source of truth) is the generated path, with `resources/ui_reference.md` as the design brief.
 
 ### What's real vs roadmap
-**Real & proven live (end-to-end):** `analyze → ed25519 sign → Walrus write (real blob) → verify (MATCH) → tamper (MISMATCH)`, reproducible via `python3 -m glassbox.audit_smoke`. Full debate, signing, real Walrus-testnet storage, and independent re-fetch verification all working today.
+**Real & proven live (end-to-end):** `analyze → ed25519 sign → Walrus write (real blob) → verify (MATCH) → tamper (MISMATCH)`, reproducible via `python3 -m glassbox.audit_smoke`. On top of it: a **FastAPI server + redesigned demo UI**, a **standalone independent verifier** (`verify_cli` — verifies a record straight from Walrus with *no GlassBox server in the loop*, validated live), an instant **demo-mode cache** for the pitch, and **67 tests + CI** (all mocked).
 **Roadmap:** live closed-candle market feed (one function in `market.py`; currently a deterministic dev snapshot), the Sui on-chain anchor wired from Tier-2 to default-on, mainnet, and the generated codeplain UI over the proven brain.
 
 ### Honest caveats

@@ -2,6 +2,8 @@
 
 The multi-agent design: roster, interaction, per-agent prompt contracts, and guardrails. Companion to `SPEC.md` (contract) and `DESIGN.md` (diagrams). This is the `/agent-design` deliverable.
 
+> **✅ Implemented** in `server/glassbox/agents.py` (preamble, openings, rebuttals, Arbiter, safe-fallbacks) + `decision.py` (deterministic post-processing). The design below matches the build; the only change from the original plan is the **model**: now **provider-agnostic** (`fast` + `smart` roles routed by `LLM_PROVIDER`), currently `gemini-2.5-flash` for both — read "Haiku" as the **fast** role and "Sonnet" as the **smart** role throughout.
+
 ## Core principle (why this is defensible)
 **Agents reason; code computes the numbers.** The LLM agents argue and resolve a verdict, but **Signal Strength, position size, and the baseline check are deterministic code** — never LLM output. This is what stops "hallucinated confidence" and makes every number reproducible and auditable. Agents may cite **only** the computed `INPUTS`; they never invent figures.
 
@@ -12,11 +14,11 @@ Because the 5 `INPUTS` are **frozen** (auditability + no-lookahead), there is no
 
 ```mermaid
 flowchart LR
-    IN["Inputs (computed, frozen)"] --> B1["Bull: opening (Haiku)"]
-    IN --> R1["Bear: opening (Haiku)"]
-    R1 -- "case + conviction" --> B2["Bull: rebuttal (Haiku)"]
-    B1 -- "case + conviction" --> R2["Bear: rebuttal (Haiku)"]
-    B2 -- "rebuttal + revised conviction" --> ARB["Arbiter (Sonnet)"]
+    IN["Inputs (computed, frozen)"] --> B1["Bull: opening (fast model)"]
+    IN --> R1["Bear: opening (fast model)"]
+    R1 -- "case + conviction" --> B2["Bull: rebuttal (fast model)"]
+    B1 -- "case + conviction" --> R2["Bear: rebuttal (fast model)"]
+    B2 -- "rebuttal + revised conviction" --> ARB["Arbiter (smart model)"]
     R2 -- "rebuttal + revised conviction" --> ARB
     IN --> ARB
     ARB -- "winningSide · verdict · riskNote · counterfactual · blindSpots" --> CODE["Deterministic post-process (code)"]
@@ -24,9 +26,9 @@ flowchart LR
     CODE --> DEC["Decision (validated, grounded)"]
 ```
 
-- **Round 1 — openings:** Bull + Bear in **parallel** (Haiku) → each `{points[2], convictionScore 0-5}`.
-- **Round 2 — rebuttals:** each agent reads the other's opening and writes **one** rebuttal + a **revised** conviction, in **parallel** (Haiku). No new facts — engagement only.
-- **Arbiter** (Sonnet) resolves using both openings + both rebuttals.
+- **Round 1 — openings:** Bull + Bear in **parallel** (fast model) → each `{points[2], convictionScore 0-5}`.
+- **Round 2 — rebuttals:** each agent reads the other's opening and writes **one** rebuttal + a **revised** conviction, in **parallel** (fast model). No new facts — engagement only.
+- **Arbiter** (smart model) resolves using both openings + both rebuttals.
 - **Code layer** computes Signal Strength (from the **revised** convictions) + size, runs the baseline check, validates, assembles `Decision`.
 - 3 round-trips, all `temperature: 0`. Live ~15–18s; the demo replays a **cached** canonical run (see Guardrails).
 
@@ -59,7 +61,7 @@ RULES (all agents):
 - Output ONLY valid JSON matching the schema. No prose, no markdown fences, no preamble.
 ```
 
-## Agent 1 — Bull · model: Haiku · temp 0
+## Agent 1 — Bull · model: fast role (currently gemini-2.5-flash) · temp 0
 
 **Opening** — schema `{ "points": [string, string], "convictionScore": int 0-5 }`
 ```
@@ -81,7 +83,7 @@ INPUTS: {inputs_json}
 Return JSON: { "rebuttal": "...", "revisedConviction": 0-5 }
 ```
 
-## Agent 2 — Bear · model: Haiku · temp 0
+## Agent 2 — Bear · model: fast role (currently gemini-2.5-flash) · temp 0
 
 **Opening** — schema `{ "points": [string, string], "convictionScore": int 0-5 }`
 ```
@@ -103,7 +105,7 @@ INPUTS: {inputs_json}
 Return JSON: { "rebuttal": "...", "revisedConviction": 0-5 }
 ```
 
-## Agent 3 — Arbiter · model: Sonnet · temp 0
+## Agent 3 — Arbiter · model: smart role (currently gemini-2.5-flash) · temp 0
 **Role:** resolve the debate against the inputs; produce verdict + narrative. **Emits no numbers** (signal strength + size are code).
 **Schema:** `{ "winningSide": "bull"|"bear", "whyResolved": string, "verdict": "BUY"|"HOLD"|"AVOID", "riskNote": string, "counterfactual": string, "blindSpots": [string] }`
 ```
@@ -140,17 +142,17 @@ RISK_BAND: {risk_band}
 ## Cross-cutting guardrails
 | Guardrail | How |
 |---|---|
-| **Structured output** | Anthropic: forced tool `emit_*` with JSON schema as `input_schema`. Gemini: `responseSchema`. Never prompt-and-parse-prose. |
-| **Validation + repair** | Zod `safeParse` on every agent response → on fail, 1 repair retry feeding the validator error → on 2nd fail, a hardcoded safe **HOLD** Decision (UI never breaks). |
-| **Injection defense** | `goal_text` only inside `<user_goal>` (data, not instructions) + the preamble rule + a regex flag on `ignore|always (buy|say)|disregard|system prompt`. |
-| **PII scrub** | Before anchoring, reject/strip any agent text that echoes `goal_text` (keeps the AnchoredDecision actually PII-free). |
-| **Determinism** | `temperature: 0`. The canonical demo goal serves a **cached** Decision (openings + rebuttals + resolution all replayed); live model is the wow, cache is the guarantee. |
-| **Provider parity** | One `LLMAdapter.analyze(prompt, schema) → validated JSON`, per-provider impl. Pre-stage, run the same inputs through Anthropic AND Gemini; both must be 100% schema-valid. FLock = test-before-stage, never first-touch live. |
-| **Latency** | 3 round-trips (openings ∥, rebuttals ∥, Arbiter) on Haiku/Haiku/Sonnet → ~15–18s live. Demo replays cached, so stage latency is ~0. (Acceptance `<12s` applies to the single-pass live path; the rebuttal round relaxes it to ~18s live.) |
+| **Structured output** | Strict JSON-only prompt + `response_format: json_object` where the provider supports it; a robust parser strips code fences / extracts the `{…}` object. Never trusts free prose. |
+| **Validation + repair** | JSON parse + shape check on every agent response → on fail, **1 repair retry** → on 2nd fail, a hardcoded safe **HOLD** Decision (UI never breaks). Implemented in `llm.chat_json` + `agents._safe`. |
+| **Injection defense** | `goal_text` only inside `<user_goal>` (data, not instructions) + the preamble rule. |
+| **PII scrub** | Before anchoring, the AnchoredDecision uses enum/numeric inputs only and never embeds the raw goal text. |
+| **Determinism** | `temperature: 0`. With `DEMO_MODE=1` the canonical demo goal serves a **cached** Decision (openings + rebuttals + resolution all replayed); live model is the wow, cache is the guarantee. |
+| **Provider parity** | One `chat_json(system, user, role)`, per-provider impl (`gemini` \| `openrouter` \| `ollama`). Pre-stage, run the same inputs through the active provider + at least one fallback; all must be schema-valid. |
+| **Latency** | 3 round-trips (openings ∥, rebuttals ∥, Arbiter) on fast/fast/smart → ~15–18s live on the free tier. `DEMO_MODE` replays cached, so stage latency is ~0 (~6ms). |
 
 ## Failure modes → fallback
 - LLM refuses / safety-blocks → forced tool output resists it; empty candidate → repair → safe HOLD.
-- Provider down → `LLM_PROVIDER` switch (anthropic default).
-- Off-script / contradictory debate → caching locks the hand-picked canonical run for the demo.
-- Hallucinated number slips through → numeric-grounding check catches it pre-audit.
-- Rebuttal adds a round-trip → if the live path must stay <12s for non-demo use, the rebuttal round is feature-flagged (`DEBATE=rebuttal|single`) and can drop to single-pass.
+- Provider down → `LLM_PROVIDER` switch (gemini default; openrouter / ollama fallback).
+- Off-script / contradictory debate → `DEMO_MODE` cache locks the hand-picked canonical run for the demo.
+- Hallucinated number slips through → grounding warnings surfaced in `decision.py` pre-audit.
+- Each agent call is wrapped in `_safe(...)` → any single failure degrades to a safe partial, never a crash.
