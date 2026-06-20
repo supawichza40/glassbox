@@ -6,206 +6,298 @@
 <title>GlassBox — tamper-evident AI decisions</title>
 <style>
   :root{
-    --bg:#0a0d14; --card:#141a24; --card2:#1b2330; --line:#27313f;
-    --ink:#e7edf5; --muted:#8a97a8; --accent:#7c5cff; --accent2:#21d4c4;
-    --bull:#28c76f; --bear:#ff5b6e; --warn:#ffb84d;
+    --bg:#090c12; --surface-1:#121821; --surface-2:#19212e; --line:#2a3543;
+    --ink:#eef3fa; --ink-2:#c0cbda; --muted:#8a97a8; --faint:#aab6c6;
+    --brand:#7c5cff; --action:#2563eb; --accent2:#21d4c4;
+    --bull:#2ed573; --bear:#ff4d5e; --warn:#ffc24d; --ok:#2ed573;
+    --fs-base:17px; --r-sm:8px; --r-md:12px; --r-lg:16px;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,"JetBrains Mono",monospace;
+    --ease:cubic-bezier(.2,.9,.2,1);
   }
+  body.present{ --fs-base:20px }
   *{box-sizing:border-box}
-  body{margin:0;background:radial-gradient(1200px 600px at 50% -10%, #161d2b 0%, var(--bg) 60%);
-       color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
-  .wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px}
-  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
-  h1{font-size:26px;margin:0;letter-spacing:-.02em}
-  .tag{color:var(--muted)}
-  .pill{font-size:11px;color:var(--accent2);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px}
-  label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
-  textarea,select{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--ink);
-       border-radius:10px;padding:11px 12px;font:inherit;outline:none}
-  textarea{resize:vertical;min-height:60px}
-  .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;align-items:flex-end}
-  .row>div{flex:1;min-width:140px}
-  button{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 18px;
-       font:inherit;font-weight:600;cursor:pointer}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -12%, #16203046 0%, var(--bg) 60%);
+       color:var(--ink);font:var(--fs-base)/1.55 var(--sans)}
+  .wrap{max-width:1040px;margin:0 auto;padding:30px 22px 90px}
+  a{color:var(--accent2)}
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  h1{font-size:30px;margin:0;letter-spacing:-.02em}
+  .pill{font-size:13px;color:var(--accent2);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
+  .pill .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:7px;vertical-align:1px}
+  .pill.online .dot{background:var(--bull);box-shadow:0 0 8px var(--bull)}
+  .pill.off .dot{background:var(--bear)}
+  .lead{color:var(--ink-2);font-size:17px;margin:10px 0 0}
+  .steps{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 2px;color:var(--muted);font-size:14px}
+  .steps b{color:var(--ink)}
+  .card{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-lg);
+        padding:22px;margin-top:18px;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+  h2{font-size:20px;margin:0 0 12px;letter-spacing:-.01em}
+  label{display:block;font-size:13px;color:var(--muted);margin:0 0 7px;letter-spacing:.02em}
+  textarea,select{width:100%;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);
+       border-radius:var(--r-sm);padding:12px 13px;font:inherit;outline:none;min-height:46px}
+  textarea{resize:vertical;min-height:64px}
+  .chip{display:inline-flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);
+        border-radius:var(--r-sm);padding:12px 13px;color:var(--ink);min-height:46px}
+  .chip small{color:var(--muted)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;align-items:flex-end}
+  .row>div{flex:1;min-width:150px}
+  button{background:var(--action);color:#fff;border:0;border-radius:var(--r-sm);padding:13px 22px;
+       font:600 var(--fs-base)/1 var(--sans);cursor:pointer;min-height:46px;transition:filter .15s,transform .05s}
+  button:hover{filter:brightness(1.1)} button:active{transform:translateY(1px)}
   button.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
-  button:disabled{opacity:.5;cursor:default}
-  .debate{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
-  .side{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--card2)}
-  .side h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.08em}
-  .bull h3{color:var(--bull)} .bear h3{color:var(--bear)}
-  .side ul{margin:0;padding-left:18px} .side li{margin-bottom:7px}
-  .reb{margin-top:10px;font-size:13px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
-  .conv{font-size:11px;color:var(--muted);margin-top:8px}
-  .verdict{display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin:16px 0 6px}
-  .v-big{font-size:30px;font-weight:800;letter-spacing:-.02em}
+  button:disabled{opacity:.55;cursor:default;filter:none}
+  :focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+  .status{margin-top:11px;color:var(--ink-2);min-height:22px}
+  .status .bar{height:4px;border-radius:3px;margin-top:8px;background:
+       linear-gradient(90deg,transparent,var(--accent2),transparent);background-size:40% 100%;
+       background-repeat:no-repeat;animation:slide 1.1s linear infinite}
+  @keyframes slide{from{background-position:-40% 0}to{background-position:140% 0}}
+
+  /* verdict hero */
+  .hero{margin:2px 0 6px}
+  .verdict{font-size:64px;font-weight:800;line-height:1;letter-spacing:-.03em}
   .v-BUY{color:var(--bull)} .v-HOLD{color:var(--warn)} .v-AVOID{color:var(--bear)}
-  .meta{color:var(--muted);font-size:13px}
-  .band{display:inline-block;border:1px solid var(--line);border-radius:8px;padding:3px 8px;font-size:12px}
-  .kvs{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--muted);
-       word-break:break-all;line-height:1.7}
-  .kvs b{color:var(--ink)}
-  .disc{font-size:11px;color:#6f7c8d;margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
-  .banner{margin-top:14px;border-radius:12px;padding:16px;text-align:center;font-size:22px;font-weight:800;
-          display:none;animation:pop .25s ease}
-  .match{background:rgba(40,199,111,.12);border:1px solid var(--bull);color:var(--bull)}
-  .mismatch{background:rgba(255,91,110,.12);border:1px solid var(--bear);color:var(--bear)}
-  @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
-  .muted{color:var(--muted)} .hidden{display:none}
-  .spin{color:var(--accent2)}
-  @media(max-width:620px){.debate{grid-template-columns:1fr}}
+  .glyph{font-weight:800;margin-right:6px}
+  .hero-row2{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .sigchip{font-size:18px;border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 13px}
+  .meta{color:var(--ink-2);font-size:15px} .muted{color:var(--muted)}
+  .resolved{margin:14px 0 4px;color:var(--ink-2)}
+
+  /* debate */
+  .debate{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+  .side{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:16px}
+  .side.bull{border-top:3px solid var(--bull)} .side.bear{border-top:3px solid var(--bear)}
+  .side h3{display:flex;align-items:center;gap:9px;margin:0 0 10px;font-size:14px;
+       text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+  .bull h3{color:var(--bull)} .bear h3{color:var(--bear)}
+  .sq{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .bull .sq{background:var(--bull);box-shadow:0 0 9px var(--bull)} .bear .sq{background:var(--bear);box-shadow:0 0 9px var(--bear)}
+  .side ul{margin:0;padding-left:19px} .side li{margin-bottom:8px;font-size:16px}
+  .reb{margin-top:11px;font-size:14px;color:var(--muted);border-top:1px dashed var(--line);padding-top:9px}
+  .conv{font-size:13px;color:var(--muted);margin-top:9px}
+
+  details.why{margin-top:14px;border:1px solid var(--line);border-radius:var(--r-md);padding:8px 14px;background:var(--surface-2)}
+  details.why summary{cursor:pointer;color:var(--ink-2);font-size:15px}
+  details.why .meta{margin:8px 0}
+  .disc{font-size:13px;color:var(--faint);margin-top:14px;border:1px solid var(--line);border-radius:var(--r-sm);
+        padding:11px 13px;background:#0e141d}
+  .disc b{color:var(--ink-2)}
+
+  /* proof receipt */
+  .why-line{color:var(--ink-2);margin:0 0 12px;font-size:15px}
+  .receipt{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:15px;font:14px/1.9 var(--mono)}
+  .receipt .k{color:var(--muted)} .receipt b{color:var(--ink)}
+  .chainchip{display:inline-flex;align-items:center;gap:6px;color:var(--accent2);border:1px solid var(--accent2);
+       border-radius:999px;padding:2px 10px;font:13px var(--sans)}
+
+  /* banners — asymmetric, climax-weighted */
+  .banner{margin-top:16px;border-radius:var(--r-md);padding:24px;text-align:center;font-weight:800;
+          border:2px solid;display:none}
+  .match{color:var(--ok);border-color:var(--ok);background:rgba(46,213,115,.14);font-size:38px;box-shadow:0 0 24px rgba(46,213,115,.30)}
+  .mismatch{color:var(--bear);border:2px dashed var(--bear);background:rgba(255,77,94,.18);font-size:46px;box-shadow:0 0 30px rgba(255,77,94,.45)}
+  .banner small{display:block;font:500 15px/1.4 var(--sans);color:var(--ink-2);margin-top:6px}
+  .hashdiff{display:none;margin-top:14px;font:18px/1.7 var(--mono)}
+  .hashdiff .lbl{color:var(--muted);font:13px var(--sans);letter-spacing:.04em}
+  .hashdiff .a b{color:var(--ink)} .hashdiff .b b{color:var(--bear);text-shadow:0 0 12px rgba(255,77,94,.5)}
+
+  .reveal{animation:rise .45s var(--ease) both}
+  .pop{animation:pop .5s var(--ease) both}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+  .shake{animation:pop .35s var(--ease) both, shake .42s .12s}
+
+  /* loading skeleton */
+  #skeleton{display:none;margin-top:6px}
+  .sk{height:120px;border-radius:var(--r-md);background:linear-gradient(90deg,#19212e,#222c3c,#19212e);
+      background-size:200% 100%;animation:shimmer 1.2s infinite}
+  @keyframes shimmer{to{background-position:-200% 0}}
+
+  .hidden{display:none}
+  @media(max-width:640px){.debate,#skeleton .debate{grid-template-columns:1fr}.verdict{font-size:52px}}
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;scroll-behavior:auto}
+    .status .bar{background-position:0 0}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
+<main class="wrap">
   <header>
     <h1>GlassBox</h1>
-    <span class="tag">Explainable to you. <b>Tamper-evident</b> for anyone.</span>
-    <span class="pill" id="health">…</span>
+    <span class="pill" id="health"><span class="dot"></span><span id="healthTxt">connecting…</span></span>
   </header>
+  <p class="lead">An AI Bull and Bear debate your trade — then we lock the verdict so it <b>can't be quietly rewritten</b>.</p>
+  <div class="steps"><span><b>1.</b> Ask</span><span>→</span><span><b>2.</b> Get a verdict</span><span>→</span><span><b>3.</b> Prove it can't be faked</span></div>
 
-  <div class="card">
-    <label>Your investing question</label>
-    <textarea id="goal">Should I hold SUI for the next 2 weeks? I'm moderate risk.</textarea>
+  <section class="card" aria-labelledby="askH">
+    <h2 id="askH" class="muted" style="font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Your investing question</h2>
+    <textarea id="goal" autofocus aria-label="Your investing question">Should I hold SUI for the next 2 weeks? I'm moderate risk.</textarea>
     <div class="row">
-      <div>
-        <label>Asset</label>
-        <select id="asset" disabled><option>SUI/USDC</option></select>
-      </div>
-      <div>
-        <label>Risk tolerance</label>
-        <select id="risk"><option>low</option><option selected>moderate</option><option>high</option></select>
-      </div>
-      <div style="flex:0 0 auto">
-        <button id="go" onclick="analyze()">Analyze</button>
+      <div><label>Asset</label><div class="chip">SUI/USDC <small>· more soon</small></div></div>
+      <div><label for="risk">Risk tolerance</label>
+        <select id="risk"><option>low</option><option selected>moderate</option><option>high</option></select></div>
+      <div style="flex:0 0 auto"><button id="go" onclick="analyze()">Analyze ⌘↵</button></div>
+    </div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+  </section>
+
+  <div id="skeleton"><div class="debate"><div class="sk"></div><div class="sk"></div></div></div>
+
+  <section id="result" class="card hidden" aria-labelledby="decH" aria-live="polite">
+    <h2 id="decH" class="muted" style="font-size:13px;text-transform:uppercase;letter-spacing:.08em">Decision</h2>
+    <div class="hero" id="heroBlock">
+      <div class="verdict" id="verdict"></div>
+      <div class="hero-row2">
+        <div class="sigchip" id="signal"></div>
+        <div class="meta">Suggested size: <b id="size"></b> <span class="muted">of your portfolio</span></div>
       </div>
     </div>
-    <div id="status" class="muted" style="margin-top:10px"></div>
-  </div>
-
-  <div id="result" class="card hidden">
-    <div class="debate">
-      <div class="side bull"><h3>🐂 Bull case</h3><ul id="bullPts"></ul>
+    <div class="resolved" id="resolved"></div>
+    <div class="debate" id="debate">
+      <div class="side bull"><h3><span class="sq" aria-hidden="true"></span>Bull case</h3><ul id="bullPts"></ul>
         <div class="reb" id="bullReb"></div><div class="conv" id="bullConv"></div></div>
-      <div class="side bear"><h3>🐻 Bear case</h3><ul id="bearPts"></ul>
+      <div class="side bear"><h3><span class="sq" aria-hidden="true"></span>Bear case</h3><ul id="bearPts"></ul>
         <div class="reb" id="bearReb"></div><div class="conv" id="bearConv"></div></div>
     </div>
-    <div class="meta" id="resolved" style="margin-top:12px"></div>
-    <div class="verdict">
-      <div class="v-big" id="verdict"></div>
-      <div>Signal strength: <span class="band" id="signal"></span>
-        <span class="meta">(mechanical, not a probability of profit)</span></div>
-      <div class="meta">Suggested size: <b id="size"></b></div>
-    </div>
-    <div class="meta" id="risknote"></div>
-    <div class="meta" id="counter" style="margin-top:6px"></div>
-    <div class="meta" id="blind" style="margin-top:6px"></div>
-    <div class="row"><div style="flex:0 0 auto"><button id="prove" onclick="prove()">🔏 Prove it</button></div></div>
-    <div class="disc" id="disc">GlassBox is an educational and analytical tool, not financial advice. SUI/USDC is high-risk and largely unregulated; you could lose all the money you put in. "Signal strength" is a mechanical score, not a probability of profit.</div>
-  </div>
+    <details class="why"><summary>Why you should doubt this</summary>
+      <div class="meta" id="risknote"></div>
+      <div class="meta" id="counter"></div>
+      <div class="meta" id="blind"></div>
+    </details>
+    <div class="disc" id="disc"><b>Not financial advice.</b> GlassBox is an educational, analytical tool. SUI/USDC is high-risk and largely unregulated — you could lose all the money you put in. "Signal strength" is a rule-based score, not a profit forecast. You are responsible for any order you place.</div>
+    <div class="row"><div style="flex:0 0 auto"><button id="prove" onclick="prove()">🔒 Prove it</button></div></div>
+  </section>
 
-  <div id="auditCard" class="card hidden">
-    <label>On-chain audit record</label>
-    <div class="kvs" id="auditKvs"></div>
+  <section id="auditCard" class="card hidden" aria-labelledby="proofH">
+    <h2 id="proofH">Proof — the on-chain record</h2>
+    <p class="why-line">GlassBox signed this exact decision and wrote its fingerprint to Walrus on the Sui blockchain. Anyone can re-check it — and if a single character changes, the fingerprint won't match.</p>
+    <div class="receipt" id="receipt"></div>
     <div class="row">
-      <div style="flex:0 0 auto"><button onclick="verify()">✅ Verify</button></div>
-      <div style="flex:0 0 auto"><button class="ghost" onclick="alterRecord()">✂️ Alter the record</button></div>
+      <div style="flex:0 0 auto"><button id="vbtn" onclick="verify()">Verify</button></div>
+      <div style="flex:0 0 auto"><button class="ghost" id="abtn" onclick="alterRecord()">Try to alter it</button></div>
     </div>
-    <div id="match" class="banner match"></div>
-    <div id="mismatch" class="banner mismatch"></div>
-    <div class="kvs" id="tamperDetail" style="margin-top:10px"></div>
-  </div>
-</div>
+    <div id="match" class="banner match" role="status" aria-live="assertive"></div>
+    <div id="mismatch" class="banner mismatch" role="alert"></div>
+    <div id="hashdiff" class="hashdiff"></div>
+  </section>
+</main>
 
 <script>
-const $ = (s)=>document.querySelector(s);
-let S = { decision:null, audit:null };
+const $=(s)=>document.querySelector(s);
+let S={decision:null,audit:null,goal:"",stepTimer:null};
+if(/[?&]present/.test(location.search)) document.body.classList.add('present');
 
-async function api(path, opts){
-  const r = await fetch(path, opts||{});
-  if(!r.ok && r.status!==422) throw new Error(path+" -> HTTP "+r.status);
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function frag(h){return h?h.slice(0,30):'—';}
+async function api(path,opts){
+  const r=await fetch(path,opts||{});
+  if(!r.ok && r.status!==422) throw new Error("service busy — please try again");
   return r.json();
 }
-function short(h){ return h ? h.slice(0,18)+"…"+h.slice(-6) : "—"; }
 
-(async ()=>{ try{ const h=await api('/api/health');
-  $('#health').textContent = h.provider+" · "+h.fastModel; }catch(e){ $('#health').textContent="offline"; } })();
+(async()=>{try{const h=await api('/api/health');
+  $('#health').classList.add('online'); $('#healthTxt').textContent='AI online · '+h.provider;
+}catch(e){$('#health').classList.add('off');$('#healthTxt').textContent='AI offline';}})();
+
+const STEPS=["Spinning up the Bull and Bear analysts…","The agents are debating both sides…",
+             "Cross-examining and scoring conviction…","Resolving the verdict…"];
+function startSteps(){let i=0;$('#status').innerHTML='<span>'+STEPS[0]+'</span><div class="bar"></div>';
+  S.stepTimer=setInterval(()=>{i=Math.min(i+1,STEPS.length-1);
+    $('#status').innerHTML='<span>'+STEPS[i]+'</span><div class="bar"></div>';},2200);}
+function stopSteps(){clearInterval(S.stepTimer);S.stepTimer=null;}
 
 async function analyze(){
   const goal=$('#goal').value.trim();
-  if(goal.length<5){ $('#status').textContent="Please enter a longer question."; return; }
-  $('#go').disabled=true; $('#status').innerHTML='<span class="spin">GlassBox is thinking — Bull vs Bear are arguing…</span>';
+  if(goal.length<5){$('#status').textContent='Please enter a longer question.';return;}
+  S.goal=goal; $('#go').disabled=true;
   $('#result').classList.add('hidden'); $('#auditCard').classList.add('hidden');
+  $('#skeleton').style.display='block'; startSteps();
   try{
     const d=await api('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({goalText:goal,asset:'SUI/USDC',risk:$('#risk').value})});
-    S.decision=d; renderDecision(d); $('#status').textContent='';
-  }catch(e){ $('#status').textContent='Error: '+e.message; }
-  finally{ $('#go').disabled=false; }
+    S.decision=d; render(d); $('#status').textContent='';
+  }catch(e){$('#status').textContent='Could not analyze: '+e.message;}
+  finally{stopSteps();$('#skeleton').style.display='none';$('#go').disabled=false;}
 }
 
-function li(arr){ return (arr||[]).map(p=>'<li>'+esc(p)+'</li>').join(''); }
-function esc(s){ return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function li(a){return (a||[]).map(p=>'<li>'+esc(p)+'</li>').join('');}
+function convWord(n){return n>=4?'strong':n>=2?'moderate':'weak';}
+const GLYPH={BUY:'▲',HOLD:'■',AVOID:'▼'};
 
-function renderDecision(d){
-  $('#bullPts').innerHTML=li(d.bull.points);
-  $('#bearPts').innerHTML=li(d.bear.points);
-  $('#bullReb').textContent=d.bull.rebuttal?('↳ '+d.bull.rebuttal):'';
-  $('#bearReb').textContent=d.bear.rebuttal?('↳ '+d.bear.rebuttal):'';
-  $('#bullConv').textContent='conviction '+d.bull.convictionRevised+'/5';
-  $('#bearConv').textContent='conviction '+d.bear.convictionRevised+'/5';
-  $('#resolved').innerHTML='<b>'+(d.winningSide==='bull'?'🐂 Bull':'🐻 Bear')+' side resolves it.</b> '+esc(d.whyResolved||'');
-  const v=$('#verdict'); v.textContent=d.verdict; v.className='v-big v-'+d.verdict;
-  $('#signal').textContent=d.signalBand+' · '+d.signalStrengthPct+'%';
+function render(d){
+  $('#bullPts').innerHTML=li(d.bull.points); $('#bearPts').innerHTML=li(d.bear.points);
+  $('#bullReb').textContent=d.bull.rebuttal?('Rebuttal: '+d.bull.rebuttal):'';
+  $('#bearReb').textContent=d.bear.rebuttal?('Rebuttal: '+d.bear.rebuttal):'';
+  $('#bullConv').textContent='conviction '+d.bull.convictionRevised+'/5 ('+convWord(d.bull.convictionRevised)+')';
+  $('#bearConv').textContent='conviction '+d.bear.convictionRevised+'/5 ('+convWord(d.bear.convictionRevised)+')';
+  $('#resolved').innerHTML='<b>'+(d.winningSide==='bull'?'Bull':'Bear')+' side wins the argument.</b> '+esc(d.whyResolved||'');
+  const v=$('#verdict'); v.innerHTML='<span class="glyph" aria-hidden="true">'+(GLYPH[d.verdict]||'')+'</span>'+d.verdict;
+  v.className='verdict v-'+d.verdict;
+  $('#signal').innerHTML='Signal strength: <b>'+d.signalBand+'</b> · '+d.signalStrengthPct+'% <span class="muted" style="font-size:13px">(rule-based, not a profit forecast)</span>';
   $('#size').textContent=d.suggestedSizePct+'%';
-  $('#risknote').innerHTML='<b>Risk:</b> '+esc(d.riskNote||'');
-  $('#counter').innerHTML='<b>Counterfactual:</b> '+esc(d.counterfactual||'');
+  $('#risknote').innerHTML='<b>Main risk:</b> '+esc(d.riskNote||'');
+  $('#counter').innerHTML='<b>Would change if:</b> '+esc(d.counterfactual||'');
   $('#blind').innerHTML='<b>Blind spots:</b> '+esc((d.blindSpots||[]).join('; '));
   $('#result').classList.remove('hidden');
-  $('#prove').disabled=false; $('#prove').textContent='🔏 Prove it';
+  $('#debate').classList.remove('reveal'); void $('#debate').offsetWidth; $('#debate').classList.add('reveal');
+  const hb=$('#heroBlock'); hb.style.opacity='0'; setTimeout(()=>{hb.style.opacity='';hb.classList.add('pop');},520);
+  $('#prove').disabled=false; $('#prove').textContent='🔒 Prove it';
 }
 
 async function prove(){
-  $('#prove').disabled=true; $('#prove').textContent='Signing + writing to Walrus…';
+  $('#prove').disabled=true; $('#prove').textContent='Signing + anchoring…';
   try{
     const a=await api('/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({decision:S.decision,goalText:$('#goal').value})});
+      body:JSON.stringify({decision:S.decision,goalText:S.goal})});
     S.audit=a;
-    $('#auditKvs').innerHTML =
-      'record hash &nbsp; <b>'+short(a.recordHash)+'</b><br>'+
-      'signature (origin) &nbsp; <b>'+short(a.signature)+'</b><br>'+
-      'public key &nbsp; <b>'+short(a.pubkey)+'</b><br>'+
-      'stored on &nbsp; <b>'+(a.sink==='walrus'?'Walrus (Sui)':'local')+'</b>'+
-      (a.blobId?' &nbsp; blob <b>'+short(a.blobId)+'</b>':'');
-    $('#auditCard').classList.remove('hidden');
-    $('#match').style.display='none'; $('#mismatch').style.display='none'; $('#tamperDetail').textContent='';
-  }catch(e){ $('#prove').textContent='Error: '+e.message; }
-  finally{ $('#prove').disabled=false; $('#prove').textContent='🔏 Proved'; }
+    $('#receipt').innerHTML=
+      '<span class="k">decision fingerprint (sha-256)</span> &nbsp;<b>'+frag(a.recordHash)+'…</b><br>'+
+      '<span class="k">signature — proves origin</span> &nbsp;<b>'+frag(a.signature)+'…</b><br>'+
+      '<span class="k">stored on</span> &nbsp;<span class="chainchip">● '+(a.sink==='walrus'?'Walrus · Sui':'local (offline)')+'</span>'+
+      (a.blobId?' &nbsp;<b>'+frag(a.blobId)+'…</b>':'');
+    $('#auditCard').classList.remove('hidden'); $('#auditCard').classList.add('reveal');
+    $('#match').style.display='none'; $('#mismatch').style.display='none'; $('#hashdiff').style.display='none';
+    $('#prove').textContent='✓ Proved'; $('#prove').disabled=true;
+  }catch(e){$('#prove').disabled=false;$('#prove').textContent='🔒 Prove it';$('#status').textContent='Could not prove: '+e.message;}
 }
 
 async function verify(){
-  const v=await api('/api/verify/'+S.audit.recordId);
-  $('#mismatch').style.display='none';
-  const b=$('#match'); b.style.display='block';
-  b.textContent = (v.hashMatch && v.signatureValid)
-    ? '✅ MATCH — byte-for-byte identical, read back from '+(v.source==='walrus'?'Walrus':'the record')
-    : '⚠️ could not match';
-  $('#tamperDetail').textContent='';
+  if(!S.audit) return;
+  $('#vbtn').disabled=true; $('#vbtn').textContent='Verifying against Walrus…';
+  try{
+    const v=await api('/api/verify/'+S.audit.recordId);
+    $('#mismatch').style.display='none'; $('#hashdiff').style.display='none';
+    const b=$('#match'); b.style.display='block'; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+    b.innerHTML=(v.hashMatch&&v.signatureValid)
+      ?'✓ VERIFIED<small>Byte-for-byte identical — read back from '+(v.source==='walrus'?'Walrus on Sui':'the record')+'</small>'
+      :'⚠ Could not verify<small>Try again</small>';
+  }catch(e){const b=$('#mismatch');b.style.display='block';b.innerHTML='⚠ Verify failed<small>'+esc(e.message)+'</small>';}
+  finally{$('#vbtn').disabled=false;$('#vbtn').textContent='Verify';}
 }
 
 async function alterRecord(){
-  const altered=JSON.parse(JSON.stringify(S.decision));
-  altered.verdict = altered.verdict==='BUY' ? 'AVOID' : 'BUY';      // change the AI's call
-  const r=await api('/api/rehash',{method:'POST',headers:{'Content-Type':'application/json'},
+  if(!S.audit) return;
+  $('#abtn').disabled=true;
+  try{
+    const altered=JSON.parse(JSON.stringify(S.decision));
+    altered.verdict = altered.verdict==='BUY' ? 'AVOID' : 'BUY';
+    const r=await api('/api/rehash',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({decision:altered})});
-  $('#match').style.display='none';
-  const b=$('#mismatch'); b.style.display='block';
-  b.textContent='❌ MISMATCH — the chain catches it';
-  $('#tamperDetail').innerHTML =
-    'I changed the verdict to <b>'+altered.verdict+'</b> and re-hashed the record:<br>'+
-    'anchored hash &nbsp; <b>'+short(S.audit.recordHash)+'</b><br>'+
-    'altered record hash &nbsp; <b style="color:var(--bear)">'+short(r.recordHash)+'</b><br>'+
-    'They do not match — you cannot rewrite what the AI decided after it was anchored.';
+    $('#match').style.display='none';
+    const b=$('#mismatch'); b.style.display='block'; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
+    b.innerHTML='✗ TAMPER DETECTED<small>I changed the verdict to "'+altered.verdict+'" — the fingerprint no longer matches what was anchored.</small>';
+    $('#hashdiff').style.display='block';
+    $('#hashdiff').innerHTML=
+      '<div class="lbl">anchored fingerprint</div><div class="a"><b>'+frag(S.audit.recordHash)+'…</b></div>'+
+      '<div class="lbl" style="margin-top:8px">after tampering</div><div class="b"><b>'+frag(r.recordHash)+'…</b></div>';
+  }catch(e){$('#mismatch').style.display='block';$('#mismatch').innerHTML='⚠ '+esc(e.message);}
+  finally{$('#abtn').disabled=false;}
 }
+
+$('#goal').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')analyze();});
+window.addEventListener('load',()=>$('#goal').focus());
 </script>
 </body>
 </html>
