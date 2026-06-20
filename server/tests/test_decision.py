@@ -4,8 +4,8 @@ No mocks needed: assemble_decision() is a pure function of (inputs, debate).
 """
 import copy
 
-from glassbox import decision
 from conftest import make_debate
+from glassbox import decision
 
 
 def _assemble(inputs, debate, risk="moderate"):

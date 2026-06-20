@@ -1,8 +1,6 @@
 """Unit tests for glassbox.llm._parse_json and model_for — pure, no network."""
-import json
 
 import pytest
-
 from glassbox import llm
 
 

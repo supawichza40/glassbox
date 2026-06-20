@@ -6,7 +6,6 @@ per-provider pairs) and LLM_PROVIDER (the active selector).
 """
 from glassbox import config
 
-
 _FIXED_MODELS = {
     "openrouter": ("or-fast", "or-smart"),
     "gemini": ("gem-fast", "gem-smart"),

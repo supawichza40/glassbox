@@ -4,10 +4,11 @@
   * Walrus down -> audit degrades to sink='local', blobId=None; verify still MATCHES.
   * /api/verify/unknownid -> {'error': ...}.
 """
-import pytest
 
-from glassbox import analyze as analyze_mod, agents, audit as audit_mod, verify as verify_mod
-from glassbox import config, llm
+from glassbox import agents, config, llm
+from glassbox import analyze as analyze_mod
+from glassbox import audit as audit_mod
+from glassbox import verify as verify_mod
 
 
 # --------------------------------------------------------------------------

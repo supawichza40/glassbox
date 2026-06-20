@@ -83,6 +83,7 @@ def test_encrypt_different_ciphertext_for_same_plaintext():
 def test_encrypt_roundtrip_decrypts():
     """Sanity: the bundle is actually decryptable with its own key/nonce."""
     import base64
+
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
     plaintext = "save for a house deposit"

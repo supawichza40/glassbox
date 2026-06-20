@@ -5,7 +5,9 @@ Exercises the full chain offline:
   * Walrus disabled via local_sink (audit sink = 'local')
 Confirms a clean record MATCHES and a tampered record MISMATCHES.
 """
-from glassbox import analyze as analyze_mod, audit as audit_mod, verify as verify_mod
+from glassbox import analyze as analyze_mod
+from glassbox import audit as audit_mod
+from glassbox import verify as verify_mod
 
 
 def test_analyze_audit_verify_match_end_to_end(canned_chat_json, local_sink):
