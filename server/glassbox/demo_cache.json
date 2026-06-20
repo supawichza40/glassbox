@@ -1,0 +1,56 @@
+{
+  "should i hold sui for the next 2 weeks? i'm moderate risk.": {
+    "asset": "SUI/USDC",
+    "timestampIso": "2026-06-20T10:57:49+00:00",
+    "inputs": {
+      "priceUsd": 3.42,
+      "trendPctVs20MA": 4.1,
+      "rsi14": 38.0,
+      "realizedVolPercentile": 0.62,
+      "deepbookTopDepthUsd": 85000.0,
+      "spreadBps": 12.0,
+      "drawdownFromHighPct": -18.0,
+      "asOfIso": "2026-06-20T10:57:49+00:00",
+      "riskBand": "moderate",
+      "horizonDays": 14,
+      "goalCategory": "growth"
+    },
+    "bull": {
+      "points": [
+        "The RSI 14 of 38.0 indicates the asset is approaching oversold conditions, suggesting potential for a price rebound.",
+        "SUI/USDC is currently 18.0% down from its high, presenting a potential 'buy the dip' opportunity for growth."
+      ],
+      "convictionRevised": 4.0,
+      "rebuttal": "While the asset has experienced a significant drawdownFromHighPct of -18.0% from its peak, its current trendPctVs20MA of 4.1% indicates recent positive momentum, suggesting a potential recovery rather than continued weakness."
+    },
+    "bear": {
+      "points": [
+        "The asset has experienced a significant drawdownFromHighPct of -18.0% from its peak, indicating substantial price depreciation and potential for continued weakness or difficulty in recovery.",
+        "The realizedVolPercentile is 0.62, meaning volatility is higher than 62% of historical periods. This elevated volatility, especially following a significant drawdown, increases the risk of further unpredictable price swings and potential downside."
+      ],
+      "convictionRevised": 0.0,
+      "rebuttal": "While the RSI 14 is 38.0, suggesting the asset is approaching oversold conditions, the realized volatility is at the 0.62 percentile, indicating a high degree of price fluctuation that could lead to further declines before any rebound."
+    },
+    "winningSide": "bull",
+    "whyResolved": "The Bull's revised conviction of 4 significantly outweighs the Bear's revised conviction of 0, indicating the Bull's arguments regarding RSI 14 and trendPctVs20MA were more persuasive after rebuttals.",
+    "verdict": "HOLD",
+    "riskNote": "The realizedVolPercentile of 0.62 indicates higher than average volatility, increasing the risk of unpredictable price swings.",
+    "suggestedSizePct": 6,
+    "signalStrengthPct": 30,
+    "signalBand": "Low",
+    "counterfactual": "I would change my call to BUY if the realizedVolPercentile decreased significantly, indicating lower market risk.",
+    "blindSpots": [
+      "Does not include news, social sentiment, or events"
+    ],
+    "flags": {
+      "llmOverrodeSignals": false,
+      "baselineVerdict": "BUY",
+      "groundingWarnings": []
+    },
+    "provenance": {
+      "provider": "gemini",
+      "fastModel": "gemini-2.5-flash",
+      "smartModel": "gemini-2.5-flash"
+    }
+  }
+}

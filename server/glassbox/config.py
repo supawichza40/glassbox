@@ -39,6 +39,7 @@ FLOCK_API_KEY      = _g("FLOCK_API_KEY")
 AUDIT_SINK         = _g("AUDIT_SINK", "walrus").lower()
 ANCHOR             = _g("ANCHOR", "none").lower()
 EXECUTION          = _g("EXECUTION", "simulated").lower()
+DEMO_MODE          = _g("DEMO_MODE", "").lower() in ("1", "true", "yes")
 SUI_PRIVATE_KEY    = _g("SUI_PRIVATE_KEY")
 
 # Walrus testnet (verified working)

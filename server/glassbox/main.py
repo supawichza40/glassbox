@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import config, crypto, analyze as analyze_mod, audit as audit_mod, verify as verify_mod
+from . import config, crypto, demo, analyze as analyze_mod, audit as audit_mod, verify as verify_mod
 
 app = FastAPI(title="GlassBox", version="0.1.0")
 app.add_middleware(
@@ -46,6 +46,9 @@ def health():
 
 @app.post("/api/analyze")
 def analyze(req: AnalyzeReq):
+    cached = demo.lookup(req.goalText)   # instant + deterministic in DEMO_MODE
+    if cached is not None:
+        return cached
     return analyze_mod.analyze(req.goalText, req.asset, req.risk)
 
 
