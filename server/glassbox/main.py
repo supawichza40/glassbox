@@ -44,6 +44,12 @@ def health():
             "anchor": config.ANCHOR, "execution": config.EXECUTION}
 
 
+@app.get("/api/pubkey")
+def pubkey():
+    """Published verifying key — anyone can check a record's signature with this + verify_cli."""
+    return {"pubkey": crypto.PUBKEY_HEX}
+
+
 @app.post("/api/analyze")
 def analyze(req: AnalyzeReq):
     cached = demo.lookup(req.goalText)   # instant + deterministic in DEMO_MODE
