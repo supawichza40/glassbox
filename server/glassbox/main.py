@@ -88,7 +88,7 @@ def verify_ep(record_id: str):
 @app.post("/api/rehash")
 def rehash(req: AuditReq):
     """Hash a (possibly altered) decision — lets the UI prove a tamper changes the hash."""
-    return {"recordHash": crypto.sha256_hex(crypto.canonical(req.decision))}
+    return {"recordHash": crypto.sha256_hex(crypto.canonical(audit_mod._anchored_object(req.decision)))}
 
 
 # Serve the demo UI from /  (mounted last so /api/* takes precedence)

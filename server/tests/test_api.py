@@ -99,6 +99,17 @@ def test_audit_surfaces_sui_object_from_walrus(client, canned_chat_json, monkeyp
     assert a["anchorNetwork"] == "sui:testnet"
 
 
+def test_chart_series_present_but_excluded_from_hash(client, canned_chat_json, local_sink):
+    """chartSeries is in the Decision (for the chart) but NOT in the signed/hashed record."""
+    import hashlib
+    d = client.post("/api/analyze",
+                    json={"goalText": "grow my savings steadily", "risk": "moderate"}).json()
+    assert isinstance(d.get("chartSeries"), list) and len(d["chartSeries"]) >= 21
+    a = client.post("/api/audit", json={"decision": d, "goalText": ""}).json()
+    assert "chartSeries" not in a["recordCanonical"]                       # not in the signed bytes
+    assert hashlib.sha256(a["recordCanonical"].encode()).hexdigest() == a["recordHash"]
+
+
 # --------------------------------------------------------------------------
 # /api/rehash on an ALTERED decision yields a different hash (tamper)
 # --------------------------------------------------------------------------

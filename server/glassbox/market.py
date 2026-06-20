@@ -7,6 +7,7 @@ modeled for now (TODO: real Sui RPC). Falls back to a deterministic snapshot on 
 demo run consistent and avoids rate limits. The dict returned is what the agents see and
 what gets hashed into the audit record, so it is frozen per analysis.
 """
+import math
 import statistics
 import time
 from datetime import datetime, timezone
@@ -16,10 +17,12 @@ import requests
 from . import config
 
 # Deterministic fallback snapshot (also the offline/demo value).
+_STUB_SERIES = [round(3.0 + 0.42 * (i / 89) + 0.08 * math.sin(i / 7.0), 4) for i in range(90)]
 _STUB = {
     "priceUsd": 3.42, "trendPctVs20MA": 4.1, "rsi14": 38.0,
     "realizedVolPercentile": 0.62, "deepbookTopDepthUsd": 85000.0,
     "spreadBps": 12.0, "drawdownFromHighPct": -18.0,
+    "chartCloses": _STUB_SERIES,                  # presentation-only (chart); stripped before hashing
 }
 _CG_ID = {"SUI/USDC": "sui"}
 _cache = {"ts": 0.0, "snap": None}
@@ -87,6 +90,7 @@ def _live_snapshot(asset: str) -> dict:
         "deepbookTopDepthUsd": depth,
         "spreadBps": spread,
         "drawdownFromHighPct": round((price - high) / high * 100, 1),
+        "chartCloses": [round(c, 4) for c in closes[-90:]],   # chart only; never hashed
     }
 
 
