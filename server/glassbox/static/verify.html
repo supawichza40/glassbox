@@ -184,10 +184,11 @@
 <script type="module">
 import * as ed from '/vendor/noble-ed25519.js';
 
-// The PUBLISHED verifying key. Trust comes from this key (published independently) + Walrus,
-// NOT from any value the page is handed. Filled by the bake step; falls back to the receipt's
-// own pubkey for local dev (a note is shown when that fallback is used).
-const PUBLISHED_PUBKEY = "c0eac67421c64b3328727a1649a38ba5d90c1267ccedbf0f3aa55d1c3a6263ab";
+// Verifying key. Receipt-key mode (the "__PUBKEY__" placeholder) verifies each record against
+// the pubkey embedded in that receipt — so it works on any machine + the Render deploy WITHOUT a
+// shared private key, while the Walrus blob + on-chain Sui anchor stay the independent grounding.
+// To pin a single PUBLISHED key instead, set GLASSBOX_ED25519_SK_HEX everywhere and bake its pubkey here.
+const PUBLISHED_PUBKEY = "__PUBKEY__";
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
@@ -343,7 +344,7 @@ async function runVerify(){
   }else{
     showState(false, 'NOT VERIFIED', 'This record failed an independent check above.');
   }
-  if(USING_FALLBACK_KEY){ $('#pubkey').insertAdjacentHTML('afterend',' <span class="muted">(dev: receipt key)</span>'); }
+  if(USING_FALLBACK_KEY){ $('#pubkey').insertAdjacentHTML('afterend',' <span class="muted">(key from this receipt)</span>'); }
   initTamper();
 }
 

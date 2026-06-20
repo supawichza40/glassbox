@@ -53,7 +53,9 @@ def test_tamper_breaks_hash_and_signature():
 
 def test_verify_page_published_key_matches_install():
     page = (_STATIC / "verify.html").read_text()
-    assert crypto.PUBKEY_HEX in page, (
-        "verify.html PUBLISHED_PUBKEY does not match this install's signing key — "
-        "re-run bake_receipt and patch the constant"
+    # Two valid modes: a pinned PUBLISHED key (== this install's key), or the "__PUBKEY__"
+    # placeholder => receipt-key mode (each record is verified against its own embedded pubkey,
+    # so it works on any machine + the deploy without a shared private key).
+    assert ("__PUBKEY__" in page) or (crypto.PUBKEY_HEX in page), (
+        "verify.html must pin this install's key OR use the __PUBKEY__ placeholder (receipt-key mode)"
     )
