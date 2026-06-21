@@ -36,7 +36,7 @@ flowchart LR
 
 | Produced by | What |
 |---|---|
-| **Code (deterministic)** | The 5 `inputs` (closed candles); `signalStrengthPct = round(100·a·(1−v)·(1−m))`; `suggestedSizePct = clamp(riskBudget/vol, 0, cap[riskBand])`; the rule-based baseline verdict + "LLM overrode signals" flag; all validation |
+| **Code (deterministic)** | The 5 `inputs` (closed candles); `signalStrengthPct = round(100·a·(1−v)·(1−m))`; `suggestedSizePct = max(0, min(cap[riskBand], round(cap[riskBand]·(1−v))))` (0 on AVOID); the rule-based baseline verdict + "LLM overrode signals" flag; all validation |
 | **Bull (LLM, x2)** | Opening: 2 buy-side points + conviction 0–5. Rebuttal: 1 reply to Bear + revised conviction |
 | **Bear (LLM, x2)** | Opening: 2 sell/avoid points + conviction 0–5. Rebuttal: 1 reply to Bull + revised conviction |
 | **Arbiter (LLM)** | `winningSide`, `whyResolved`, `verdict`, `riskNote`, `counterfactual`, `blindSpots` — narrative resolution only, **no numbers** |
@@ -134,7 +134,7 @@ RISK_BAND: {risk_band}
 
 ## Deterministic post-processing (code — never the LLM)
 1. **Signal Strength:** clamp each revised conviction to 0–5; `a = |bullRevisedConviction − bearRevisedConviction|/5`; `signalStrengthPct = clamp(round(100·a·(1−v)·(1−m)), 0, 100)`; band Low/Med/High. Monotone-decreasing in risk (quant-proven). (The clamp matters: the LLM occasionally returns conviction > 5.)
-2. **Position size:** `suggestedSizePct = clamp(riskBudget/realizedVol, 0, cap)`, `cap = {low:5, moderate:15, high:30}`.
+2. **Position size:** `suggestedSizePct = max(0, min(cap, round(cap·(1−v))))` (`v = realizedVolPercentile`; `cap = {low:5, moderate:15, high:30}`); linear de-risk in the vol percentile, clamped to [0, cap], and **0 on an AVOID** verdict.
 3. **Baseline consistency check:** compute a rule-based verdict from INPUTS (trend>0 ∧ rsi<70 ∧ m=0 → lean BUY; rsi>70 ∨ deep drawdown ∨ m=1 → lean AVOID; else HOLD). If the Arbiter's verdict differs by 2 levels (BUY↔AVOID), set `flags.llmOverrodeSignals = true` and surface it.
 4. **Numeric grounding check:** extract every number in `bull`/`bear`/`riskNote`; assert each appears in `inputs` (within tolerance). On failure → repair retry.
 5. **Assemble** the validated `Decision` (SPEC data model), then hand to `/api/audit`.

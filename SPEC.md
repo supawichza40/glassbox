@@ -104,7 +104,7 @@ v = realized-vol percentile (90d)      # in [0,1]
 m = manipulation/thin-liquidity flag   # 1 if >Nσ move on below-median vol OR depth < threshold
 signalStrengthPct = round(100 * a * (1 - v) * (1 - m))
 ```
-Monotone non-increasing in risk by construction (`d/dv = -a <= 0`); high vol -> 0; any manipulation flag -> 0. Position size: `size% = clamp(risk_budget / realizedVol, 0, cap)`, cap = {low:5, moderate:15, high:30}. Both signal and size fall together as risk rises.
+Monotone non-increasing in risk by construction (`d/dv = -a <= 0`); high vol -> 0; any manipulation flag -> 0. Position size: `size% = max(0, min(cap, round(cap·(1−v))))` where `v = realizedVolPercentile`, cap = {low:5, moderate:15, high:30} — linear de-risking in the vol percentile (no divide-by-zero), clamped to [0, cap], and forced to **0 on an AVOID** verdict. Both signal and size fall together as risk rises.
 
 ## Backend endpoints
 | Path | Notes |

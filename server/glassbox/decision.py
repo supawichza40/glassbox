@@ -61,16 +61,22 @@ def assemble_decision(asset: str, inputs: dict, debate: dict, risk_band: str) ->
     band = "Low" if signal_pct < 33 else ("Medium" if signal_pct < 66 else "High")
 
     cap = _CAPS.get(risk_band, 15)
-    size_pct = max(0, round(cap * (1 - v)))  # falls as vol percentile rises, <= cap
+    size_pct = max(0, min(cap, round(cap * (1 - v))))  # de-risks as vol rises; clamped to [0, cap]
 
     verdict = (arb.get("verdict") or "HOLD").upper()
     if verdict not in _LEVELS:
         verdict = "HOLD"
+    if verdict == "AVOID":
+        size_pct = 0   # never suggest a position size on an AVOID call
     baseline = _baseline_verdict(inputs, m)
     llm_overrode = abs(_LEVELS[verdict] - _LEVELS.get(baseline, 1)) >= 2
 
     texts = _points(bull) + _points(bear) + [arb.get("riskNote", "")]
     warns = _grounding_warnings(texts, inputs)
+    # Surface silently-defaulted gameable inputs so the audited record shows the value was
+    # synthetic, not from the feed (missing vol -> 0.5, depth -> 1e12, spread -> 0).
+    defaulted = [k for k in ("realizedVolPercentile", "deepbookTopDepthUsd", "spreadBps")
+                 if k not in inputs]
 
     return {
         "asset": asset,
@@ -90,7 +96,7 @@ def assemble_decision(asset: str, inputs: dict, debate: dict, risk_band: str) ->
         "counterfactual": arb.get("counterfactual"),
         "blindSpots": arb.get("blindSpots") or [],
         "flags": {"llmOverrodeSignals": llm_overrode, "baselineVerdict": baseline,
-                  "groundingWarnings": warns},
+                  "groundingWarnings": warns, "defaultedInputs": defaulted},
         "provenance": {"provider": config.LLM_PROVIDER,
                        "fastModel": config.models()[0], "smartModel": config.models()[1]},
     }
