@@ -201,6 +201,44 @@
     .status .bar{background-position:0 0}
     .sm-bar i,.gfill{transition:none}
   }
+
+  /* === plain-language explainer layer (opt-in, ephemeral) === */
+  #xToggle{background:none;font-family:var(--sans);cursor:pointer;color:var(--muted)}
+  #xToggle.on{color:var(--accent2);border-color:var(--accent2)}
+  #xToggle.on .dot{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+  .x-anchor{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:help}
+  body:not(.xmode) .x-anchor{pointer-events:none}
+  body:not(.xmode) .x-info{display:none}
+  .x-info{position:relative;display:inline-flex;align-items:center;justify-content:center;width:1.15em;height:1.15em;min-width:0;min-height:0;margin-left:5px;padding:0;line-height:1;
+    border:1px solid var(--line);border-radius:50%;color:var(--muted);font:700 .8em/1 var(--sans);vertical-align:middle;cursor:help;flex:0 0 auto;-webkit-appearance:none;appearance:none}
+  .x-info::after{content:"";position:absolute;inset:-10px}   /* invisible ≥24px hit zone (visible circle stays small) */
+  .x-info::before{content:"?"}
+  .x-info:hover,.x-info:focus-visible,.x-info[aria-expanded="true"]{border-color:var(--accent2);color:var(--accent2);background:rgba(33,212,196,.12)}
+  #xpop{position:absolute;z-index:60;max-width:300px;background:var(--surface-1);border:1px solid var(--line);
+    border-radius:var(--r-sm);box-shadow:0 8px 24px rgba(0,0,0,.5);padding:13px 15px;color:var(--ink);font-size:14px;display:none}
+  #xpop[data-open]{display:block;animation:xpop .16s var(--ease)}
+  #xpop::before{content:"";position:absolute;left:var(--cx,16px);width:11px;height:11px;background:var(--surface-1);border:1px solid var(--line);transform:rotate(45deg)}
+  #xpop:not(.above):not(.sheet)::before{top:-6px;border-right-color:transparent;border-bottom-color:transparent}
+  #xpop.above::before{bottom:-6px;border-left-color:transparent;border-top-color:transparent}
+  #xpop.sheet::before{display:none}
+  body.present .x-info{width:1.3em;height:1.3em;font-size:.82em}
+  @media(max-width:420px){header .pill{font-size:12px;padding:3px 9px}}
+  @keyframes xpop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  #xpop .xt{font:700 14px var(--sans);color:var(--ink);margin-bottom:5px}
+  #xpop .xb{font:14px/1.5 var(--sans);color:var(--ink-2)}
+  #xpop .xe{font:13px/1.45 var(--sans);color:var(--muted);margin-top:7px}
+  #xpop .xf{margin-top:10px;font-size:13px} #xpop .xf .xglink{background:none;border:0;padding:0;color:var(--accent2);cursor:pointer;font:inherit}
+  #xback{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:69;display:none} #xback.open{display:block}
+  #xdrawer{position:fixed;top:0;right:0;height:100dvh;width:min(380px,92vw);background:var(--surface-1);
+    border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,.5);padding:22px 24px 40px;overflow:auto;
+    z-index:70;transform:translateX(100%);transition:transform .22s var(--ease)}
+  #xdrawer.open{transform:translateX(0)}
+  #xdrawer h3{font-size:18px;margin:0 0 2px}
+  #xdrawer h4{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 0 6px}
+  #xdrawer dl{margin:0} #xdrawer dt{font-weight:700;color:var(--ink);margin-top:11px}
+  #xdrawer dd{margin:2px 0 0;color:var(--ink-2);font-size:14px;line-height:1.5}
+  #xdrawer .xclose{position:absolute;top:16px;right:18px;background:none;border:1px solid var(--line);color:var(--ink-2);border-radius:6px;padding:4px 9px;cursor:pointer;font:13px var(--sans)}
+  @media (prefers-reduced-motion: reduce){#xpop[data-open]{animation:none} #xdrawer{transition:none}}
 </style>
 </head>
 <body>
@@ -209,6 +247,7 @@
     <h1>GlassBox</h1>
     <span class="pill" id="health"><span class="dot"></span><span id="healthTxt">connecting…</span></span>
     <span class="pill" id="mode" title="LIVE = every question runs the full live pipeline. DEMO = the canonical pitch question is a pre-baked instant cache; other questions still run live."><span class="dot"></span><span id="modeTxt">mode…</span></span>
+    <button class="pill" id="xToggle" type="button" role="switch" aria-checked="false" title="Explain mode: plain-language help on every part. Beginners on, experts off."><span class="dot"></span><span id="xTxt">💡 Explain</span></button>
   </header>
   <p class="lead">An AI Bull and Bear debate your trade — then we lock the verdict so it <b>can't be quietly rewritten</b>.</p>
   <div class="steps"><span><b>1.</b> Ask</span><span>→</span><span><b>2.</b> Get a verdict</span><span>→</span><span><b>3.</b> Prove it can't be faked</span></div>
@@ -359,6 +398,7 @@ function render(d){
   renderStrength(d); renderEvidence(d); renderPriceChart(d);
   const _c=S.source==='cache'; $('#srcTag').textContent=_c?'cached demo':'live'; $('#srcTag').className='srctag '+(_c?'demo':'live');
   $('#result').classList.remove('hidden');
+  armExplainers();
   $('#debate').classList.remove('reveal'); void $('#debate').offsetWidth; $('#debate').classList.add('reveal');
   const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
   const hb=$('#heroBlock'); hb.style.opacity='0'; setTimeout(()=>{hb.style.opacity='';hb.classList.add('pop');growMeter();},rm?0:520);
@@ -503,6 +543,7 @@ async function prove(){
     _lastMatch = null;
     await refreshHash();                 // initial state: matches -> green VERIFIED
     $('#auditCard').classList.remove('hidden'); $('#auditCard').classList.add('reveal');
+    armExplainers();
     $('#prove').textContent='✓ Proved'; $('#prove').disabled=true;
   }catch(e){$('#prove').disabled=false;$('#prove').textContent='🔒 Prove it';$('#status').textContent='Could not prove: '+e.message;}
 }
@@ -565,6 +606,103 @@ async function verify(){
 
 $('#goal').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')analyze();});
 window.addEventListener('load',()=>$('#goal').focus());
+
+/* ===== Plain-language explainer layer (opt-in, ephemeral) ===== */
+const XPLAIN={
+ aiOnline:{t:'AI online',b:'The analysis engine is reachable; the model name is shown beside it.'},
+ mode:{t:'LIVE vs DEMO',b:'DEMO = the showcase question is a pre-saved instant answer; other questions still run live. LIVE = every question runs the full pipeline now.',e:'Each result is also tagged “live” or “cached”.'},
+ ask:{t:'Your question',b:'Ask in plain English. GlassBox only covers SUI/USDC; off-topic questions are politely declined.'},
+ risk:{t:'Risk tolerance',b:'How much price swing you can stomach. Higher risk allows a larger suggested size.',e:'Like a spice level: mild, medium, hot.'},
+ verdict:{t:'The verdict',b:'The debate’s resolved call — BUY, HOLD or AVOID. An evidence-backed opinion you can check, not advice.',e:'A second opinion, not a doctor’s order.'},
+ signalStrength:{t:'Signal Strength',b:'A rule-based 0–100 score for how clear-cut the call is: a bigger conviction gap in a calm, liquid market scores higher. Not a profit forecast.',e:'Higher = clearer signal, NOT “more money”.'},
+ suggestedSize:{t:'Suggested size',b:'A starting-point share of your money this risk band allows — a guardrail, not an order, and it shrinks when prices swing.'},
+ bull:{t:'Bull case',b:'The AI side arguing the asset will go up: the strongest case FOR, then a rebuttal to the bear.',e:'The optimistic debater.'},
+ bear:{t:'Bear case',b:'The AI side arguing the asset will go down: the strongest case AGAINST, then a rebuttal to the bull.',e:'The skeptical debater.'},
+ conviction:{t:'Conviction (0–5)',b:'How strongly each side believes its own case after the rebuttal. A bigger gap means a clearer call.',e:'0 = “meh”, 5 = “I’m sure”.'},
+ override:{t:'Baseline vs debate',b:'A simple fixed-rules verdict (no AI) shown beside the debate’s verdict. “→” means the debate overrode the rules; “agree ✓” means they matched.',e:'“Heads-up: the AI went against the textbook here.”'},
+ evidence:{t:'The numbers they debated',b:'The exact market inputs the agents could cite — the same numbers baked into the signed fingerprint.'},
+ rsi:{t:'RSI (14)',b:'A 0–100 momentum gauge of recent buying vs selling. Below 30 = oversold, above 70 = overbought.',e:'Like a speedometer for price momentum.'},
+ trend:{t:'Trend vs 20-day average',b:'Whether today’s price sits above or below its 20-day average, as a %. Above = recent uptrend, below = downtrend.'},
+ vol:{t:'Volatility percentile',b:'How wild recent swings are versus this asset’s own history — a rank, not a swing size. High (70th+) trims the signal.',e:'“Jumpier than 80% of its recent history.”'},
+ drawdown:{t:'Drawdown from high',b:'How far price has fallen from its recent peak, as a %. A quick risk gut-check.',e:'“Down 18% from its high.”'},
+ depth:{t:'DeepBook depth',b:'How many dollars of live orders are waiting to trade. Thin (under ~$20k) means one trader can push the price around.',e:'A deep pool vs a puddle.'},
+ spread:{t:'Spread (bps)',b:'The gap between the best buy and sell price, in basis points. Wide (over ~50 bps) = costlier and a sign of thin liquidity.',e:'100 bps = 1%. Tighter is cheaper.'},
+ ma:{t:'20-day moving average',b:'The average closing price over the last 20 days — it smooths daily noise into a clearer trend line.'},
+ priceChart:{t:'Price history',b:'The last ~90 daily closes plus the dashed 20-day average. The dot is “now” (last close). Nothing is drawn past now — no forecast.',e:'A rear-view mirror, not a crystal ball.'},
+ doubt:{t:'Why you should doubt this',b:'The honest weak spots: the biggest risk now, what would flip the call, and known blind spots.',e:'The fine print the AI tells on itself.'},
+ proof:{t:'The proof',b:'A tamper-evident record: a fingerprint of the exact decision, cryptographically signed, and registered on the Sui blockchain.'},
+ fingerprint:{t:'Fingerprint (SHA-256)',b:'A short code fixed by the record’s exact contents. Change one character and it changes completely.',e:'A fingerprint for the document.'},
+ signature:{t:'Signature (ed25519)',b:'A digital seal proving WHO issued this record — it proves origin, not that the call is right.',e:'Proves the author, not the truth.'},
+ walrus:{t:'Walrus blob',b:'The decision record stored on the Walrus network — an independent copy you can re-check later.',e:'Filing the document in an outside vault.'},
+ suiObject:{t:'On-chain Sui object',b:'A public reference on the Sui blockchain pointing to the stored record — a witness GlassBox can’t quietly edit.',e:'A public logbook entry anyone can look up.'},
+ epoch:{t:'Storage epoch',b:'The Sui storage period the record was anchored in — a rough window, not an exact clock time.',e:'“Filed in the spring term,” not “3:42 PM”.'},
+ tamperEvident:{t:'Tamper-evident',b:'If the record is changed, the fingerprint stops matching — so edits are detectable. (Not “tamper-proof”: it shows tampering, it doesn’t prevent it.)',e:'A wax seal: breaking it shows; it can’t stop you.'},
+ tamper:{t:'Try it yourself',b:'Edit any character of the record and watch its fingerprint break live; reset to restore the MATCH. “Tamper-evident”, hands-on.'}
+};
+const XGROUPS=[
+ ['Reading the call',['verdict','signalStrength','suggestedSize','bull','bear','conviction','override','doubt','ask','risk']],
+ ['The market numbers',['rsi','trend','vol','drawdown','depth','spread','ma','priceChart','evidence']],
+ ['The proof & status',['proof','fingerprint','signature','walrus','suiObject','epoch','tamperEvident','tamper','aiOnline','mode']]
+];
+const XSPOTS=[['#health','aiOnline'],['#mode','mode'],['#askH','ask'],['label[for="risk"]','risk'],['#decH','verdict'],['#evidenceOverride','override'],['.side.bull h3','bull'],['.side.bear h3','bear'],['#priceDetails .panel-h','priceChart'],['#proofH','proof']];
+const XGAUGE={'RSI (14)':'rsi','Trend vs 20-day MA':'trend','Volatility (pctile)':'vol','Drawdown from high':'drawdown','DeepBook depth':'depth','Spread':'spread'};
+function xchip(key){const b=document.createElement('button');b.className='x-anchor x-info';b.type='button';b.dataset.x=key;b.setAttribute('aria-expanded','false');b.setAttribute('aria-label','What is “'+(XPLAIN[key]?XPLAIN[key].t:key)+'”?');return b;}
+function armExplainers(){
+ XSPOTS.forEach(([sel,key])=>{const el=document.querySelector(sel);if(el&&!el.querySelector('.x-info'))el.appendChild(xchip(key));});
+ document.querySelectorAll('#evidenceGauges .glbl').forEach(el=>{if(el.querySelector('.x-info'))return;const k=XGAUGE[el.textContent.trim()];if(k)el.appendChild(xchip(k));});
+ const cf=document.querySelector('#strengthMeter .sm-conf-top span');if(cf&&!cf.querySelector('.x-info'))cf.appendChild(xchip('signalStrength'));
+ const sz=document.querySelector('#size');if(sz&&sz.parentElement&&!sz.parentElement.querySelector('.x-info'))sz.parentElement.appendChild(xchip('suggestedSize'));
+ document.querySelectorAll('#result details.why > summary').forEach(s=>{if(s.querySelector('.x-info'))return;const k=/doubt/i.test(s.textContent)?'doubt':/numbers/i.test(s.textContent)?'evidence':null;if(k)s.appendChild(xchip(k));});
+ const th=[...document.querySelectorAll('#auditCard h3')].find(h=>/tamper/i.test(h.textContent));if(th&&!th.querySelector('.x-info'))th.appendChild(xchip('tamper'));
+}
+let _xpop=null,_xanchor=null,_xpinned=false,_xhoverT=null,_xdrawer=null,_xback=null,_xret=null;
+function _xel(){if(_xpop)return _xpop;_xpop=document.createElement('div');_xpop.id='xpop';_xpop.setAttribute('role','dialog');
+ _xpop.addEventListener('pointerleave',()=>{if(!_xpinned)closePop();});document.body.appendChild(_xpop);return _xpop;}
+function openPop(a,pin){const d=XPLAIN[a.dataset.x];if(!d)return;const p=_xel();_xpinned=!!pin;
+ p.innerHTML='<div class="xt">'+esc(d.t)+'</div><div class="xb">'+esc(d.b)+'</div>'+(d.e?'<div class="xe">'+esc(d.e)+'</div>':'')+'<div class="xf"><button type="button" data-xglossary class="xglink">Open glossary →</button></div>';
+ p.setAttribute('aria-label',d.t);p.setAttribute('data-open','');
+ const r=a.getBoundingClientRect();p.classList.remove('above','sheet');
+ if(innerWidth<=640){p.classList.add('sheet');p.style.position='fixed';p.style.left='8px';p.style.right='8px';p.style.top='auto';p.style.bottom='12px';p.style.width='auto';p.style.maxWidth='none';}
+ else{p.style.position='absolute';p.style.right='auto';p.style.bottom='auto';p.style.top='';p.style.width='';p.style.maxWidth='300px';
+  const pw=p.offsetWidth,ph=p.offsetHeight;let left=Math.max(8,Math.min(r.left+r.width/2-pw/2,innerWidth-pw-8));
+  let top=r.bottom+9;if(r.bottom+9+ph>innerHeight&&r.top-ph-9>0){p.classList.add('above');top=r.top-ph-9;}
+  const cx=Math.max(10,Math.min(pw-10,r.left+r.width/2-left));p.style.setProperty('--cx',cx+'px');
+  p.style.left=(left+scrollX)+'px';p.style.top=(top+scrollY)+'px';}
+ document.querySelectorAll('.x-info[aria-expanded="true"]').forEach(x=>x.setAttribute('aria-expanded','false'));
+ if(a.classList.contains('x-info'))a.setAttribute('aria-expanded','true');_xanchor=a;}
+function closePop(){const a=_xanchor;if(_xpop)_xpop.removeAttribute('data-open');if(a&&a.classList.contains('x-info'))a.setAttribute('aria-expanded','false');if(_xpop&&a&&_xpop.contains(document.activeElement))a.focus();_xanchor=null;}
+let _mouseFocus=false;
+document.addEventListener('pointerdown',()=>{_mouseFocus=true;setTimeout(()=>{_mouseFocus=false;},350);},true);
+document.addEventListener('click',e=>{
+ if(e.target.closest('[data-xglossary]')){openDrawer();return;}
+ const a=e.target.closest('.x-anchor');
+ if(a){e.preventDefault();clearTimeout(_xhoverT);(_xanchor===a&&_xpinned)?closePop():openPop(a,true);return;}
+ if(_xpop&&_xpop.hasAttribute('data-open')&&!e.target.closest('#xpop'))closePop();});
+document.addEventListener('pointerover',e=>{if(!matchMedia('(pointer:fine)').matches)return;const a=e.target.closest&&e.target.closest('.x-anchor');if(!a||_xanchor===a)return;clearTimeout(_xhoverT);_xhoverT=setTimeout(()=>openPop(a,false),120);});
+document.addEventListener('pointerout',e=>{const a=e.target.closest&&e.target.closest('.x-anchor');if(!a||_xpinned)return;clearTimeout(_xhoverT);_xhoverT=setTimeout(()=>{if(_xpop&&!_xpop.matches(':hover'))closePop();},200);});
+document.addEventListener('focusin',e=>{const a=e.target.closest&&e.target.closest('.x-anchor');if(a&&!_mouseFocus)openPop(a,true);});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'){if(_xdrawer&&_xdrawer.classList.contains('open'))closeDrawer();else closePop();return;}
+ if(e.key==='Tab'&&!e.shiftKey&&_xanchor&&document.activeElement===_xanchor&&_xpop&&_xpop.hasAttribute('data-open')){const g=_xpop.querySelector('[data-xglossary]');if(g){e.preventDefault();g.focus();}}});
+window.addEventListener('scroll',()=>{if(_xpop&&_xpop.hasAttribute('data-open')&&_xpop.style.position!=='fixed')closePop();},{passive:true});
+function buildDrawer(){if(_xdrawer)return;_xback=document.createElement('div');_xback.id='xback';_xback.addEventListener('click',closeDrawer);
+ _xdrawer=document.createElement('aside');_xdrawer.id='xdrawer';_xdrawer.setAttribute('role','dialog');_xdrawer.setAttribute('aria-modal','true');_xdrawer.setAttribute('aria-label','Plain-language glossary');
+ let h='<button class="xclose" data-xclose aria-label="Close glossary">✕ Close</button><h3>Plain-language glossary</h3><p class="muted" style="font-size:13px;margin:0 0 6px">Every part of GlassBox, in plain words.</p>';
+ XGROUPS.forEach(([g,ks])=>{h+='<h4>'+esc(g)+'</h4><dl>';ks.forEach(k=>{const d=XPLAIN[k];if(d)h+='<dt>'+esc(d.t)+'</dt><dd>'+esc(d.b)+'</dd>';});h+='</dl>';});
+ _xdrawer.innerHTML=h;document.body.appendChild(_xback);document.body.appendChild(_xdrawer);
+ _xdrawer.addEventListener('click',e=>{if(e.target.closest('[data-xclose]'))closeDrawer();});
+ _xdrawer.addEventListener('keydown',e=>{if(e.key!=='Tab')return;const f=_xdrawer.querySelectorAll('button,a');if(!f.length)return;const a=f[0],b=f[f.length-1];
+  if(e.shiftKey&&document.activeElement===a){b.focus();e.preventDefault();}else if(!e.shiftKey&&document.activeElement===b){a.focus();e.preventDefault();}});}
+function openDrawer(){buildDrawer();_xret=_xanchor||document.activeElement;closePop();_xback.classList.add('open');_xdrawer.classList.add('open');_xdrawer.querySelector('[data-xclose]').focus();}
+function closeDrawer(){if(!_xdrawer)return;_xdrawer.classList.remove('open');_xback.classList.remove('open');if(_xret&&_xret.focus)_xret.focus();}
+function setExplain(on){document.body.classList.toggle('xmode',on);const t=document.getElementById('xToggle');
+ if(t){t.classList.toggle('on',on);t.setAttribute('aria-checked',on?'true':'false');}try{localStorage.setItem('gb_explain',on?'1':'0');}catch(e){}
+ if(on)armExplainers();else{closePop();if(_xdrawer&&_xdrawer.classList.contains('open'))closeDrawer();}}
+(function initExplain(){const t=document.getElementById('xToggle');if(!t)return;
+ t.addEventListener('click',()=>setExplain(!document.body.classList.contains('xmode')));
+ let on=false;try{on=localStorage.getItem('gb_explain')==='1';}catch(e){}
+ if(document.body.classList.contains('present'))on=false;
+ armExplainers();setExplain(on);})();
 </script>
 </body>
 </html>
