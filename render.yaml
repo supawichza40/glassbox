@@ -6,7 +6,7 @@ services:
     name: glassbox
     runtime: python
     plan: free
-    branch: feature/explore-feature2
+    branch: main
     buildCommand: pip install -r requirements.txt
     startCommand: cd server && python -m uvicorn glassbox.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
@@ -19,8 +19,18 @@ services:
         sync: false
       - key: LLM_PROVIDER
         value: gemini
+      # Smart model = flash too: fast + cheap. Render has no 30s request cap, so the
+      # multi-agent debate completes comfortably even on the smart/arbiter step.
+      - key: GEMINI_MODEL_SMART
+        value: gemini-2.5-flash
       # Your Gemini key (or switch LLM_PROVIDER=openrouter + set OPENROUTER_API_KEY).
       - key: GEMINI_API_KEY
         sync: false
       - key: AUDIT_SINK
         value: walrus
+      # Generous timeouts — no Heroku-style 30s router cap on Render, so let slow calls finish
+      # instead of falling back early. (Code defaults are 12 / 5 for Heroku's tight budget.)
+      - key: LLM_TIMEOUT
+        value: "30"
+      - key: MARKET_HTTP_TIMEOUT
+        value: "8"
