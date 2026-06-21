@@ -4,6 +4,10 @@
 
 Watch two AI agents argue an investing call — then prove the decision they signed can't be altered after the fact.
 
+**▶ Try it live:** **[full app](https://glassbox-evidence-834d99a1d3b7.herokuapp.com)** · **[verify-it-yourself](https://static-flame-tau.vercel.app/verify)** — open on your phone: it recomputes the hash + checks the ed25519 signature in *your* browser, against a network we don't control. Submission package → [`submission/`](submission/).
+
+**Bounties:** Sui (DeepBook + Walrus) · BGA (AI trading — transparency, not PnL) · *codeplain (`glassbox.plain`).
+
 ---
 
 ## The problem
