@@ -14,7 +14,7 @@ Encode requires entries to be **built with AI** and to disclose **prompts + tech
 | Verify | Standalone `verify_cli` (offline) + in-browser verifier: **Web Crypto** SHA-256 + vendored **`@noble/ed25519`** + offline `qrcode-generator` |
 | Frontend | **Codeplain** spec-first: `glassbox.plain` + `glassbox.config.yaml` → React (`web/`, gitignored); hand-written reference UI in `server/glassbox/static/` |
 | Tests | `pytest` (large suite: agents, decision, market, scenarios, API, verify-receipt) |
-| Deploy | **Heroku** (full app), **Vercel** (static verifier) |
+| Deploy | **Render** (full app, primary), **Vercel** (static verifier), Heroku (backup) |
 
 ## How AI built it
 - **Claude Code** as the primary builder, driven through a **multi-agent dispatch + panel/red-team loop**: an expert panel (hackathon-strategist, demo-engineer, quant, designer, security-engineer) chose and pressure-tested the "verify-it-yourself" feature; a **QA agent drove a real headless browser**; a **security agent** audited claims and crypto.

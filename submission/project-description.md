@@ -22,7 +22,7 @@ Then the accountability layer: the decision becomes a PII-free record, **ed25519
 Dedicated Sui anchor transaction (own digest), DeepBook manual-confirm execution as another *audited* event, persistent record store (DB), GDPR crypto-erase wiring, and a customer co-signing (two-key) attestation.
 
 ## Built with
-Sui · Walrus · DeepBook · ed25519 · SHA-256 · Python · FastAPI · Gemini · Codeplain · Web Crypto · @noble/ed25519 · pytest · Heroku · Vercel
+Sui · Walrus · DeepBook · ed25519 · SHA-256 · Python · FastAPI · Gemini · Codeplain · Web Crypto · @noble/ed25519 · pytest · Render · Vercel
 
 ## Team
 **The Start of a Joke** — Supavich Aussawaauschariyakul · Orestis Kap · Encode Vibe Coding Hackathon (London).

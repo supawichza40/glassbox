@@ -19,6 +19,6 @@ GlassBox produces a **signed, independently-verifiable record** of every AI deci
 **Sui** (DeepBook + Walrus, on-chain object) · **BGA** (AI trading judged on transparency, not PnL) · ***codeplain** (frontend generated from a `.plain` spec). *Narrative:* Solvimon (B2B evidence-retention), FLock.
 
 ### Try it
-- Live app: **https://glassbox-evidence-834d99a1d3b7.herokuapp.com**
+- Live app: **https://glassbox-1mvl.onrender.com** *(free host — may take ~30s to wake)*
 - Verify-it-yourself: **https://static-flame-tau.vercel.app/verify**
 - Code: **https://github.com/supawichza40/glassbox**

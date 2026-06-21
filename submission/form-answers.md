@@ -53,14 +53,15 @@ https://github.com/supawichza40/glassbox
 
 ## Live Demo Link  *(Required)*
 ```
-https://glassbox-evidence-834d99a1d3b7.herokuapp.com
+https://glassbox-1mvl.onrender.com
 ```
-Verify-it-yourself page (also standalone on Vercel): `https://static-flame-tau.vercel.app/verify`
+Verify-it-yourself: `https://glassbox-1mvl.onrender.com/verify` · static mirror (Vercel): `https://static-flame-tau.vercel.app/verify` · backup full app (Heroku): `https://glassbox-evidence-834d99a1d3b7.herokuapp.com`
+*(Render's free plan cold-starts ~30–60s when idle — **open it once to warm it right before judging.**)*
 
 ---
 
 ## Built with *(tags)*
-`Sui` · `Walrus` · `DeepBook` · `ed25519` · `Python` · `FastAPI` · `Gemini` · `Codeplain` · `Web Crypto` · `pytest` · `Heroku` · `Vercel`
+`Sui` · `Walrus` · `DeepBook` · `ed25519` · `Python` · `FastAPI` · `Gemini` · `Codeplain` · `Web Crypto` · `pytest` · `Render` · `Vercel`
 
 ## Team
 **The Start of a Joke** — Supavich Aussawaauschariyakul · Orestis Kap
