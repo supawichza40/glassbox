@@ -11,7 +11,7 @@ from typing import Literal
 
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -120,15 +120,30 @@ def rehash(req: AuditReq):
 _STATIC = os.path.join(os.path.dirname(__file__), "static")
 
 
-@app.get("/verify")
-@app.get("/r/{record_id}")
+def _verify_html() -> str:
+    """verify.html with this deploy's published verifying key baked in at serve time.
+
+    The static page ships with a `PUBLISHED_PUBKEY = "__PUBKEY__"` placeholder; left as-is
+    it falls back to the key carried inside each receipt (the 'DEV KEY ONLY' warning). We
+    pin it to crypto.PUBKEY_HEX (derived from GLASSBOX_ED25519_SK_HEX) so the page verifies
+    against this deploy's real published key — independent of the receipt — on every host.
+    """
+    with open(os.path.join(_STATIC, "verify.html"), encoding="utf-8") as f:
+        html = f.read()
+    return html.replace('PUBLISHED_PUBKEY = "__PUBKEY__"',
+                        f'PUBLISHED_PUBKEY = "{crypto.PUBKEY_HEX}"')
+
+
+@app.get("/verify", response_class=HTMLResponse)
+@app.get("/verify.html", response_class=HTMLResponse)
+@app.get("/r/{record_id}", response_class=HTMLResponse)
 def verify_page(record_id: str = ""):
     """Standalone 'verify-it-yourself' receipt page (independent of the API/UI).
 
     The page reads ?r=<id>; /r/<id> is a clean alias. It re-fetches the blob from Walrus
     and re-checks hash + signature IN THE BROWSER — no GlassBox server in the trust path.
     """
-    return FileResponse(os.path.join(_STATIC, "verify.html"))
+    return HTMLResponse(_verify_html())
 
 
 # Serve the demo UI from /  (mounted last so /api/* + explicit routes take precedence)
