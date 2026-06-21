@@ -103,19 +103,25 @@ def _dispatch(system: str, user: str, role: str, timeout: int, json_mode: bool =
     """
     p = config.LLM_PROVIDER
     model = model_for(role)
-    if p == "openrouter":
-        if not config.OPENROUTER_API_KEY:
-            raise LLMError("OPENROUTER_API_KEY is empty — paste it into .env")
-        return _openai_compat(
-            "https://openrouter.ai/api/v1", config.OPENROUTER_API_KEY, model, system, user,
-            headers_extra={"HTTP-Referer": "https://github.com/supawichza40/glassbox", "X-Title": "GlassBox"},
-            timeout=timeout, json_mode=json_mode)
-    if p == "gemini":
-        if not config.GEMINI_API_KEY:
-            raise LLMError("GEMINI_API_KEY is empty — paste it into .env")
-        return _gemini(config.GEMINI_API_KEY, model, system, user, timeout=timeout, json_mode=json_mode)
-    if p == "ollama":
-        return _ollama(model, system, user, timeout=max(timeout, 180), json_mode=json_mode)
+    try:
+        if p == "openrouter":
+            if not config.OPENROUTER_API_KEY:
+                raise LLMError("OPENROUTER_API_KEY is empty — paste it into .env")
+            return _openai_compat(
+                "https://openrouter.ai/api/v1", config.OPENROUTER_API_KEY, model, system, user,
+                headers_extra={"HTTP-Referer": "https://github.com/supawichza40/glassbox", "X-Title": "GlassBox"},
+                timeout=timeout, json_mode=json_mode)
+        if p == "gemini":
+            if not config.GEMINI_API_KEY:
+                raise LLMError("GEMINI_API_KEY is empty — paste it into .env")
+            return _gemini(config.GEMINI_API_KEY, model, system, user, timeout=timeout, json_mode=json_mode)
+        if p == "ollama":
+            return _ollama(model, system, user, timeout=max(timeout, 180), json_mode=json_mode)
+    except requests.exceptions.RequestException as e:
+        # Transport-level failure (connection refused/aborted, DNS, read timeout) —
+        # e.g. a local Ollama crash or a provider blip. Surface as LLMError so callers
+        # (the chatbot) degrade to a friendly fallback instead of a raw 500.
+        raise LLMError(f"{model}: transport error ({type(e).__name__}: {str(e)[:160]})") from e
     raise LLMError(f"unknown LLM_PROVIDER='{p}' (use openrouter | gemini | ollama)")
 
 

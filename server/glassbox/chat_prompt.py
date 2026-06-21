@@ -787,7 +787,13 @@ def self_check(answer: str) -> SelfCheckResult:
             lead = text[max(0, m.start() - 12):m.start()]
             adjacent_neg = bool(_NEGATION_CUES.search(lead))
             contrast = re.search(r"tamper[\s-]*evident[^.]*?\bnot\b[^.]*tamper[\s-]*proof",
-                                 text, re.I)
+                                 text, re.I) or re.search(
+                # "...different from / as opposed to / rather than tamper-proof" — the
+                # term is being contrasted AWAY from, so it is correct usage. (Only
+                # these distinguishing phrases, NOT a loose 'not', so an affirmative
+                # overclaim like "this is tamper-proof" is still caught.)
+                r"\b(different from|differs? from|as opposed to|distinct from|"
+                r"rather than|instead of)\b[^.]{0,25}?tamper[\s-]*proof", text, re.I)
             if adjacent_neg or contrast:
                 continue
             violations.append(label)
