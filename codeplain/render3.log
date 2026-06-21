@@ -1,0 +1,28 @@
+[00:00:00] INFO codeplain: Render started. Render ID: 5000a161-b33c-4bdd-b50d-153c8e48be71
+[00:00:00] INFO codeplain: -------------------------------------
+           Module: typescript-react-app-boilerplate
+           Rendering functionality 1:
+           - Implement the entry point for :App:.
+           -------------------------------------
+[00:00:08] INFO codeplain: Refactoring the generated code...
+[00:00:09] INFO codeplain: [#79FC96]Render of module typescript-react-app-boilerplate completed successfully.[/#79FC96]
+[00:00:18] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 1:
+           - Show the header of :App: with the name "GlassBox" and the tagline "An AI Bull and Bear debate your trade — then we lock the verdict so it can't be quietly rewritten.". Show a 3-step guide: "1. Ask → 2. Get a verdict → 3. Prove it can't be faked". Also show :EvidenceCount: as "Evidence records: N retained".
+           -------------------------------------
+[00:00:41] INFO codeplain: Refactoring the generated code...
+[00:00:42] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 2:
+           - Show a standing disclaimer beneath every :Decision: with this exact text: "GlassBox is an educational and analytical tool. It does not provide personalised or financial advice. SUI/USDC is high-risk and largely unregulated; you could lose all the money you put in. 'Signal strength' is a mechanical score, not a probability of profit. You are solely responsible for any order you place."
+           -------------------------------------
+[00:00:52] INFO codeplain: Refactoring the generated code...
+[00:00:53] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 3:
+           - :User: should be able to enter a :Goal: (Text, Asset fixed to "SUI/USDC", Risk Tolerance from the three options) and submit it. Only a valid :Goal: can be submitted. If the Text is shorter than 5 characters, show an inline error and do not submit.
+           -------------------------------------
+[00:01:23] ERROR codeplain: {'error': {'message': 'The functionality:\n- :User: should be able to enter a :Goal: (Text, Asset fixed to "SUI/USDC", Risk Tolerance from the three options) and submit it. Only a valid :Goal: can be submitted. If the Text is shorter than 5 characters, show an inline error and do not submit.\n is too complex to be implemented. Please break down the functionality into smaller parts (Functional requirement\n\n- :User: should be able to enter a :Goal: (Text, Asset fixed to "SUI/USDC", Risk Tolerance from the three options) and submit it. Only a valid :Goal: can be submitted. If the Text is shorter than 5 characters, show an inline error and do not submit.\n\nis too complex).', 'type': 'COMPLEXITY_ERROR', 'details': {'frid': '3', 'proposed_breakdown': None}}}
+[00:01:23] INFO codeplain: To continue rendering from the last successfully rendered functionality, provide the [red]--render-from 3[/red] flag.
+[00:01:23] INFO codeplain: Render ID: 5000a161-b33c-4bdd-b50d-153c8e48be71
