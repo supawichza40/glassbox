@@ -54,6 +54,14 @@ requires:
 
 - The original-UI URL must be read from the environment variable "VITE_ORIGINAL_UI_URL" and default to "http://localhost:8787/".
 
+- Style the whole app as a DARK dashboard matching "resources/ui_reference.md" and the reference "server/glassbox/static/index.html". Use these tokens: page background #090c12, card surface #121821, inner surface #19212e, borders #2a3543, text #eef3fa, muted #8a97a8, green (bull / BUY / verified) #2ed573, red (bear / AVOID / tamper) #ff4d5e, amber (HOLD) #ffc24d, violet #7c5cff, teal (links / numbers / focus ring) #21d4c4. Center one column at max-width 1040px; render each section as a card (surface background, 1px #2a3543 border, 16px radius, soft shadow). Use a system sans font, and a monospace font for every hash / fingerprint / id.
+
+- The verdict is a very large hero word (about 64px, weight 800) coloured by outcome: green #2ed573 for BUY, amber #ffc24d for HOLD, red #ff4d5e for AVOID.
+
+- The Bull and Bear cases sit in two side-by-side cards (stacking to one column on narrow screens): the BULL card has a green #2ed573 top border and a green "BULL CASE" heading; the BEAR card has a red #ff4d5e top border and a red "BEAR CASE" heading.
+
+- The tamper states are asymmetric and use a word plus an icon (never colour alone): VERIFIED is a calm green #2ed573 confirmation; TAMPER DETECTED is the largest, most prominent state on the page — a big red #ff4d5e banner.
+
 ***test reqs***
 > Test requirements are defined in 'typescript-react-app-template'.
 

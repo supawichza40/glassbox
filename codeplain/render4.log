@@ -1,0 +1,81 @@
+[00:00:00] INFO codeplain: Render started. Render ID: c3f67029-c9e5-4674-ac3e-d22550d1087f
+[00:00:00] INFO codeplain: -------------------------------------
+           Module: typescript-react-app-boilerplate
+           Rendering functionality 1:
+           - Implement the entry point for :App:.
+           -------------------------------------
+[00:00:08] INFO codeplain: Refactoring the generated code...
+[00:00:09] INFO codeplain: [#79FC96]Render of module typescript-react-app-boilerplate completed successfully.[/#79FC96]
+[00:00:18] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 1:
+           - Show the header of :App: with the name "GlassBox" and the tagline "An AI Bull and Bear debate your trade — then we lock the verdict so it can't be quietly rewritten.". Show a 3-step guide: "1. Ask → 2. Get a verdict → 3. Prove it can't be faked". Also show :EvidenceCount: as "Evidence records: N retained".
+           -------------------------------------
+[00:00:41] INFO codeplain: Refactoring the generated code...
+[00:00:42] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 2:
+           - Show a standing disclaimer beneath every :Decision: with this exact text: "GlassBox is an educational and analytical tool. It does not provide personalised or financial advice. SUI/USDC is high-risk and largely unregulated; you could lose all the money you put in. 'Signal strength' is a mechanical score, not a probability of profit. You are solely responsible for any order you place."
+           -------------------------------------
+[00:00:48] INFO codeplain: Refactoring the generated code...
+[00:00:49] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 3:
+           - :User: should be able to enter a :Goal: (Text, Asset fixed to "SUI/USDC", Risk Tolerance from the three options) and submit it. Only a valid :Goal: can be submitted. If the Text is shorter than 5 characters, show an inline error and do not submit.
+           -------------------------------------
+[00:01:01] INFO codeplain: Refactoring the generated code...
+[00:01:15] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 4:
+           - On submit, call :AnalyzeEndpoint: with the body "{ goalText, asset, risk }" and show a loading state that shows progress (not a static spinner) while the agents debate. When the :Decision: returns, render it leading with the Verdict ("verdict") as a large hero element, together with the Signal Strength band ("signalBand": "Low"/"Medium"/"High") and its percentage ("signalStrengthPct") labelled "rule-based, not a probability of profit" and the suggested position size ("suggestedSizePct") labelled "of your portfolio"; then the Winning Side line that resolves the debate (the "winningSide" string plus the "whyResolved" reason); then the Bull Case ("bull.points") and Bear Case ("bear.points") side by side (the debate); then, behind a "Why you should doubt this" expander, the Risk Note (the "riskNote" string), the Counterfactual ("counterfactual"), and the Blind Spots ("blindSpots"), and the Inputs the analysis used ("inputs": priceUsd, rsi14, realizedVolPercentile, deepbookTopDepthUsd, etc.). Reveal the debate first, then the verdict a moment later so it gets its own focus.
+           -------------------------------------
+[00:01:32] INFO codeplain: Refactoring the generated code...
+[00:02:00] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 5:
+           - If :User:'s :Goal: Text is not an investing question about "SUI/USDC" (for example a greeting, small talk, a test, or an unrelated topic), :App: must NOT produce a :Decision:. Instead show a short, friendly message that GlassBox only analyzes whether to buy, hold, or avoid SUI/USDC, with an example question, and keep :User:'s input so they can edit it.
+           -------------------------------------
+[00:02:07] INFO codeplain: Refactoring the generated code...
+[00:02:08] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 6:
+           - :User: should be able to click a "Prove it" button on a :Decision:. This calls :AuditEndpoint: with the body "{ decision, goalText }", increases :EvidenceCount: by 1, and shows the resulting :AuditRecord: as a labelled receipt: a plain-English line explaining that GlassBox signed this exact decision and wrote its fingerprint to Walrus on Sui, so a single changed character won't match; then the Record Hash ("recordHash"), that it was signed (origin, "signature"), the Walrus storage shown as a chip ("sink"/"blobId"), and the on-chain Sui object id ("suiObjectId") linked to a Sui explorer.
+           -------------------------------------
+[00:02:22] INFO codeplain: Refactoring the generated code...
+[00:02:34] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 7:
+           - After "Prove it", :App: shows the signed record — the :AuditRecord:'s "recordCanonical" bytes — in an editable field together with two fingerprints: the **anchored fingerprint** (the fixed "recordHash") and **this record's fingerprint** (recomputed live by hashing the editable field's current text with Web Crypto SHA-256, formatted as lowercase hex). On first show, the un-edited bytes hash back to "recordHash", so start in the green "VERIFIED" state. While the two fingerprints are identical, show a green "VERIFIED" state; the moment they differ, show a red "TAMPER DETECTED" state. Neither state may rely on colour alone (use words + an icon).
+           -------------------------------------
+[00:02:47] INFO codeplain: Refactoring the generated code...
+[00:02:48] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 8:
+           - :User: should be able to edit the record — changing even a single character must immediately recompute this record's fingerprint (re-hash the editable text client-side with Web Crypto SHA-256) and (because it now differs from the anchored fingerprint) show "TAMPER DETECTED", with the differing characters of the fingerprint highlighted. A "Reset" returns the record to its original "recordCanonical" bytes and the state returns to "VERIFIED". A "Try to alter it" button performs a one-character change on the user's behalf. This is the key moment — make the mismatch the largest, most prominent state.
+           -------------------------------------
+[00:02:57] INFO codeplain: Refactoring the generated code...
+[00:02:58] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 9:
+           - :User: should be able to click a "Re-verify on Walrus" button that calls :VerifyEndpoint: at "GET /api/verify/{recordId}" (using the :AuditRecord:'s short "recordId") to re-fetch the record from storage and confirm the anchored fingerprint is intact and the signature is valid — shown as a short confirmation line only when BOTH "hashMatch" and "signatureValid" are true.
+           -------------------------------------
+[00:03:06] INFO codeplain: Refactoring the generated code...
+[00:03:21] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 10:
+           - Never use the words "tamper-proof" or "provable to anyone" anywhere in :App:. Use "tamper-evident" and "verify".
+           -------------------------------------
+[00:03:36] INFO codeplain: Refactoring the generated code...
+[00:03:37] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 11:
+           - Every call to :AnalyzeEndpoint:, :AuditEndpoint:, and :VerifyEndpoint: must show a loading state while in progress, an empty state before it runs, and a clear error state if it fails. The application must never show a blank screen on failure.
+           -------------------------------------
+[00:03:51] INFO codeplain: Refactoring the generated code...
+[00:03:52] INFO codeplain: -------------------------------------
+           Module: glassbox
+           Rendering functionality 12:
+           - Show a small, unobtrusive control in the header of :App: — a labelled link reading "View the original UI ↗" — that opens the original hand-built GlassBox UI at the URL from the environment variable "VITE_ORIGINAL_UI_URL". This lets a viewer switch between this Codeplain-rendered UI and the original at the press of a button.
+           -------------------------------------
+[00:04:06] INFO codeplain: Refactoring the generated code...
+[00:04:07] INFO codeplain: [#79FC96]Render of module glassbox completed successfully.[/#79FC96]

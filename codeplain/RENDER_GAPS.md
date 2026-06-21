@@ -1,164 +1,121 @@
-# RENDER_GAPS — what the renderer left, and how it folds back upstream
+# RENDER_GAPS — what the v2 dark render left, and how it folds back upstream
 
-> The Codeplain render of `glassbox.plain` produced a near-complete app, but left **three
-> classes of gap**: **4 mechanical compile gaps** (GAPs 1–4); **5 contract gaps** (GAPs 5–9)
-> where the renderer invented a WRONG backend contract because the original spec described the
-> endpoints abstractly without pinning the JSON field names; and **the FRID 12 switch link**
-> (GAP 10), reproduced idempotently so the committed app carries it without a re-render. This
-> file documents each one,
-> the minimal deterministic fix applied by
-> [`../scripts/post-render-patch.sh`](../scripts/post-render-patch.sh), and the **upstream fix**
-> — the change to `glassbox.plain` (or the template) that would make the patch unnecessary on
-> the next render. The discipline that matters for a spec-first project: **the real fix belongs
-> in the spec, not in the generated code.**
+> The v2 "dark design" render of `glassbox.plain` produced a **dark, on-brand, working app** and
+> left only **3 small gaps** — down from 10 in the v1 render. There are **no contract gaps this
+> time**: because the spec now pins the exact backend JSON field names, the renderer emitted the
+> correct contract, and the live journey passed end-to-end without any contract rewrite. The three
+> remaining gaps are: **(1)** the Vite client-types declaration, **(2)** a one-line `Decision`
+> re-export, and **(3)** the FRID-12 switch-link normalization. This file documents each one, the
+> minimal deterministic fix applied by
+> [`../scripts/post-render-patch.sh`](../scripts/post-render-patch.sh), and the **upstream fix** —
+> the change to `glassbox.plain` (or the template) that would make the patch unnecessary on the
+> next render. The discipline that matters for a spec-first project: **the real fix belongs in the
+> spec, not in the generated code.**
 >
-> The compile gaps are confirmed by `cd web && npm run build` before the patch (errors) and
-> after it (clean). The contract gaps are **silent** — they pass `npm run build` and only fail
-> at runtime (HTTP 422 / crash on the live backend), so they were caught by a live headless
-> drive (`/tmp/gbverify/drive_codeplain.mjs`), not by the compiler. The patch script is
-> idempotent — re-running it is a verified no-op, and it heals all 10 from a fresh render.
-> **[measured]**
+> The headline insight of v2: **the better the spec, the cleaner the render.** v1 left 10 gaps
+> (4 mechanical + 5 invented-contract + the switch link) because the spec described the endpoints
+> abstractly. Once the contract AND the design were pinned in the spec, the render came out dark,
+> on-brand, and contract-correct, and the patch shrank to 3 idempotent gaps. **[measured]**
 
-> **Status (2026-06-21):** the contract gaps (5–9) are now PINNED upstream in `glassbox.plain`
-> — `:Decision:`, `:AuditRecord:`, and the four endpoint definitions state the EXACT request
-> and response field names. `codeplain glassbox.plain --dry-run` compiles clean (exit 0). The
-> patch's GAP 5–9 steps remain as the deterministic safety net until a re-render is run against
-> the pinned spec and verified. Live journey drive: **PASS** end-to-end (analyze → HOLD/85/High
-> → debate → doubt expander → Prove it → receipt → tamper VERIFIED↔TAMPER (un-edited = MATCH)
-> → Re-verify on Walrus 200).
+> **Status (2026-06-21):** `codeplain glassbox.plain --dry-run` compiles clean (exit 0).
+> `cd web && npm run build` is clean (`tsc && vite build` ✓ in ~0.5 s). Live journey drive:
+> **PASS** end-to-end (analyze → HOLD/85/High → debate → doubt expander → Prove it → receipt →
+> tamper VERIFIED↔TAMPER (un-edited = MATCH) → Re-verify on Walrus 200). The render is **dark and
+> on-brand** (page #090c12, 64px coloured verdict hero, #121821 cards, green/red Bull/Bear cards,
+> asymmetric VERIFIED/TAMPER).
 
 ---
 
-## The four gaps
+## First, the complexity-error lesson (why the spec stays concise)
 
-### GAP 1 — Missing `src/vite-env.d.ts` (TS2339)
+The first v2 attempt put **all** the design detail (the full token palette, every measurement,
+all the staging) directly into the spec's `***implementation reqs***`. Codeplain hit a hard
+limit and **failed at FRID 3** (`render3.log`):
 
-The renderer reads the backend URL from `import.meta.env.VITE_API_BASE_URL` (in `config.ts` and
-`hooks/useTradeAnalysis.ts`) but never emitted the Vite client-types declaration, so
-`import.meta.env` is untyped and `tsc` errors with *Property 'env' does not exist on type
-'ImportMeta'*.
+```
+ERROR codeplain: {'error': {'message': '... is too complex to be implemented. Please break
+down the functionality into smaller parts ...', 'type': 'COMPLEXITY_ERROR',
+'details': {'frid': '3', ...}}}
+```
 
-- **Patch:** create the standard triple-slash `src/vite-env.d.ts` declaring
-  `ImportMetaEnv.VITE_API_BASE_URL`.
-- **Upstream fix:** the `typescript-react-app-template` should ship `vite-env.d.ts` (or
-  Codeplain should emit it) whenever a spec reads `import.meta.env`. This is a **template/tooling
-  gap**, not a `glassbox.plain` gap — the spec correctly *uses* the env var.
-
-### GAP 2 — `App.tsx` verify state not destructured (TS2304)
-
-`useTradeAnalysis` **returns** `verifyOnWalrus` / `isVerifying` / `verificationStatus`, and the
-JSX **passes** them to `<DecisionView/>`, but `App.tsx`'s destructure stops at `rehashDecision`,
-so those three names are undefined.
-
-- **Patch:** insert the three names into the destructure, anchored on its unique closing line.
-- **Upstream fix:** FRID 9 ("Re-verify on Walrus") describes the *behaviour* but the renderer
-  wired only ~⅔ of the data path. Tightening FRID 9 to name the surfaced state (or splitting the
-  verify wiring into its own FRID) gives the renderer an unambiguous target.
-
-### GAP 3 — `DecisionView.tsx` verify props not destructured (TS2304)
-
-Symmetric to GAP 2 one component down: `DecisionViewProps` **declares** `onVerify` /
-`isVerifying` / `verificationStatus` and the JSX **forwards** them to `<AuditSection/>`, but the
-component's parameter destructure stops at `onRehash`.
-
-- **Patch:** insert the three names after `onRehash` in the **destructure** (the interface is
-  already correct).
-- **Upstream fix:** same as GAP 2 — the "Re-verify" data path crosses three components; a
-  sharper FRID 9 closes all of it at once.
-
-### GAP 4 — Dead code after a return in `AuditVerification.tsx` (TS2304 / TS1308 / TS2345)
-
-`renderHighlightedHash()` ends correctly at its map's `});`, but the renderer duplicated a stale
-change-handler body **after** it (unreachable) — referencing an undefined `e`, using `await`
-outside an async function, and passing `string|null` to a `string` setState.
-
-- **Patch:** delete only the dead block (from the stray `const newVal = e.target.value;` down to
-  its `setLiveHash('INVALID_JSON');`), keeping the function's real body and closer. Bounded so it
-  can only match this one contiguous block. The live handler above (`handleEdit`/`updateHash`) is
-  untouched.
-- **Upstream fix:** this is a **renderer artifact** (a duplicated fragment), not a spec
-  ambiguity — worth reporting upstream to Codeplain; nothing in `glassbox.plain` invites it.
+The renderer has a per-functionality complexity budget; an impl-reqs block that tries to specify
+every pixel blows it. We fixed it the standard Codeplain way — **keep the heavy detail in
+`resources/ui_reference.md` (215 lines) and put only CONCISE, high-impact directives in the
+spec** (the token list, the 64px coloured hero, the green/red Bull/Bear cards, the asymmetric
+VERIFIED/TAMPER climax). The re-render (`render4.log`) then completed **all 12 FRIDs in one
+pass**. This mirrors the reference repo's "split big FRIDs to fit the renderer's complexity
+limit" — the limit isn't a defect, it's a forcing function toward the right architecture: a
+concise spec that *points at* a detailed design brief.
 
 ---
 
-## The five contract gaps (the renderer invented a wrong API contract)
+## The three gaps
 
-These are the gaps QA's `REPLICA_VERIFICATION.md` flagged as P0/P1. None of them is a compile
-error — the rendered code type-checks against its OWN invented `types.ts`. They fail only at
-runtime against the real backend (`server/glassbox/`). **Root cause: the original spec named the
-endpoints and the Decision/AuditRecord concepts but never pinned the exact JSON field names, so
-Codeplain guessed — and guessed wrong.** The fix is upstream: `glassbox.plain` now states the
-exact field names; the patch (GAPs 5–9) is the safety net that overwrites the five
-contract-bearing files with contract-correct versions, each guarded by a unique
-`CONTRACT-PINNED (… GAP N)` sentinel so re-runs are no-ops.
+### GAP 1 — Vite client types missing / incomplete (TS2339)
 
-### GAP 5 — `src/types.ts`: Decision/AuditRecord typed to invented fields
-The renderer typed `Decision` with `bullCase`/`bearCase`, `winningSide.{side,reason}`,
-`signalStrength.{percentage,band}`, `riskNote.{risk,suggestedSize}`, `inputs.{price,rsi,volatility,liquidity}`,
-and `AuditRecord` with a **nested** `suiAnchor.{objectId,epoch}` + `walrusBlobId`. The backend
-returns `bull.points[]`/`bear.points[]`, `winningSide` (a **string**) + `whyResolved`,
-`signalStrengthPct` + `signalBand`, `suggestedSizePct`, `riskNote` (a **string**),
-`inputs.{priceUsd,rsi14,realizedVolPercentile,deepbookTopDepthUsd,…}`, and a **flat**
-`AuditRecord` (`recordId`, `recordHash`, `recordCanonical`, `signature`, `pubkey`, `sink`,
-`blobId`, `suiObjectId`, `anchorEpoch`, `anchorNetwork`).
-- **Patch:** write `types.ts` with the real shapes.
-- **Upstream fix:** `:Decision:` and `:AuditRecord:` now enumerate the exact field names.
+`import.meta.env.VITE_API_BASE_URL` and `.VITE_ORIGINAL_UI_URL` are read in `src/App.tsx` (and
+`AuditReceiptView.tsx`), but if the renderer doesn't emit `src/vite-env.d.ts`, `import.meta.env`
+is untyped and `tsc` errors with *Property 'env' does not exist on type 'ImportMeta'*.
 
-### GAP 6 — `src/hooks/useTradeAnalysis.ts`: wrong request bodies + verify field
-Analyze posted `{text, asset, riskTolerance}` → **422** (backend wants `{goalText, asset, risk}`);
-audit posted the bare decision and rehash the bare object (backend wants `{decision, goalText}`
-and `{decision}`); off-topic was read as `isOffTopic` (backend sends `outOfScope` + `message`);
-verify read `data.isValid` (backend returns `{hashMatch, signatureValid}`).
-- **Patch:** correct all four bodies + the off-topic and verify field reads.
-- **Upstream fix:** the four endpoint definitions now pin the request bodies, the `outOfScope`
-  422 shape, and the `{hashMatch, signatureValid}` verify response.
+- **Patch:** (re)write the standard triple-slash `src/vite-env.d.ts` declaring **both**
+  `VITE_API_BASE_URL` and `VITE_ORIGINAL_UI_URL`. Guarded on the presence of the
+  `VITE_ORIGINAL_UI_URL` declaration, so a complete file is a no-op; heals from scratch if absent.
+- **Upstream fix:** the `typescript-react-app-template` should ship `vite-env.d.ts` (or Codeplain
+  should emit it) whenever a spec reads `import.meta.env`. This is a **template/tooling gap**, not
+  a `glassbox.plain` gap — the spec correctly *uses* the env vars.
 
-### GAP 7 — `src/components/DecisionView.tsx`: renders invented fields
-Read `decision.bullCase.map`, `decision.winningSide.side.toUpperCase()`,
-`decision.signalStrength.percentage`, `decision.riskNote.suggestedSize`, `decision.inputs.price`
-— all `undefined`/throw on the real payload.
-- **Patch:** render `bull.points`/`bear.points`, the `winningSide` string + `whyResolved`,
-  `signalStrengthPct`/`signalBand`, `suggestedSizePct`, the `riskNote` string, and the real
-  `inputs.*`.
-- **Upstream fix:** the analyze functional spec now names the exact fields to render.
+### GAP 2 — `AnalysisResults.tsx` does not re-export `Decision` (TS2459) — the build blocker
 
-### GAP 8 — `src/components/AuditVerification.tsx`: tamper demo hashed the wrong bytes
-The renderer made the editable field `JSON.stringify(decision)` and recomputed "this record's
-fingerprint" by POSTing it to `/api/rehash` — which would never match `recordHash` (the backend
-canonicalizes server-side), so an un-edited record showed a false TAMPER.
-- **Patch:** the editable field holds the `recordCanonical` bytes; "this record's fingerprint"
-  is recomputed client-side with **Web Crypto SHA-256** (lowercase hex), exactly like the
-  original UI (`server/glassbox/static/index.html`). Confirmed: `sha256(recordCanonical) ===
-  recordHash`, so an un-edited record shows **MATCH/VERIFIED**; a one-char edit flips to
-  **TAMPER**; Reset returns to VERIFIED. **[measured]**
-- **Upstream fix:** the tamper functional specs + `:AuditRecord:` now state that the fingerprint
-  is the Web-Crypto SHA-256 of the edited `recordCanonical`, and that the rehash endpoint is NOT
-  used by the demo.
+`App.tsx` imports `{ AnalysisResults, Decision }` from `'./components/AnalysisResults'`, but that
+module only **imports** `Decision` from `'./AnalysisTypes'` and never re-exports it, so `tsc`
+errors: *Module './components/AnalysisResults' declares 'Decision' locally, but it is not
+exported.*
 
-### GAP 9 — `src/components/AuditSection.tsx`: nested AuditRecord + wrong verify id
-Read `auditRecord.walrusBlobId`/`auditRecord.suiAnchor.objectId` (undefined → "Local Fallback",
-no Sui link) and called `onVerify(auditRecord.recordHash)` — the **full** hash, but
-`/api/verify/{id}` keys on the **short** `recordId` (`{"error":"unknown recordId"}`).
-- **Patch:** use flat `sink`/`blobId`/`suiObjectId`/`anchorEpoch`, and pass
-  `auditRecord.recordId` to `onVerify`.
-- **Upstream fix:** `:AuditRecord:` is flat and `:VerifyEndpoint:` pins `{recordId}` = the short
-  id + the `{hashMatch, signatureValid}` response.
+- **Patch:** append `export type { Decision } from './AnalysisTypes';` to `AnalysisResults.tsx`
+  (anchored on its unique `AuditReceiptView` import line; EOF fallback if the anchor moves).
+  Guarded on a sentinel and only applied when `App.tsx` actually imports `Decision` from this
+  module and it isn't re-exported yet.
+- **Upstream fix:** a **renderer artifact** — the renderer split the types into `AnalysisTypes.tsx`
+  but had `App.tsx` import the type from `AnalysisResults.tsx` without threading the re-export.
+  Worth reporting upstream; nothing in `glassbox.plain` invites it.
+
+### GAP 3 — FRID 12: the "View the original UI" switch link
+
+The spec's FRID 12 (the side-by-side UI switch) wants a header link reading **"View the original
+UI ↗"** pointing at `VITE_ORIGINAL_UI_URL` (default the backend's bundled original UI at
+`http://localhost:8787/`). The renderer is inconsistent: it may emit the link with slightly
+different text/markup, or omit it.
+
+- **Patch:** normalize to the spec. Three heal paths, all guarded on a `cp-switch` class sentinel
+  (a correct link is a no-op): (a) a `cp-switch` link already present → skip; (b) an original-UI
+  anchor exists but isn't normalized → add the `cp-switch` class + spec text; (c) no anchor →
+  inject a labelled `cp-switch` link right after `<h1>GlassBox</h1>`. This pairs with the original
+  UI's own "⇄ Codeplain UI ↗" link back to `:5173/`, so the switch is **live both ways**.
+  **[measured]**
+- **Upstream fix:** none needed in principle — this is FRID 12; a render emits the link, and GAP 3
+  becomes a verified no-op when the renderer happens to emit the exact spec wording. The patch just
+  normalizes the wording/markup deterministically.
 
 ---
 
-## The switch link (GAP 10)
+## Why no contract gaps this time
 
-### GAP 10 — FRID 12 "View the original UI ↗" header link
-`render.log` captured the render of FRIDs 1–11; FRID 12 (the side-by-side switch) was added to
-`glassbox.plain` as a single sentence afterward. A fresh render of the current 12-FRID spec emits
-the link directly, but the committed `web/` snapshot predates that render, so the patch reproduces
-it.
-- **Patch:** insert the labelled "View the original UI ↗" header link into `App.tsx`, reading
-  `import.meta.env.VITE_ORIGINAL_UI_URL` (default `http://localhost:8787/`), guarded by a unique
-  sentinel so a re-run is a no-op. This pairs with the original UI's own "⇄ Codeplain UI ↗" link
-  back to `:5173/`, so the switch is **live both ways**. **[measured]**
-- **Upstream fix:** none needed — this is FRID 12 in the spec; a fresh render emits it, at which
-  point GAP 10 becomes a verified no-op like the others.
+v1 left **5 contract gaps** (GAPs 5–9 in the old version of this doc) where the renderer
+**invented a wrong backend contract** — `{text, riskTolerance}` instead of `{goalText, asset,
+risk}`, nested `suiAnchor` instead of flat `suiObjectId`/`anchorEpoch`, a tamper demo that hashed
+the wrong bytes, etc. Those failed silently at compile time and only blew up at runtime (HTTP
+422 / false TAMPER on an un-edited record).
+
+The root cause was that the spec named the endpoints abstractly without pinning the JSON field
+names. **That is now fixed in the spec:** `:Decision:`, `:AuditRecord:`, and the four endpoint
+definitions in `glassbox.plain` enumerate the **exact** request/response field names (e.g.
+`{goalText, asset, risk}`; `bull.points`/`signalStrengthPct`/`winningSide` as a *string*; a
+**flat** `recordId`/`recordHash`/`recordCanonical`/`suiObjectId`/`anchorEpoch`; verify →
+`{hashMatch, signatureValid}`; the tamper demo hashing the edited `recordCanonical` client-side
+with Web Crypto, **not** the rehash endpoint). The v2 render emitted the **correct** contract, and
+the live drive passed end-to-end — so the patch script carries **no contract-rewrite GAPs** at
+all. The patch's own header comment states this explicitly. That is the spec-first thesis paying
+off: tighten the spec once, and the render stops guessing wrong.
 
 ---
 
@@ -180,10 +137,16 @@ the moment anyone re-renders. So the gaps live in **one deterministic, idempoten
 - keeps the **spec as the single source of truth** — `glassbox.plain` + the patch script fully
   reproduce a clean build from scratch.
 
+The Codeplain renderer is **non-deterministic** — each render's component structure differs, so
+the exact compile gaps vary run-to-run. The current script targets **this render's** structure
+(`App.tsx` owns the form + analyze fetch inline; `AnalysisResults.tsx` holds the debate grid +
+verdict hero; `AnalysisTypes.tsx` the types; `AuditReceiptView.tsx` the receipt + tamper demo) and
+each step heals from scratch.
+
 ```bash
 CODEPLAIN_API_KEY=<key> codeplain glassbox.plain --force-render --headless
 ./scripts/post-render-patch.sh
-cd web && npm run build      # tsc && vite build → clean
+cd web && npm run build      # tsc && vite build → clean (~0.5 s)
 ```
 
 ## Gap classification (for the upstream report)
@@ -191,19 +154,11 @@ cd web && npm run build      # tsc && vite build → clean
 | Gap | Class | Root cause | Fix lives in |
 |---|---|---|---|
 | 1 — missing `vite-env.d.ts` | compile | template/tooling omission | Codeplain template |
-| 2 — `App.tsx` destructure | compile | partial wiring of FRID 9 | spec (sharpen FRID 9) |
-| 3 — `DecisionView.tsx` destructure | compile | partial wiring of FRID 9 | spec (sharpen FRID 9) |
-| 4 — dead code after return | compile | renderer artifact (duplicated fragment) | Codeplain renderer |
-| 5 — `types.ts` invented Decision/AuditRecord | **contract** | spec never pinned field names | **spec** (`:Decision:`/`:AuditRecord:` — now pinned) |
-| 6 — `useTradeAnalysis.ts` wrong request bodies | **contract** | spec never pinned request shapes | **spec** (4 endpoint defs — now pinned) |
-| 7 — `DecisionView.tsx` renders invented fields | **contract** | spec never pinned field names | **spec** (analyze functional spec — now pinned) |
-| 8 — tamper hashed re-serialized decision | **contract** | spec didn't say *what bytes* to hash | **spec** (tamper specs + `:AuditRecord:` — now pinned) |
-| 9 — `AuditSection.tsx` nested record + full-hash verify | **contract** | spec never pinned flat record + short id | **spec** (`:AuditRecord:`/`:VerifyEndpoint:` — now pinned) |
-| 10 — FRID 12 switch link | snapshot | `web/` predates the FRID-12 render | **spec** (FRID 12 — a fresh render emits it) |
+| 2 — `Decision` not re-exported from `AnalysisResults.tsx` | compile | renderer artifact (split types, un-threaded re-export) | Codeplain renderer |
+| 3 — FRID 12 switch link wording/markup | snapshot | renderer emits inconsistent text | **spec** (FRID 12 — a render emits it; patch normalizes) |
 
-The four compile gaps split tooling/renderer/spec; **all five contract gaps trace to one root
-cause — the spec described the endpoints abstractly and never pinned the JSON field names**, so
-the renderer guessed and guessed wrong. That root cause is now fixed in `glassbox.plain`
-(`--dry-run` clean). The patch's GAP 5–9 steps remain the deterministic safety net until a
-re-render against the pinned spec is run and verified — at which point they should become
-verified no-ops, like GAPs 1–4 already are when the renderer happens to emit clean output.
+**There are no contract gaps in v2.** All five of v1's contract gaps traced to one root cause —
+the spec described the endpoints abstractly and never pinned the JSON field names — and that root
+cause is now fixed in `glassbox.plain` (`--dry-run` clean, live drive PASS). The remaining three
+gaps are two minor compile fix-ups (one template, one renderer artifact) and one cosmetic
+link-wording normalization. **The better the spec, the cleaner the render — 10 gaps became 3.**
