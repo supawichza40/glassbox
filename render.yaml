@@ -7,7 +7,10 @@ services:
     runtime: python
     plan: free
     branch: main
-    buildCommand: pip install -r requirements.txt
+    # pysui (Sui anchoring) is an OPTIONAL, lazily-imported dep that fails to build on
+    # Python 3.13 in Render's build image — and anchoring is off here (AUDIT_SINK=walrus,
+    # ANCHOR=none), so the app never imports it. Install the runtime deps WITHOUT pysui.
+    buildCommand: pip install fastapi "uvicorn[standard]" requests pydantic python-dotenv cryptography
     startCommand: cd server && python -m uvicorn glassbox.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health
     envVars:
