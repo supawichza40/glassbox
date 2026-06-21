@@ -1,0 +1,78 @@
+%% How GlassBox works — slide diagram (quick-edit source)
+%% Claim discipline: tamper-EVIDENT (never tamper-proof); Signal Strength = how decisive
+%% the evidence was, NOT a profit forecast; signature proves ORIGIN; the on-chain Sui
+%% object is an ANCHOR (non-alteration + independent reference), not a wall-clock timestamp.
+%% Render: mermaid-cli  ->  mmdc -i glassbox-architecture.mmd -o glassbox-architecture.svg
+
+flowchart LR
+
+  %% ---------- ZONE 1 · YOU ASK ----------
+  subgraph Z1["1 · YOU ASK"]
+    direction TB
+    A["fa:fa-user You<br/><i>Ask in plain English:<br/>'Should I hold SUI for 2 weeks? (moderate risk)'</i>"]
+    B["Question check<br/><small>Really an investing question?<br/>Off-topic → polite redirect, never a fake answer.</small>"]
+    A --> B
+  end
+
+  %% ---------- ZONE 2 · GLASSBOX DECIDES ----------
+  subgraph Z2["2 · GLASSBOX DECIDES"]
+    direction TB
+    C["Freeze the facts<br/><small>5 real market numbers locked in:<br/>trend · RSI · volatility · liquidity · drawdown</small>"]
+    BULL["Bull agent<br/><small>argues the optimistic case —<br/>using ONLY the frozen numbers</small>"]
+    BEAR["Bear agent<br/><small>argues the cautious case —<br/>using ONLY the frozen numbers</small>"]
+    ARB["Risk Arbiter<br/><small>weighs both sides</small>"]
+    C --> BULL
+    C --> BEAR
+    BULL <-->|"debate + 1 rebuttal"| BEAR
+    BULL --> ARB
+    BEAR --> ARB
+  end
+
+  %% ---------- VERDICT (bridge 2 → 3) ----------
+  G["VERDICT — BUY / HOLD / AVOID  +  Signal Strength<br/><small>(how decisive the evidence was — not a profit forecast)</small>"]
+  ARB --> G
+
+  %% ---------- ZONE 3 · GLASSBOX PROVES IT ----------
+  subgraph Z3["3 · GLASSBOX PROVES IT"]
+    direction TB
+    H["Sign it<br/><small>ed25519 signature = a tamper-evident<br/>fingerprint of the decision</small>"]
+    I["Store + anchor<br/><small>Walrus stores the signed record;<br/>Sui registers an on-chain anchor object</small>"]
+    J["Verify it yourself<br/><small>your own phone recomputes the fingerprint<br/>& checks the signature — no GlassBox server needed</small>"]
+    K["TAMPER DETECTED<br/><small>change one character →<br/>the fingerprint no longer matches</small>"]
+    H --> I --> J
+    J -.->|"edit one character"| K
+  end
+  G --> H
+
+  %% ---------- ZONE-TO-ZONE FLOW ----------
+  B --> C
+
+  %% ---------- EXTERNAL SYSTEMS (labeled edges) ----------
+  CG(["CoinGecko"]) -->|"live price, trend, RSI, volatility"| C
+  DB(["DeepBook v3"]) -->|"order-book depth & spread (liquidity)"| C
+  LLM(["Gemini / OpenRouter (LLM)"]) -->|"powers the agents' reasoning"| BULL
+  LLM -->|"powers the agents' reasoning"| BEAR
+  I -->|"stores the signed record (blob)"| WAL(["Walrus"])
+  I -->|"registers the on-chain anchor object"| SUI(["Sui"])
+  PHONE(["Your phone"]) -->|"re-checks everything independently"| J
+
+  %% ---------- STYLING ----------
+  classDef bull fill:#0e1a13,stroke:#2ed573,stroke-width:2px,color:#2ed573;
+  classDef bear fill:#1a0d10,stroke:#ff4d5e,stroke-width:2px,color:#ff4d5e;
+  classDef verify fill:#0e1a13,stroke:#2ed573,stroke-width:2px,color:#2ed573;
+  classDef tamper fill:#1a0d10,stroke:#ff4d5e,stroke-width:2px,stroke-dasharray:5 4,color:#ff4d5e;
+  classDef verdict fill:#120f1f,stroke:#7c5cff,stroke-width:2px,color:#eef3fa;
+  classDef ext fill:#0d1119,stroke:#21d4c4,stroke-width:1.5px,color:#c0cbda;
+  classDef core fill:#121821,stroke:#2a3543,stroke-width:1px,color:#eef3fa;
+
+  class A,B,C,ARB,H,I core;
+  class BULL bull;
+  class BEAR bear;
+  class G verdict;
+  class J verify;
+  class K tamper;
+  class CG,DB,LLM,WAL,SUI,PHONE ext;
+
+  %% FOOTER NOTE (claim discipline):
+  %% Tamper-evident, not tamper-proof — GlassBox proves WHAT the AI decided and that no one
+  %% changed it, not that the call is right.  ·  The Start of a Joke · Encode Vibe Hackathon

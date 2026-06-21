@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>How GlassBox works</title>
+<style>
+  :root{
+    --bg:#090c12; --surface:#121821; --line:#2a3543;
+    --ink:#eef3fa; --ink2:#c0cbda; --muted:#8a97a8;
+    --brand:#7c5cff; --bull:#2ed573; --bear:#ff4d5e; --warn:#ffc24d; --accent:#21d4c4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#05070b}
+  .stage{
+    position:relative;width:1280px;height:720px;overflow:hidden;
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+    background:
+      radial-gradient(1000px 460px at 50% -12%, #16203055 0%, transparent 60%),
+      var(--bg);
+    padding:20px 26px 0;
+    display:flex;flex-direction:column;
+  }
+
+  /* ---------- header ---------- */
+  .head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:10px}
+  .title{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.02}
+  .subtitle{font-size:15.5px;color:var(--ink2);line-height:1.3;margin-top:5px;max-width:760px}
+  .brandtag{font-size:12px;color:var(--brand);font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;text-align:right;white-space:nowrap;padding-bottom:2px}
+
+  /* ---------- zones ---------- */
+  .zones{position:relative;display:grid;grid-template-columns:0.92fr 2.05fr 1.55fr;gap:12px;flex:1;min-height:0}
+  /* cross-zone flow arrows overlaid at the seams */
+  .seam{position:absolute;transform:translate(-50%,-50%);z-index:8;
+    width:34px;height:34px;border-radius:50%;background:#0b1016;border:2px solid var(--brand);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--brand);font-size:19px;font-weight:800;box-shadow:0 0 16px #7c5cff66}
+  /* seam x = padding(26) + col widths + half-gap. usable=1228-24=1204; sum=4.52
+     col1=0.92/4.52*1204=245px; col2=2.05/4.52*1204=546px; col3=413px
+     s1 = 26 + 245 + 6 = 277 ; s2 = 26 + 245 +12 +546 +6 = 835 */
+  .seam.s1{left:276px;top:50%}
+  /* Arbiter -> Verdict bridge connector (the worst handoff, made obvious) */
+  .bridge{position:absolute;z-index:9;overflow:visible;
+    filter:drop-shadow(0 0 6px #7c5cff66)}
+  .zone{
+    position:relative;border:1px solid var(--line);border-radius:14px;
+    background:linear-gradient(180deg,#0e141d 0%, #0b1016 100%);
+    padding:9px 11px 11px;display:flex;flex-direction:column;min-height:0}
+  .zone-h{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;
+    color:var(--accent);margin-bottom:8px;display:flex;align-items:center;gap:7px}
+  .zone-h .num{display:inline-flex;align-items:center;justify-content:center;
+    width:18px;height:18px;border-radius:50%;background:#13313055;border:1px solid var(--accent);
+    color:var(--accent);font-size:11px;font-weight:800}
+  .zone-body{display:flex;flex-direction:column;gap:7px;flex:1;min-height:0;justify-content:flex-start}
+  .zone-body.center{justify-content:center}
+
+  /* ---------- node card ---------- */
+  .node{
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:8px 10px;position:relative}
+  .node .nt{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:7px;line-height:1.1}
+  .node .nd{font-size:11.5px;color:var(--ink2);line-height:1.3;margin-top:3px}
+  .node .ico{font-size:15px;line-height:1;filter:saturate(1.1)}
+  .node.bull{border-color:var(--bull)}
+  .node.bull .nt{color:var(--bull)}
+  .node.bear{border-color:var(--bear)}
+  .node.bear .nt{color:var(--bear)}
+  .node.verify{border-color:var(--bull);background:#0e1a13}
+  .node.verify .nt{color:var(--bull)}
+  .node.tamper{border:1.5px dashed var(--bear);background:#1a0d10}
+  .node.tamper .nt{color:var(--bear)}
+  .node.arbiter{border-color:var(--brand);background:#120f1f;box-shadow:0 0 0 1px #7c5cff33}
+  .node.arbiter .nt{color:var(--brand)}
+  .node.verdict{border:1.5px solid var(--brand);background:#15102a;box-shadow:0 0 18px #7c5cff33}
+
+  /* intentional anchor note (fills Zone 1 airiness on purpose) */
+  .zone-note{margin-top:14px;text-align:center;font-size:12px;font-weight:800;color:var(--ink2);
+    letter-spacing:.01em;line-height:1.35}
+  .zone-note span{display:block;margin-top:3px;font-size:10.5px;font-weight:500;color:var(--muted);
+    text-transform:none;letter-spacing:0}
+
+  /* arrow between stacked nodes — clear vertical connector with a chevron */
+  .down{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    margin:0;line-height:1;gap:0}
+  .down::before{content:"";width:2px;height:8px;background:var(--brand);opacity:.55;border-radius:1px}
+  .down .tip{color:var(--brand);font-size:12px;line-height:.6;margin-top:-1px;opacity:.9}
+
+  /* ---------- debate row ---------- */
+  .debate-wrap{position:relative}
+  .debate{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .debate-link{
+    text-align:center;font-size:11px;color:var(--accent);font-weight:800;
+    margin:6px 0 2px;letter-spacing:.04em;text-transform:uppercase;
+    display:flex;align-items:center;justify-content:center;gap:7px}
+  .debate-link .ar{color:var(--accent);font-size:15px;letter-spacing:-1px}
+  /* compact "powered by" badge under the debate (keeps logo + name) */
+  .powered{display:flex;align-items:center;justify-content:center;gap:6px;
+    margin-top:5px;font-size:10.5px;color:var(--ink2);line-height:1.1}
+  .powered .logo{width:15px;height:15px;flex:none;display:flex;align-items:center;justify-content:center}
+  .powered .logo svg{width:15px;height:15px;display:block}
+  .powered .ptxt b{color:var(--ink);font-weight:700}
+
+  /* verdict line */
+  .verdict .vt{font-size:15px;font-weight:800;color:#fff;letter-spacing:.01em}
+  .verdict .vt b{color:var(--brand)}
+  .verdict .pill{display:inline-block;font-size:11px;font-weight:800;padding:1px 7px;border-radius:6px;
+    border:1px solid;margin-left:3px}
+  .verdict .buy{color:var(--bull);border-color:var(--bull)}
+  .verdict .hold{color:var(--warn);border-color:var(--warn)}
+  .verdict .avoid{color:var(--bear);border-color:var(--bear)}
+  .verdict .nd{color:var(--muted);font-style:italic}
+
+  /* ---------- external logo chips ---------- */
+  .chip{
+    display:flex;align-items:center;gap:8px;
+    background:#0d1119;border:1px solid var(--line);border-radius:10px;
+    padding:4px 9px}
+  .chip .logo{width:22px;height:22px;flex:none;display:flex;align-items:center;justify-content:center}
+  .chip .logo img,.chip .logo svg{width:22px;height:22px;display:block}
+  .chip .meta{min-width:0}
+  .chip .cn{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.05}
+  .chip .cl{font-size:10.5px;color:var(--ink2);line-height:1.2;margin-top:2px;font-weight:500}
+  .chip-row{display:flex;gap:7px}
+  .chip-row .chip{flex:1;min-width:0}
+
+  .feeds-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;
+    text-align:center;margin:1px 0 0;font-weight:700}
+
+  /* connector tick (logo -> node) */
+  .conn{display:flex;justify-content:center;color:var(--muted);font-size:11px;margin:1px 0;line-height:1}
+  .conn small{color:var(--muted);font-size:9.5px}
+
+  /* ---------- footer ---------- */
+  .foot{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    border-top:1px solid var(--line);margin-top:9px;padding:7px 2px 8px}
+  .foot .msg{font-size:11.5px;color:var(--ink2);line-height:1.25;max-width:980px}
+  .foot .msg b{color:var(--ink)}
+  .foot .who{font-size:10.5px;color:var(--muted);white-space:nowrap;text-align:right}
+
+  /* spacer arrow between zone columns (overlaid) */
+  .flowarrow{position:absolute;top:50%;transform:translateY(-50%);
+    color:var(--brand);font-size:20px;font-weight:800;z-index:5;opacity:.9}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- HEADER -->
+  <div class="head">
+    <div>
+      <div class="title">How GlassBox works</div>
+      <div class="subtitle">Watch two AI agents argue an investing call — then prove the decision can&rsquo;t be quietly rewritten.</div>
+    </div>
+    <div class="brandtag">The Start of a Joke<br/>Encode Vibe Hackathon</div>
+  </div>
+
+  <!-- ZONES -->
+  <div class="zones">
+    <div class="seam s1">&rarr;</div>
+
+    <!-- Arbiter -> Verdict bridge: the single most important handoff.
+         Zones-relative (CSS px): Arbiter right-edge (x791,y342) curves up
+         into Verdict left-edge (x827,y183). SVG box left787/top175. -->
+    <svg class="bridge" viewBox="0 0 46 175" width="46" height="175"
+         style="left:787px;top:175px" aria-label="Arbiter produces the Verdict">
+      <defs>
+        <marker id="ah" markerWidth="7" markerHeight="7" refX="4.6" refY="3.2" orient="auto">
+          <path d="M0 0 L6 3.2 L0 6.4 Z" fill="#7c5cff"/>
+        </marker>
+      </defs>
+      <path d="M4 167 C 30 167, 16 12, 38 9" fill="none"
+            stroke="#7c5cff" stroke-width="3.2" stroke-linecap="round" marker-end="url(#ah)"/>
+    </svg>
+
+    <!-- ============ ZONE 1 ============ -->
+    <div class="zone">
+      <div class="zone-h"><span class="num">1</span> You ask</div>
+      <div class="zone-body" style="justify-content:flex-start;gap:0">
+        <div class="node">
+          <div class="nt"><span class="ico">👤</span> You</div>
+          <div class="nd">Ask in plain English: <em>&ldquo;Should I hold SUI for 2 weeks? (moderate risk)&rdquo;</em></div>
+        </div>
+        <div class="down" style="margin:9px 0"><span class="tip">▼</span></div>
+        <div class="node">
+          <div class="nt"><span class="ico">🛡️</span> Question check</div>
+          <div class="nd">Really an investing question? Off-topic &rarr; polite redirect, never a fake answer.</div>
+        </div>
+        <!-- intentional anchor: one line that frames the whole demo,
+             pinned to the bottom so Zone 1's whitespace reads as deliberate -->
+        <div class="zone-note" style="margin-top:auto">One plain-English question in.<br/><span>Everything to the right is automatic &mdash; and provable.</span></div>
+      </div>
+    </div>
+
+    <!-- ============ ZONE 2 ============ -->
+    <div class="zone">
+      <div class="zone-h"><span class="num">2</span> GlassBox decides</div>
+      <div class="zone-body" style="justify-content:flex-start;gap:6px">
+
+        <!-- C: freeze facts -->
+        <div class="node">
+          <div class="nt"><span class="ico">🧊</span> Freeze the facts</div>
+          <div class="nd">5 real market numbers locked in: trend &middot; RSI &middot; volatility &middot; liquidity &middot; drawdown</div>
+        </div>
+
+        <div class="feeds-label">&darr; pulled live from &darr;</div>
+
+        <!-- external feeds into C -->
+        <div class="chip-row">
+          <div class="chip">
+            <div class="logo"><img src="data:image/png;base64,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" alt="CoinGecko"/></div>
+            <div class="meta"><div class="cn">CoinGecko</div><div class="cl">live price, trend, RSI, volatility</div></div>
+          </div>
+          <div class="chip">
+            <div class="logo">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="DeepBook">
+                <rect x="2" y="2.5" width="20" height="19" rx="3" fill="#0b1622" stroke="#4DA2FF" stroke-width="1.4"/>
+                <rect x="5" y="6"   width="9"  height="2.1" rx="1" fill="#2ed573"/>
+                <rect x="5" y="9.2" width="6.5" height="2.1" rx="1" fill="#2ed573" opacity=".7"/>
+                <rect x="11" y="13.5" width="8" height="2.1" rx="1" fill="#ff4d5e"/>
+                <rect x="13" y="16.7" width="6" height="2.1" rx="1" fill="#ff4d5e" opacity=".7"/>
+                <line x1="2.5" y1="12.4" x2="21.5" y2="12.4" stroke="#4DA2FF" stroke-width="1" stroke-dasharray="2 1.6" opacity=".8"/>
+              </svg>
+            </div>
+            <div class="meta"><div class="cn">DeepBook v3</div><div class="cl">order-book depth &amp; spread (liquidity)</div></div>
+          </div>
+        </div>
+
+        <div class="down"><span class="tip">▼</span></div>
+
+        <!-- D/E debate — the visual centerpiece of Zone 2 -->
+        <div class="debate-wrap">
+          <div class="debate">
+            <div class="node bull">
+              <div class="nt"><span class="ico">🟢</span> Bull agent</div>
+              <div class="nd">argues the <b>optimistic</b> case — using <b>ONLY</b> the frozen numbers</div>
+            </div>
+            <div class="node bear">
+              <div class="nt"><span class="ico">🔴</span> Bear agent</div>
+              <div class="nd">argues the <b>cautious</b> case — using <b>ONLY</b> the frozen numbers</div>
+            </div>
+          </div>
+          <div class="debate-link"><span class="ar">&#8646;</span> debate + 1 rebuttal <span class="ar">&#8646;</span></div>
+          <!-- LLM that powers the debate: compact badge, keeps logo + name -->
+          <div class="powered">
+            <span class="logo">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="Gemini" fill="#a98bff">
+                <path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/>
+              </svg>
+            </span>
+            <span class="ptxt"><b>Gemini</b> <span style="color:var(--muted)">/ OpenRouter</span> powers the agents&rsquo; reasoning</span>
+          </div>
+        </div>
+
+        <div class="down"><span class="tip">▼</span></div>
+
+        <!-- F: Arbiter — the decision; lands level with the Verdict in Zone 3
+             (clean left→right handoff across the seam) -->
+        <div class="node arbiter">
+          <div class="nt"><span class="ico">⚖️</span> Risk Arbiter <span style="font-weight:600;color:var(--muted);font-size:11px">decides</span></div>
+          <div class="nd">weighs both arguments against your risk level &rarr; one call</div>
+        </div>
+        <div style="flex:0 0 var(--z2pad,0)"></div>
+      </div>
+    </div>
+
+    <!-- ============ ZONE 3 ============ -->
+    <div class="zone">
+      <div class="zone-h"><span class="num">3</span> GlassBox proves it</div>
+      <div class="zone-body" style="justify-content:flex-start;gap:6px">
+        <div style="flex:0 0 var(--z3top,104px)"></div>
+
+        <!-- G: verdict (bridge 2->3) -->
+        <div class="node verdict">
+          <div class="vt">VERDICT &mdash;
+            <span class="pill buy">BUY</span><span class="pill hold">HOLD</span><span class="pill avoid">AVOID</span>
+            <span style="color:var(--ink)"> + Signal Strength</span>
+          </div>
+          <div class="nd">(how decisive the evidence was — not a profit forecast)</div>
+        </div>
+        <div class="down"><span class="tip">▼</span></div>
+
+        <!-- H: sign -->
+        <div class="node">
+          <div class="nt"><span class="ico">🔏</span> Sign it</div>
+          <div class="nd">ed25519 signature = a tamper-evident fingerprint of the decision</div>
+        </div>
+        <div class="down"><span class="tip">▼</span></div>
+
+        <!-- I: store + anchor + walrus/sui chips -->
+        <div class="node">
+          <div class="nt"><span class="ico">⛓️</span> Store + anchor</div>
+          <div class="chip-row" style="margin-top:6px">
+            <div class="chip">
+              <div class="logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="Walrus">
+                  <ellipse cx="12" cy="11" rx="8.5" ry="7.5" fill="#21d4c4"/>
+                  <ellipse cx="12" cy="12.3" rx="6" ry="5" fill="#0d4f4a"/>
+                  <circle cx="9.4" cy="9.8" r="1.25" fill="#06231f"/>
+                  <circle cx="14.6" cy="9.8" r="1.25" fill="#06231f"/>
+                  <path d="M10.4 13.2q1.6 1 3.2 0" stroke="#06231f" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+                  <path d="M10.9 13.6 9.7 19.5q-.1.6.6.4l1.5-1.1" fill="#eef3fa"/>
+                  <path d="M13.1 13.6 14.3 19.5q.1.6-.6.4l-1.5-1.1" fill="#eef3fa"/>
+                </svg>
+              </div>
+              <div class="meta"><div class="cn">Walrus</div><div class="cl">stores the signed record (blob)</div></div>
+            </div>
+            <div class="chip">
+              <div class="logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-label="Sui" fill="#4DA2FF">
+                  <path d="M17.636 10.009a7.16 7.16 0 0 1 1.565 4.474 7.2 7.2 0 0 1-1.608 4.53l-.087.106-.023-.135a7 7 0 0 0-.07-.349c-.502-2.21-2.142-4.106-4.84-5.642-1.823-1.034-2.866-2.278-3.14-3.693-.177-.915-.046-1.834.209-2.62.254-.787.631-1.446.953-1.843l1.05-1.284a.46.46 0 0 1 .713 0l5.28 6.456zm1.66-1.283L12.26.123a.336.336 0 0 0-.52 0L4.704 8.726l-.023.029a9.33 9.33 0 0 0-2.07 5.872C2.612 19.803 6.816 24 12 24s9.388-4.197 9.388-9.373a9.32 9.32 0 0 0-2.07-5.871zM6.389 9.981l.63-.77.018.142q.023.17.055.34c.408 2.136 1.862 3.917 4.294 5.297 2.114 1.203 3.345 2.586 3.7 4.103a5.3 5.3 0 0 1 .109 1.801l-.004.034-.03.014A7.2 7.2 0 0 1 12 21.67c-3.976 0-7.2-3.218-7.2-7.188 0-1.705.594-3.27 1.587-4.503z"/>
+                </svg>
+              </div>
+              <div class="meta"><div class="cn">Sui</div><div class="cl">registers the on-chain anchor object</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="down"><span class="tip">▼</span></div>
+
+        <!-- J: verify + K: tamper side by side -->
+        <div class="debate" style="grid-template-columns:1.08fr 0.92fr">
+          <div class="node verify">
+            <div class="nt"><span class="ico">✅</span> Verify it yourself</div>
+            <div class="nd">your own phone 📱 recomputes the fingerprint &amp; checks the signature — <b>no GlassBox server needed</b></div>
+          </div>
+          <div class="node tamper">
+            <div class="nt"><span class="ico">🚨</span> TAMPER DETECTED</div>
+            <div class="nd">change one character &rarr; the fingerprint no longer matches</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="foot">
+    <div class="msg"><b>Tamper-evident, not tamper-proof</b> — GlassBox proves <b>WHAT</b> the AI decided and that no one changed it, not that the call is right.</div>
+    <div class="who">The Start of a Joke<br/>Encode Vibe Hackathon</div>
+  </div>
+
+</div>
+</body>
+</html>
