@@ -12,37 +12,47 @@ requires:
 
 - :Goal: is :User:'s plain-English investing question. :Goal: has the following attributes
   - Text - the question. This is a required attribute. The text must be at least 5 characters long.
-  - Asset - the market to analyze. For this version the only valid :Asset: is "SUI/USDC".
+  - Asset - the market to analyze. For this version the only valid Asset is "SUI/USDC".
   - Risk Tolerance - one of "low", "moderate", or "high".
 
-- :Decision: is what GlassBox returns for a :Goal:. :Decision: has the following attributes
-  - Inputs - the computed market numbers the analysis is based on (price, RSI, volatility, liquidity). The analysis may reference only these numbers.
-  - Bull Case - a list of exactly 2 short points arguing to buy. Must not restate :User:'s :Goal: text.
-  - Bear Case - a list of exactly 2 short points arguing against buying. Must not restate :User:'s :Goal: text.
-  - Winning Side - which side the verdict resolves to ("bull" or "bear") and a one-line reason it outweighs the other.
-  - Risk Note - one line on the main risk and a suggested position size as a percentage.
-  - Verdict - one of "BUY", "HOLD", or "AVOID".
-  - Signal Strength - a percentage from 0 to 100 with a band of "Low", "Medium", or "High". This is a mechanical score, NOT a probability of profit.
-  - Counterfactual - a sentence of the form "I would change my call if ...".
-  - Blind Spots - a list of things the analysis does NOT consider (e.g. "does not include news or social media").
+- :Decision: is what GlassBox returns for a :Goal:. The backend sends it as a JSON object. Read EXACTLY these field names off it — do not rename or restructure them:
+  - Verdict - the field "verdict", one of "BUY", "HOLD", or "AVOID".
+  - Signal Strength - the number field "signalStrengthPct" (0 to 100) and the string field "signalBand" (one of "Low", "Medium", "High"). This is a mechanical score, NOT a probability of profit. There is NO nested "signalStrength" object.
+  - Suggested Size - the number field "suggestedSizePct" (a percentage of portfolio).
+  - Winning Side - the field "winningSide" is a plain STRING, either "bull" or "bear" (NOT an object). The one-line reason it outweighs the other side is the separate string field "whyResolved".
+  - Bull Case - the field "bull" is an object whose "points" is a list of short strings arguing to buy (it also carries "convictionRevised" and "rebuttal"). Read the points from "bull.points". Must not restate :User:'s :Goal: text.
+  - Bear Case - the field "bear" is an object whose "points" is a list of short strings arguing against buying (it also carries "convictionRevised" and "rebuttal"). Read the points from "bear.points". Must not restate :User:'s :Goal: text.
+  - Risk Note - the string field "riskNote" (a plain string, one line on the main risk — NOT an object).
+  - Counterfactual - the string field "counterfactual", a sentence of the form "I would change my call if ...".
+  - Blind Spots - the string-list field "blindSpots", things the analysis does NOT consider (e.g. "does not include news or social media").
+  - Inputs - the object field "inputs" of computed market numbers the analysis may reference. Its fields are "priceUsd", "trendPctVs20MA", "rsi14", "realizedVolPercentile", "deepbookTopDepthUsd", "spreadBps", "drawdownFromHighPct", and "asOfIso". (There are NO "price", "rsi", "volatility", or "liquidity" fields.)
+  - Chart Series - the number-list field "chartSeries", a small price series for a sparkline.
+  - Flags - the object field "flags" with "baselineVerdict", "llmOverrodeSignals", and "groundingWarnings".
 
-- :AuditRecord: is the tamper-evident proof of a :Decision:. :AuditRecord: has the following attributes
-  - Record Hash - a hash of the decision record.
-  - Signature - proves GlassBox produced the record (origin).
-  - Sui Anchor - the on-chain **Sui object** the record is registered as on Walrus (an independent anchor); shows the object id (linked to a Sui explorer) and its epoch. Empty only if storage fell back to local.
-  - Walrus Blob Id - where the record is stored, or empty when stored locally.
+- :AuditRecord: is the tamper-evident proof of a :Decision:. The backend sends it as a FLAT JSON object (nothing is nested). Read EXACTLY these field names off it:
+  - Record Id - the string field "recordId" — the SHORT id used to re-verify (this is NOT the full hash). This is the exact value the re-verify call sends in its path.
+  - Record Hash - the string field "recordHash" — the full sha-256 fingerprint of the record. This is the **anchored fingerprint**.
+  - Record Canonical - the string field "recordCanonical" — the exact canonical bytes that were hashed. Show THIS string in the editable record field, and recompute "this record's fingerprint" by hashing these (edited) bytes client-side with Web Crypto SHA-256; an un-edited record hashes back to "recordHash" (a MATCH). Do NOT re-serialize the :Decision: object to recompute the fingerprint.
+  - Signature - the string field "signature" — proves GlassBox produced the record (origin). The public key is the string field "pubkey".
+  - Sui Anchor - the on-chain **Sui object** the record is registered as on Walrus (an independent anchor): the string field "suiObjectId" (linked to a Sui explorer), the number field "anchorEpoch", and the string field "anchorNetwork". (These are flat top-level fields, NOT a nested "suiAnchor" object.) Empty only if storage fell back to local.
+  - Walrus Blob Id - the string field "blobId" — where the record is stored, or empty when stored locally. The string field "sink" says "walrus" or "local".
 
 - :EvidenceCount: is the number of audit-grade records :User: has retained. Initially :EvidenceCount: is 0 and increases by 1 each time a :Decision: is proved.
 
-- :AnalyzeEndpoint: is "POST /api/analyze" that turns a :Goal: into a :Decision:.
-- :AuditEndpoint: is "POST /api/audit" that turns a :Decision: into an :AuditRecord:.
-- :VerifyEndpoint: is "GET /api/verify/{Record Id}" that returns the stored :Decision: and whether it still matches.
-- :RehashEndpoint: is "POST /api/rehash" that hashes a (possibly altered) :Decision: and returns its Record Hash — used to demonstrate that altering the record changes its fingerprint.
+- :AnalyzeEndpoint: is "POST /api/analyze" that turns a :Goal: into a :Decision:. Its JSON request body has EXACTLY these three fields: "goalText" (the question string), "asset" (the string "SUI/USDC"), and "risk" (one of "low", "moderate", "high"). Do NOT send "text" or "riskTolerance". When :User:'s input is off-topic the endpoint replies with HTTP 422 and a JSON body that has "outOfScope" set to true and a friendly "message" string; treat that case as the off-topic rejection (not as a generic error).
+
+- :AuditEndpoint: is "POST /api/audit" that turns a :Decision: into an :AuditRecord:. Its JSON request body has EXACTLY these two fields: "decision" (the whole :Decision: object) and "goalText" (the original question string). The :Decision: must be wrapped under "decision" — do NOT post the bare :Decision: object.
+
+- :VerifyEndpoint: is "GET /api/verify/{recordId}" where {recordId} is the :AuditRecord:'s "recordId" (the SHORT id, NOT the full "recordHash"). It returns a JSON object with the boolean fields "hashMatch" and "signatureValid" (and a "source" string). Treat the record as re-verified only when BOTH "hashMatch" and "signatureValid" are true. (There is NO "isValid" field.)
+
+- :RehashEndpoint: is "POST /api/rehash" that hashes a (possibly altered) :Decision: and returns a JSON object with the field "recordHash". Its request body wraps the decision as "decision" (the whole :Decision: object). Note: the interactive tamper demo does NOT use this endpoint — it recomputes the fingerprint client-side from the edited "recordCanonical" bytes; this endpoint exists only as a server-side rehash helper.
 
 ***implementation reqs***
 > Implementation requirements are defined in 'typescript-react-app-template'.
 
 - The backend base URL must be read from the environment variable "VITE_API_BASE_URL" and default to "http://localhost:8787".
+
+- The original-UI URL must be read from the environment variable "VITE_ORIGINAL_UI_URL" and default to "http://localhost:8787/".
 
 ***test reqs***
 > Test requirements are defined in 'typescript-react-app-template'.
@@ -57,20 +67,22 @@ requires:
 
 - :User: should be able to enter a :Goal: (Text, Asset fixed to "SUI/USDC", Risk Tolerance from the three options) and submit it. Only a valid :Goal: can be submitted. If the Text is shorter than 5 characters, show an inline error and do not submit.
 
-- On submit, call :AnalyzeEndpoint: and show a loading state that shows progress (not a static spinner) while the agents debate. When the :Decision: returns, render it leading with the Verdict as a large hero element, together with the Signal Strength band ("Low"/"Medium"/"High") labelled "rule-based, not a probability of profit" and the suggested position size labelled "of your portfolio"; then the Winning Side line that resolves the debate; then the Bull Case and Bear Case side by side (the debate); then, behind a "Why you should doubt this" expander, the Risk Note, the Counterfactual, and the Blind Spots, and the Inputs the analysis used. Reveal the debate first, then the verdict a moment later so it gets its own focus.
+- On submit, call :AnalyzeEndpoint: with the body "{ goalText, asset, risk }" and show a loading state that shows progress (not a static spinner) while the agents debate. When the :Decision: returns, render it leading with the Verdict ("verdict") as a large hero element, together with the Signal Strength band ("signalBand": "Low"/"Medium"/"High") and its percentage ("signalStrengthPct") labelled "rule-based, not a probability of profit" and the suggested position size ("suggestedSizePct") labelled "of your portfolio"; then the Winning Side line that resolves the debate (the "winningSide" string plus the "whyResolved" reason); then the Bull Case ("bull.points") and Bear Case ("bear.points") side by side (the debate); then, behind a "Why you should doubt this" expander, the Risk Note (the "riskNote" string), the Counterfactual ("counterfactual"), and the Blind Spots ("blindSpots"), and the Inputs the analysis used ("inputs": priceUsd, rsi14, realizedVolPercentile, deepbookTopDepthUsd, etc.). Reveal the debate first, then the verdict a moment later so it gets its own focus.
 
 - If :User:'s :Goal: Text is not an investing question about "SUI/USDC" (for example a greeting, small talk, a test, or an unrelated topic), :App: must NOT produce a :Decision:. Instead show a short, friendly message that GlassBox only analyzes whether to buy, hold, or avoid SUI/USDC, with an example question, and keep :User:'s input so they can edit it.
 
-- :User: should be able to click a "Prove it" button on a :Decision:. This calls :AuditEndpoint:, increases :EvidenceCount: by 1, and shows the resulting :AuditRecord: as a labelled receipt: a plain-English line explaining that GlassBox signed this exact decision and wrote its fingerprint to Walrus on Sui, so a single changed character won't match; then the Record Hash, that it was signed (origin), the Walrus storage shown as a chip, and the on-chain Sui object id linked to a Sui explorer.
+- :User: should be able to click a "Prove it" button on a :Decision:. This calls :AuditEndpoint: with the body "{ decision, goalText }", increases :EvidenceCount: by 1, and shows the resulting :AuditRecord: as a labelled receipt: a plain-English line explaining that GlassBox signed this exact decision and wrote its fingerprint to Walrus on Sui, so a single changed character won't match; then the Record Hash ("recordHash"), that it was signed (origin, "signature"), the Walrus storage shown as a chip ("sink"/"blobId"), and the on-chain Sui object id ("suiObjectId") linked to a Sui explorer.
 
-- After "Prove it", :App: shows the signed record in an editable field together with two fingerprints: the **anchored fingerprint** (fixed) and **this record's fingerprint** (recomputed live from the editable field). While the two are identical, show a green "VERIFIED" state; the moment they differ, show a red "TAMPER DETECTED" state. Neither state may rely on colour alone (use words + an icon).
+- After "Prove it", :App: shows the signed record — the :AuditRecord:'s "recordCanonical" bytes — in an editable field together with two fingerprints: the **anchored fingerprint** (the fixed "recordHash") and **this record's fingerprint** (recomputed live by hashing the editable field's current text with Web Crypto SHA-256, formatted as lowercase hex). On first show, the un-edited bytes hash back to "recordHash", so start in the green "VERIFIED" state. While the two fingerprints are identical, show a green "VERIFIED" state; the moment they differ, show a red "TAMPER DETECTED" state. Neither state may rely on colour alone (use words + an icon).
 
-- :User: should be able to edit the record — changing even a single character must immediately recompute this record's fingerprint and (because it now differs from the anchored fingerprint) show "TAMPER DETECTED", with the differing characters of the fingerprint highlighted. A "Reset" returns the record to its original bytes and the state returns to "VERIFIED". A "Try to alter it" button performs a one-character change on the user's behalf. This is the key moment — make the mismatch the largest, most prominent state.
+- :User: should be able to edit the record — changing even a single character must immediately recompute this record's fingerprint (re-hash the editable text client-side with Web Crypto SHA-256) and (because it now differs from the anchored fingerprint) show "TAMPER DETECTED", with the differing characters of the fingerprint highlighted. A "Reset" returns the record to its original "recordCanonical" bytes and the state returns to "VERIFIED". A "Try to alter it" button performs a one-character change on the user's behalf. This is the key moment — make the mismatch the largest, most prominent state.
 
-- :User: should be able to click a "Re-verify on Walrus" button that calls :VerifyEndpoint: to re-fetch the record from storage and confirm the anchored fingerprint is intact and the signature is valid, shown as a short confirmation line.
+- :User: should be able to click a "Re-verify on Walrus" button that calls :VerifyEndpoint: at "GET /api/verify/{recordId}" (using the :AuditRecord:'s short "recordId") to re-fetch the record from storage and confirm the anchored fingerprint is intact and the signature is valid — shown as a short confirmation line only when BOTH "hashMatch" and "signatureValid" are true.
 
 - Never use the words "tamper-proof" or "provable to anyone" anywhere in :App:. Use "tamper-evident" and "verify".
 
 - Every call to :AnalyzeEndpoint:, :AuditEndpoint:, and :VerifyEndpoint: must show a loading state while in progress, an empty state before it runs, and a clear error state if it fails. The application must never show a blank screen on failure.
+
+- Show a small, unobtrusive control in the header of :App: — a labelled link reading "View the original UI ↗" — that opens the original hand-built GlassBox UI at the URL from the environment variable "VITE_ORIGINAL_UI_URL". This lets a viewer switch between this Codeplain-rendered UI and the original at the press of a button.
 
 > see https://www.plainlang.org/ for more information on ***plain
