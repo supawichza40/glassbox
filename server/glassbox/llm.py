@@ -109,8 +109,10 @@ def _dispatch(system: str, user: str, role: str, timeout: int) -> str:
     raise LLMError(f"unknown LLM_PROVIDER='{p}' (use openrouter | gemini | ollama)")
 
 
-def chat_json(system: str, user: str, role: str = "fast", timeout: int = 60) -> dict:
+def chat_json(system: str, user: str, role: str = "fast", timeout: int | None = None) -> dict:
     """Call the provider and parse JSON, with ONE repair retry on malformed output."""
+    if timeout is None:
+        timeout = config.LLM_TIMEOUT
     last_err = None
     for attempt in range(2):
         u = user if attempt == 0 else (

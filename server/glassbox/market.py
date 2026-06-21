@@ -48,7 +48,8 @@ def _deepbook_safe(asset):
     """Real DeepBook order-book depth (USD) + spread (bps), or modeled fallback (85000 / 12)."""
     try:
         r = requests.get(f"{config.DEEPBOOK_INDEXER}/orderbook/{config.DEEPBOOK_POOL}",
-                         params={"level": 2, "depth": 50}, timeout=8)  # ~book depth, not just touch
+                         params={"level": 2, "depth": 50},
+                         timeout=config.MARKET_HTTP_TIMEOUT)  # ~book depth, not just touch
         r.raise_for_status()
         ob = r.json()
         bids = [(float(p), float(q)) for p, q in ob.get("bids", [])]
@@ -67,7 +68,7 @@ def _live_snapshot(asset: str) -> dict:
     cg = _CG_ID.get(asset, "sui")
     r = requests.get(
         f"https://api.coingecko.com/api/v3/coins/{cg}/market_chart",
-        params={"vs_currency": "usd", "days": 200}, timeout=8,
+        params={"vs_currency": "usd", "days": 200}, timeout=config.MARKET_HTTP_TIMEOUT,
     )
     r.raise_for_status()
     closes = [p[1] for p in r.json()["prices"]][:-1]   # drop today's partial candle

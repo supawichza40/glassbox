@@ -12,6 +12,13 @@ def _g(key: str, default: str = "") -> str:
     return (os.getenv(key, default) or "").strip()
 
 
+def _gi(key: str, default: int) -> int:
+    try:
+        return int(_g(key, str(default)) or default)
+    except ValueError:
+        return default
+
+
 LLM_PROVIDER = _g("LLM_PROVIDER", "openrouter").lower()
 
 # per-provider (fast, smart) model pairs — only the active provider's pair is used
@@ -35,6 +42,13 @@ OPENROUTER_API_KEY = _g("OPENROUTER_API_KEY")
 GEMINI_API_KEY     = _g("GEMINI_API_KEY")
 ANTHROPIC_API_KEY  = _g("ANTHROPIC_API_KEY")
 FLOCK_API_KEY      = _g("FLOCK_API_KEY")
+
+# Request timeouts (seconds). Tight defaults so one slow upstream can't push the
+# whole /api/analyze request past Heroku's hard 30s router limit (error H12). Each
+# call already degrades to a graceful fallback on timeout. Bump these on a host with
+# no request cap (e.g. Render) via env vars — no redeploy of code needed.
+LLM_TIMEOUT         = _gi("LLM_TIMEOUT", 12)
+MARKET_HTTP_TIMEOUT = _gi("MARKET_HTTP_TIMEOUT", 5)
 
 # pipeline switches
 AUDIT_SINK         = _g("AUDIT_SINK", "walrus").lower()
