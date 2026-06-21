@@ -47,6 +47,12 @@ requires:
 
 - :RehashEndpoint: is "POST /api/rehash" that hashes a (possibly altered) :Decision: and returns a JSON object with the field "recordHash". Its request body wraps the decision as "decision" (the whole :Decision: object). Note: the interactive tamper demo does NOT use this endpoint — it recomputes the fingerprint client-side from the edited "recordCanonical" bytes; this endpoint exists only as a server-side rehash helper.
 
+- :Explainer: is an in-page conversational helper. Its sole job is to EXPLAIN this page in plain language — what each word means, how GlassBox works, and what it does and does NOT prove. It is an evidence-layer explainer, NOT an adviser: it must never give financial advice, predict prices, or promise any return or profit. It always says "tamper-evident" (never "tamper-proof"), keeps the signature (origin) distinct from the on-chain Sui-object anchor, and treats Signal Strength as decisiveness of the evidence, never a profit forecast. The actual answer text comes from :ChatEndpoint:; :App: owns only the chrome and its framing copy.
+
+- :ChatEndpoint: is "POST /api/chat" that answers a :User:'s explainer question about this page. Its JSON request body has EXACTLY these fields: "question" (the user's question string), "context" (an object with "decision" set to the current :Decision: object or null, "audit" set to the current :AuditRecord: object or null, and "page" set to the string "dashboard"), and "history" (a list of the last few turns, each "{ role, content }" where role is "user" or "assistant"; send at most the last 6 turns). The response is a JSON object with "answer" (the explainer's reply as a Markdown string), "refused" (a boolean, true when the question was out of scope and politely redirected), and an optional "suggestions" (a list of follow-up question strings). The endpoint ALSO supports Server-Sent Events: when the request's "Accept" header is "text/event-stream", the reply is an SSE stream of "event: delta" frames whose "data" is "{ text }" chunks, ended by one "event: done" frame whose "data" is "{ refused, suggestions }". SSE is a progressive enhancement for a typewriter effect; the plain JSON response is the reliable default.
+
+- :SuggestedQuestions: is a fixed list of 12 starter questions shown as clickable chips when the :Explainer: is first opened: "What does this BUY/HOLD/AVOID verdict actually mean?"; "What is Signal Strength — does a high score mean I'll make money?"; "Is this tamper-proof?"; "What's the difference between the signature and the on-chain anchor?"; "What are the 5 market numbers the agents are arguing about?"; "What does the on-chain Sui object / storage epoch prove?"; "Is my data private? What gets stored on the blockchain?"; "What happens if I change one character in the record?"; "Is this financial advice — can I trust the AI's call?"; "How can I verify this record myself?"; "Why can I only analyze SUI/USDC?"; "What does LIVE vs DEMO mode mean?".
+
 ***implementation reqs***
 > Implementation requirements are defined in 'typescript-react-app-template'.
 
@@ -92,5 +98,23 @@ requires:
 - Every call to :AnalyzeEndpoint:, :AuditEndpoint:, and :VerifyEndpoint: must show a loading state while in progress, an empty state before it runs, and a clear error state if it fails. The application must never show a blank screen on failure.
 
 - Show a small, unobtrusive control in the header of :App: — a labelled link reading "View the original UI ↗" — that opens the original hand-built GlassBox UI at the URL from the environment variable "VITE_ORIGINAL_UI_URL". This lets a viewer switch between this Codeplain-rendered UI and the original at the press of a button.
+
+> The :Explainer: chat widget below is a conversational layer on top of the page. It MUST match the dark dashboard style (same tokens, cards, system + monospace fonts, teal focus ring) — a complementary layer, never a clashing second style. Its static copy obeys claim discipline: never "tamper-proof", never advice/return/profit language; it presents itself as an explainer of THIS page, not an adviser.
+
+- Show a floating launcher button fixed to the bottom-right corner of every screen, on-brand (a violet "✦"/chat glyph labelled "Ask GlassBox"), that opens the :Explainer: chat panel. The launcher must be keyboard-operable and labelled for assistive tech (it controls the panel via aria-controls / aria-expanded).
+
+- The :Explainer: chat panel has a header (a title "Ask GlassBox", an explainer subtitle, and a close control), a scrollable message list that distinguishes :User: messages from :Explainer: messages (right-aligned violet-tinted user bubbles vs left-aligned surface assistant bubbles), and a footer with a multi-line text input and a send button. On small screens the panel becomes full-width / full-height. Beneath the input show a small standing note that this explains the page and is not financial advice.
+
+- When the panel is first opened and the conversation is empty, show an empty state — a one-line greeting that the :Explainer: explains what's on the page and what GlassBox does and does NOT prove — followed by :SuggestedQuestions: rendered as clickable chips. Clicking a chip sends that question. The chips disappear once the first real turn begins.
+
+- :User: should be able to send a question by clicking send or by pressing Enter (Shift+Enter inserts a newline). On send, append the :User:'s question as a user bubble, then call :ChatEndpoint: with the body "{ question, context, history }" where "context" carries the CURRENT :Decision: and :AuditRecord: from page state (or null when none yet) and "page" is "dashboard", and "history" is the last 6 turns of the conversation. While waiting, show an animated typing indicator (not a static spinner).
+
+- Prefer the streaming path: send "Accept: text/event-stream" and, if the reply is an SSE stream, render the :Explainer:'s "answer" with a typewriter effect (append each "delta" chunk live with a blinking cursor) and apply the final "refused"/"suggestions" from the "done" frame. If the reply is plain JSON instead, render the whole "answer" at once after the typing indicator. Either way the JSON path is the reliable default and streaming is only a progressive enhancement.
+
+- Render each :Explainer: "answer" as an assistant bubble that supports basic Markdown — bold, inline code, and ordered/unordered lists — and that safely escapes any HTML in the text (no raw markup is injected). If the response includes "suggestions", render them as a short row of follow-up chips beneath the answer; clicking one sends it.
+
+- If a :ChatEndpoint: call fails (network or server error), show a clear error bubble reading "I'm having trouble right now — please try again." as an assertive live-region alert, and leave the conversation usable so :User: can retry. The widget must never silently fail or show a blank panel.
+
+- The :Explainer: must be accessible: the panel is a labelled modal dialog; opening it moves focus into the input; Escape closes it and returns focus to the launcher; focus is kept within the open panel; the message list is a polite live region so new replies are announced; all controls are keyboard-operable with a visible focus ring and sufficient contrast.
 
 > see https://www.plainlang.org/ for more information on ***plain

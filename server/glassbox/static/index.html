@@ -239,6 +239,86 @@
   #xdrawer dd{margin:2px 0 0;color:var(--ink-2);font-size:14px;line-height:1.5}
   #xdrawer .xclose{position:absolute;top:16px;right:18px;background:none;border:1px solid var(--line);color:var(--ink-2);border-radius:6px;padding:4px 9px;cursor:pointer;font:13px var(--sans)}
   @media (prefers-reduced-motion: reduce){#xpop[data-open]{animation:none} #xdrawer{transition:none}}
+
+  /* === explainer chat widget (conversational layer, matches the drawer) === */
+  #cbLaunch{position:fixed;right:22px;bottom:22px;z-index:80;display:inline-flex;align-items:center;gap:9px;
+    background:linear-gradient(180deg,#1a2230,var(--surface-1));color:var(--ink);border:1px solid var(--line);
+    border-radius:999px;padding:11px 18px 11px 15px;font:600 15px var(--sans);cursor:pointer;min-height:48px;
+    box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 1px rgba(124,92,255,.18) inset;transition:transform .12s var(--ease),filter .15s,box-shadow .2s}
+  #cbLaunch:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 14px 36px rgba(0,0,0,.55),0 0 22px rgba(124,92,255,.28)}
+  #cbLaunch:active{transform:translateY(0)}
+  #cbLaunch .cbspark{font-size:18px;line-height:1;color:var(--brand);text-shadow:0 0 12px rgba(124,92,255,.6)}
+  #cbLaunch[aria-expanded="true"]{opacity:0;pointer-events:none}
+  /* Projector / present mode: initChat() early-returns and never binds a click
+     handler to the launcher, so the button would be inert. Hide it entirely. */
+  body.present #cbLaunch{display:none}
+
+  #cbBack{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:84;display:none}
+  #cbBack.open{display:block}
+  #cbPanel{position:fixed;right:22px;bottom:22px;z-index:85;width:min(400px,calc(100vw - 44px));
+    height:min(640px,calc(100dvh - 44px));display:flex;flex-direction:column;background:var(--surface-1);
+    border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:0 24px 60px rgba(0,0,0,.6);
+    overflow:hidden;transform:translateY(14px) scale(.98);opacity:0;pointer-events:none;
+    transition:transform .2s var(--ease),opacity .2s var(--ease)}
+  #cbPanel.open{transform:translateY(0) scale(1);opacity:1;pointer-events:auto}
+  .cb-head{display:flex;align-items:center;gap:11px;padding:14px 16px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#161d29,var(--surface-1))}
+  .cb-head .cbspark{font-size:18px;color:var(--brand);text-shadow:0 0 12px rgba(124,92,255,.6)}
+  .cb-head .cb-ttl{font:700 16px var(--sans);letter-spacing:-.01em}
+  .cb-head .cb-sub{font:12px var(--sans);color:var(--muted);margin-top:1px}
+  .cb-head .cb-htxt{flex:1;min-width:0}
+  .cbclose{background:none;border:1px solid var(--line);color:var(--ink-2);border-radius:6px;padding:5px 9px;
+    cursor:pointer;font:13px var(--sans);min-height:0}
+  .cbclose:hover{border-color:var(--accent2);color:var(--accent2)}
+
+  #cbLog{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+  .cb-msg{max-width:88%;padding:11px 13px;border-radius:var(--r-md);font-size:14.5px;line-height:1.5;word-wrap:break-word}
+  .cb-msg.user{align-self:flex-end;background:rgba(124,92,255,.16);border:1px solid rgba(124,92,255,.4);color:var(--ink);border-bottom-right-radius:5px}
+  .cb-msg.bot{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);border-bottom-left-radius:5px}
+  .cb-msg.err{align-self:flex-start;background:rgba(255,77,94,.12);border:1px solid rgba(255,77,94,.45);color:var(--ink)}
+  .cb-msg.bot p{margin:0 0 8px} .cb-msg.bot p:last-child{margin-bottom:0}
+  .cb-msg.bot ul,.cb-msg.bot ol{margin:6px 0 8px;padding-left:20px} .cb-msg.bot li{margin-bottom:4px}
+  .cb-msg.bot strong{color:var(--ink)}
+  .cb-msg.bot code{font:13px var(--mono);background:#0e141d;border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--accent2);word-break:break-all}
+  .cb-msg.bot a{color:var(--accent2)}
+  .cb-cursor{display:inline-block;width:7px;height:1.05em;background:var(--accent2);border-radius:1px;margin-left:1px;vertical-align:-2px;animation:cbblink 1s steps(2) infinite}
+  @keyframes cbblink{50%{opacity:0}}
+
+  .cb-empty{color:var(--muted);font-size:14px;text-align:center;padding:6px 8px 2px}
+  .cb-empty b{color:var(--ink-2);font-weight:600}
+  .cb-chips{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  .cb-chips-lbl{font:11px var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:2px 0 1px}
+  .cb-chip{text-align:left;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);
+    border-radius:var(--r-sm);padding:9px 12px;font:13.5px/1.4 var(--sans);cursor:pointer;min-height:0;
+    transition:border-color .15s,color .15s,background .15s}
+  .cb-chip:hover{border-color:var(--accent2);color:var(--ink);background:#1b2433}
+  .cb-suggest{align-self:flex-start;max-width:100%;display:flex;flex-direction:column;gap:7px;margin-top:-2px}
+
+  .cb-typing{align-self:flex-start;display:inline-flex;gap:5px;padding:13px 15px;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:var(--r-md);border-bottom-left-radius:5px}
+  .cb-typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:cbbob 1.2s infinite ease-in-out}
+  .cb-typing i:nth-child(2){animation-delay:.15s} .cb-typing i:nth-child(3){animation-delay:.3s}
+  @keyframes cbbob{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+
+  .cb-foot{border-top:1px solid var(--line);padding:11px 12px;background:var(--surface-1)}
+  .cb-inrow{display:flex;gap:8px;align-items:flex-end}
+  #cbInput{flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:var(--r-sm);
+    padding:10px 12px;font:14.5px/1.4 var(--sans);outline:none;resize:none;min-height:42px;max-height:120px;overflow-y:auto}
+  #cbInput::placeholder{color:var(--muted)}
+  #cbSend{background:var(--brand);color:#fff;border:0;border-radius:var(--r-sm);min-height:42px;min-width:46px;
+    padding:0 14px;font:600 16px var(--sans);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  #cbSend:hover{filter:brightness(1.1)} #cbSend:disabled{opacity:.5;cursor:default;filter:none}
+  .cb-disc{font:10.5px/1.4 var(--sans);color:var(--faint);text-align:center;margin-top:7px}
+
+  @media(max-width:560px){
+    #cbPanel{right:0;bottom:0;width:100vw;height:100dvh;border-radius:0;border-left:0;border-right:0;border-bottom:0}
+    #cbLaunch{right:16px;bottom:16px}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #cbPanel{transition:none} #cbLaunch{transition:none}
+    .cb-cursor,.cb-typing i{animation:none} .cb-typing i{opacity:.7}
+    #cbLog{scroll-behavior:auto}
+  }
 </style>
 </head>
 <body>
@@ -338,12 +418,38 @@
   </section>
 </main>
 
+<!-- === explainer chat widget === -->
+<button id="cbLaunch" type="button" aria-expanded="false" aria-haspopup="dialog" aria-controls="cbPanel"
+        title="Ask the GlassBox explainer about this page">
+  <span class="cbspark" aria-hidden="true">✦</span><span>Ask GlassBox</span>
+</button>
+<div id="cbBack" aria-hidden="true"></div>
+<aside id="cbPanel" role="dialog" aria-modal="true" aria-label="GlassBox explainer chat" aria-hidden="true">
+  <div class="cb-head">
+    <span class="cbspark" aria-hidden="true">✦</span>
+    <div class="cb-htxt">
+      <div class="cb-ttl">Ask GlassBox</div>
+      <div class="cb-sub">Explainer · understands this page</div>
+    </div>
+    <button class="cbclose" type="button" id="cbCloseBtn" aria-label="Close chat">✕ Close</button>
+  </div>
+  <div id="cbLog" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation"></div>
+  <div class="cb-foot">
+    <div class="cb-inrow">
+      <textarea id="cbInput" rows="1" aria-label="Ask a question about this page"
+        placeholder="Ask what anything on this page means…"></textarea>
+      <button id="cbSend" type="button" aria-label="Send message">➤</button>
+    </div>
+    <div class="cb-disc">Explains this page — not financial advice. Answers can be imperfect.</div>
+  </div>
+</aside>
+
 <script>
 const $=(s)=>document.querySelector(s);
 let S={decision:null,audit:null,goal:"",stepTimer:null};
 if(/[?&]present/.test(location.search)) document.body.classList.add('present');
 
-function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function frag(h){return h?h.slice(0,30):'—';}
 async function api(path,opts){
   const r=await fetch(path,opts||{});
@@ -704,6 +810,222 @@ function setExplain(on){document.body.classList.toggle('xmode',on);const t=docum
  let on=false;try{on=localStorage.getItem('gb_explain')==='1';}catch(e){}
  if(document.body.classList.contains('present'))on=false;
  armExplainers();setExplain(on);})();
+
+/* ===== Explainer chat widget (conversational layer over the page) ===== */
+const CB_SUGGESTED=[
+ "What does this BUY/HOLD/AVOID verdict actually mean?",
+ "What is Signal Strength — does a high score mean I'll make money?",
+ "Is this tamper-proof?",
+ "What's the difference between the signature and the on-chain anchor?",
+ "What are the 5 market numbers the agents are arguing about?",
+ "What does the on-chain Sui object / storage epoch prove?",
+ "Is my data private? What gets stored on the blockchain?",
+ "What happens if I change one character in the record?",
+ "Is this financial advice — can I trust the AI's call?",
+ "How can I verify this record myself?",
+ "Why can I only analyze SUI/USDC?",
+ "What does LIVE vs DEMO mode mean?"
+];
+let CB={open:false,busy:false,history:[],returnFocus:null,greeted:false};
+
+// --- tiny, safe markdown -> HTML (bold, inline code, links, ordered/unordered lists) ---
+// Only http(s) URLs with NO quote / angle-bracket / whitespace are linkified. This
+// closes an attribute-breakout XSS: a markdown link whose URL smuggles a `"` (e.g.
+// [x](https://a"onpointerover=alert(1)//)) can otherwise escape the href attribute
+// and inject a live event handler. NB esc() has already run by the time we get here,
+// so an injected quote shows up as the entity &quot; / &#39; — we reject those too.
+function cbSafeUrl(u){
+  return /^https?:\/\/[^"'\s<>]+$/.test(u) && !/&quot;|&#39;|&lt;|&gt;/.test(u);
+}
+function cbInline(s){
+  s=esc(s);
+  s=s.replace(/`([^`]+)`/g,(_,c)=>'<code>'+c+'</code>');
+  s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/(?<!\*)\*(?!\s)([^*]+?)\*(?!\*)/g,'<em>$1</em>');
+  s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,(m,label,url)=>
+    cbSafeUrl(url)
+      ? '<a href="'+esc(url)+'" target="_blank" rel="noopener">'+label+'</a>'
+      : m);   // not a clean http(s) URL -> leave the raw (already-escaped) markdown text, no anchor
+  return s;
+}
+function cbMarkdown(src){
+  const lines=String(src||'').replace(/\r/g,'').split('\n');
+  let html='',list=null,para=[];
+  const flushP=()=>{ if(para.length){ html+='<p>'+para.join('<br>')+'</p>'; para=[]; } };
+  const flushL=()=>{ if(list){ html+='</'+list+'>'; list=null; } };
+  for(const raw of lines){
+    const line=raw.trimEnd();
+    if(!line.trim()){ flushP(); flushL(); continue; }
+    const ol=line.match(/^\s*\d+[.)]\s+(.*)$/);
+    const ul=line.match(/^\s*[-*•]\s+(.*)$/);
+    if(ol){ flushP(); if(list!=='ol'){flushL();html+='<ol>';list='ol';} html+='<li>'+cbInline(ol[1])+'</li>'; continue; }
+    if(ul){ flushP(); if(list!=='ul'){flushL();html+='<ul>';list='ul';} html+='<li>'+cbInline(ul[1])+'</li>'; continue; }
+    flushL(); para.push(cbInline(line.trim()));
+  }
+  flushP(); flushL();
+  return html||'<p>'+cbInline(String(src||'').trim())+'</p>';
+}
+
+function cbScroll(){ const l=$('#cbLog'); if(l) l.scrollTop=l.scrollHeight; }
+function cbAddUser(text){
+  const d=document.createElement('div'); d.className='cb-msg user'; d.textContent=text;
+  $('#cbLog').appendChild(d); cbScroll();
+}
+function cbAddBot(){
+  const d=document.createElement('div'); d.className='cb-msg bot'; d.innerHTML='';
+  $('#cbLog').appendChild(d); cbScroll(); return d;
+}
+function cbAddError(){
+  const d=document.createElement('div'); d.className='cb-msg err'; d.setAttribute('role','alert');
+  d.textContent="I'm having trouble right now — please try again.";
+  $('#cbLog').appendChild(d); cbScroll();
+}
+function cbTyping(on){
+  let t=$('#cbTyping');
+  if(on){ if(t)return; t=document.createElement('div'); t.id='cbTyping'; t.className='cb-typing';
+    t.setAttribute('aria-label','GlassBox is typing'); t.innerHTML='<i></i><i></i><i></i>';
+    $('#cbLog').appendChild(t); cbScroll(); }
+  else if(t){ t.remove(); }
+}
+function cbRenderSuggestions(arr){
+  if(!arr||!arr.length) return;
+  const wrap=document.createElement('div'); wrap.className='cb-suggest';
+  wrap.innerHTML='<div class="cb-chips-lbl">Related</div>';
+  arr.slice(0,4).forEach(q=>{
+    const b=document.createElement('button'); b.type='button'; b.className='cb-chip'; b.textContent=q;
+    b.addEventListener('click',()=>cbSend(q)); wrap.appendChild(b);
+  });
+  $('#cbLog').appendChild(wrap); cbScroll();
+}
+function cbStarter(){
+  const log=$('#cbLog'); log.innerHTML='';
+  const empty=document.createElement('div'); empty.className='cb-empty';
+  empty.innerHTML='<b>Hi — I explain what you’re looking at.</b><br>What each word means and what GlassBox does (and doesn’t) prove. Pick a question or type your own.';
+  log.appendChild(empty);
+  const chips=document.createElement('div'); chips.className='cb-chips';
+  chips.innerHTML='<div class="cb-chips-lbl">Try asking</div>';
+  CB_SUGGESTED.forEach(q=>{
+    const b=document.createElement('button'); b.type='button'; b.className='cb-chip'; b.textContent=q;
+    b.addEventListener('click',()=>cbSend(q)); chips.appendChild(b);
+  });
+  log.appendChild(chips);
+}
+
+// pull the CURRENT decision + audit from the page's live JS state
+function cbContext(){
+  return { decision:S.decision||null, audit:S.audit||null, page:'dashboard' };
+}
+
+async function cbSend(text){
+  if(CB.busy) return;
+  const q=String(text||$('#cbInput').value||'').trim();
+  if(!q) return;
+  $('#cbInput').value=''; cbAutosize();
+  // clear the starter (empty state + chips) on first real turn
+  const st=$('#cbLog').querySelector('.cb-empty'); if(st){ $('#cbLog').innerHTML=''; }
+  CB.busy=true; $('#cbSend').disabled=true;
+  cbAddUser(q);
+  CB.history.push({role:'user',content:q});
+  const payload={ question:q, context:cbContext(), history:CB.history.slice(-6) };
+  cbTyping(true);
+  let answer='', refused=false, suggestions=null, ok=false;
+  try{
+    const res=await fetch('/api/chat',{ method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'text/event-stream'},
+      body:JSON.stringify(payload) });
+    if(!res.ok && res.status!==422) throw new Error('http '+res.status);
+    const ct=res.headers.get('content-type')||'';
+    if(res.body && /text\/event-stream/.test(ct)){
+      // --- SSE: typewriter ---
+      cbTyping(false);
+      const bot=cbAddBot(); const cur=document.createElement('span'); cur.className='cb-cursor';
+      bot.appendChild(cur);
+      const reader=res.body.getReader(), dec=new TextDecoder(); let buf='';
+      for(;;){
+        const {value,done}=await reader.read(); if(done) break;
+        buf+=dec.decode(value,{stream:true});
+        let idx;
+        while((idx=buf.indexOf('\n\n'))>=0){
+          const block=buf.slice(0,idx); buf=buf.slice(idx+2);
+          let ev='message', data='';
+          block.split('\n').forEach(ln=>{
+            if(ln.startsWith('event:')) ev=ln.slice(6).trim();
+            else if(ln.startsWith('data:')) data+=ln.slice(5).replace(/^ /,'');
+          });
+          if(!data) continue;
+          let j; try{ j=JSON.parse(data); }catch(_){ continue; }
+          if(ev==='delta'){ answer+=(j.text||''); bot.innerHTML=cbMarkdown(answer); bot.appendChild(cur); cbScroll(); }
+          else if(ev==='done'){ refused=!!j.refused; suggestions=j.suggestions||null; }
+          else if(ev==='error'){ throw new Error('stream error'); }
+        }
+      }
+      cur.remove();
+      if(answer) bot.innerHTML=cbMarkdown(answer); else bot.remove();
+      ok=!!answer;
+    } else {
+      // --- JSON fallback ---
+      const j=await res.json(); cbTyping(false);
+      answer=j.answer||''; refused=!!j.refused; suggestions=j.suggestions||null;
+      if(answer){ const bot=cbAddBot(); bot.innerHTML=cbMarkdown(answer); cbScroll(); ok=true; }
+    }
+  }catch(e){
+    cbTyping(false); cbAddError();
+  }finally{
+    cbTyping(false); CB.busy=false; $('#cbSend').disabled=false;
+    if(CB.open) $('#cbInput').focus();
+  }
+  if(ok){
+    CB.history.push({role:'assistant',content:answer});
+    if(CB.history.length>16) CB.history=CB.history.slice(-16);
+    cbRenderSuggestions(suggestions);
+  }else{
+    // don't keep a dangling user turn in history if nothing came back
+    if(CB.history.length && CB.history[CB.history.length-1].role==='user') CB.history.pop();
+  }
+}
+
+function cbAutosize(){ const t=$('#cbInput'); if(!t)return; t.style.height='auto'; t.style.height=Math.min(120,t.scrollHeight)+'px'; }
+
+function cbOpen(){
+  if(CB.open) return; CB.open=true; CB.returnFocus=document.activeElement;
+  if(!CB.greeted){ cbStarter(); CB.greeted=true; }
+  $('#cbBack').classList.add('open'); $('#cbPanel').classList.add('open');
+  $('#cbPanel').setAttribute('aria-hidden','false'); $('#cbBack').setAttribute('aria-hidden','false');
+  $('#cbLaunch').setAttribute('aria-expanded','true');
+  const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  setTimeout(()=>{ $('#cbInput').focus(); }, rm?0:120);
+}
+function cbClose(){
+  if(!CB.open) return; CB.open=false;
+  $('#cbBack').classList.remove('open'); $('#cbPanel').classList.remove('open');
+  $('#cbPanel').setAttribute('aria-hidden','true'); $('#cbBack').setAttribute('aria-hidden','true');
+  $('#cbLaunch').setAttribute('aria-expanded','false');
+  const r=CB.returnFocus||$('#cbLaunch'); if(r&&r.focus) try{r.focus();}catch(_){ $('#cbLaunch').focus(); }
+}
+
+(function initChat(){
+  if(document.body.classList.contains('present')) return; // keep presentation/projector mode clean
+  $('#cbLaunch').addEventListener('click',cbOpen);
+  $('#cbCloseBtn').addEventListener('click',cbClose);
+  $('#cbBack').addEventListener('click',cbClose);
+  $('#cbSend').addEventListener('click',()=>cbSend());
+  const inp=$('#cbInput');
+  inp.addEventListener('input',cbAutosize);
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); cbSend(); } });
+  // Esc closes; focus trap within the open panel
+  document.addEventListener('keydown',e=>{
+    if(!CB.open) return;
+    if(e.key==='Escape'){ e.preventDefault(); cbClose(); return; }
+    if(e.key==='Tab'){
+      const f=$('#cbPanel').querySelectorAll('button,textarea,a[href],[tabindex]:not([tabindex="-1"])');
+      const vis=[...f].filter(el=>el.offsetParent!==null);
+      if(!vis.length) return;
+      const first=vis[0], last=vis[vis.length-1];
+      if(e.shiftKey&&document.activeElement===first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey&&document.activeElement===last){ e.preventDefault(); first.focus(); }
+    }
+  });
+})();
 </script>
 </body>
 </html>

@@ -33,7 +33,8 @@ def _parse_json(text: str) -> dict:
     return json.loads(s)
 
 
-def _openai_compat(base_url, api_key, model, system, user, headers_extra=None, timeout=60):
+def _openai_compat(base_url, api_key, model, system, user, headers_extra=None, timeout=60,
+                   json_mode=True):
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     if headers_extra:
         headers.update(headers_extra)
@@ -42,8 +43,9 @@ def _openai_compat(base_url, api_key, model, system, user, headers_extra=None, t
         "temperature": 0,
         "messages": [{"role": "system", "content": system},
                      {"role": "user", "content": user}],
-        "response_format": {"type": "json_object"},
     }
+    if json_mode:
+        body["response_format"] = {"type": "json_object"}
     r = requests.post(f"{base_url}/chat/completions", headers=headers, json=body, timeout=timeout)
     if r.status_code == 400 and "response_format" in r.text:  # model lacks JSON mode
         body.pop("response_format", None)
@@ -63,12 +65,15 @@ def _openai_compat(base_url, api_key, model, system, user, headers_extra=None, t
     return content
 
 
-def _gemini(api_key, model, system, user, timeout=60):
+def _gemini(api_key, model, system, user, timeout=60, json_mode=True):
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+    gen_cfg = {"temperature": 0}
+    if json_mode:
+        gen_cfg["responseMimeType"] = "application/json"
     body = {
         "system_instruction": {"parts": [{"text": system}]},
         "contents": [{"parts": [{"text": user}]}],
-        "generationConfig": {"temperature": 0, "responseMimeType": "application/json"},
+        "generationConfig": gen_cfg,
     }
     r = requests.post(url, json=body, timeout=timeout)
     if r.status_code >= 400:
@@ -76,21 +81,26 @@ def _gemini(api_key, model, system, user, timeout=60):
     return r.json()["candidates"][0]["content"]["parts"][0]["text"]
 
 
-def _ollama(model, system, user, timeout=180):
-    r = requests.post(
-        "http://localhost:11434/api/chat",
-        json={"model": model, "stream": False, "format": "json",
-              "options": {"temperature": 0},
-              "messages": [{"role": "system", "content": system},
-                           {"role": "user", "content": user}]},
-        timeout=timeout,
-    )
+def _ollama(model, system, user, timeout=180, json_mode=True):
+    payload = {"model": model, "stream": False,
+               "options": {"temperature": 0},
+               "messages": [{"role": "system", "content": system},
+                            {"role": "user", "content": user}]}
+    if json_mode:
+        payload["format"] = "json"
+    r = requests.post("http://localhost:11434/api/chat", json=payload, timeout=timeout)
     if r.status_code >= 400:
         raise LLMError(f"{model}: HTTP {r.status_code} {r.text[:200]}")
     return r.json()["message"]["content"]
 
 
-def _dispatch(system: str, user: str, role: str, timeout: int) -> str:
+def _dispatch(system: str, user: str, role: str, timeout: int, json_mode: bool = True) -> str:
+    """Send one (system, user) to the active provider and return the raw text.
+
+    ``json_mode`` toggles the provider's structured-output mode. chat_json calls
+    with json_mode=True (and parses); chat_text calls with json_mode=False to get
+    free-form prose. The provider routing is shared so there is one transport path.
+    """
     p = config.LLM_PROVIDER
     model = model_for(role)
     if p == "openrouter":
@@ -99,13 +109,13 @@ def _dispatch(system: str, user: str, role: str, timeout: int) -> str:
         return _openai_compat(
             "https://openrouter.ai/api/v1", config.OPENROUTER_API_KEY, model, system, user,
             headers_extra={"HTTP-Referer": "https://github.com/supawichza40/glassbox", "X-Title": "GlassBox"},
-            timeout=timeout)
+            timeout=timeout, json_mode=json_mode)
     if p == "gemini":
         if not config.GEMINI_API_KEY:
             raise LLMError("GEMINI_API_KEY is empty — paste it into .env")
-        return _gemini(config.GEMINI_API_KEY, model, system, user, timeout=timeout)
+        return _gemini(config.GEMINI_API_KEY, model, system, user, timeout=timeout, json_mode=json_mode)
     if p == "ollama":
-        return _ollama(model, system, user, timeout=max(timeout, 180))
+        return _ollama(model, system, user, timeout=max(timeout, 180), json_mode=json_mode)
     raise LLMError(f"unknown LLM_PROVIDER='{p}' (use openrouter | gemini | ollama)")
 
 
@@ -124,3 +134,19 @@ def chat_json(system: str, user: str, role: str = "fast", timeout: int | None = 
         except Exception as e:  # noqa: BLE001 - retry once, then surface
             last_err = e
     raise LLMError(f"{model_for(role)} returned non-JSON after retry ({last_err})")
+
+
+def chat_text(system: str, user: str, role: str = "fast", timeout: int | None = None) -> str:
+    """Call the provider in free-form TEXT mode and return the reply verbatim.
+
+    Same provider routing as chat_json (OpenRouter / Gemini / Ollama) but with
+    JSON-mode OFF and no JSON parsing — used by the explainer chatbot, which wants
+    plain prose. Raises LLMError on transport failure or an empty reply.
+    """
+    if timeout is None:
+        timeout = config.LLM_TIMEOUT
+    content = _dispatch(system, user, role, timeout, json_mode=False)
+    text = (content or "").strip()
+    if not text:
+        raise LLMError(f"{model_for(role)} returned empty text")
+    return text
