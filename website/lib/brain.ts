@@ -124,3 +124,137 @@ export function verify(recordId: string): Promise<VerifyResult> {
     { timeoutMs: 10000 },
   );
 }
+
+// ── Explainer chat (POST /api/chat) ────────────────────────────────────────
+// Streams `event: delta\ndata:{"text":…}` chunks then one `event: done\n
+// data:{"refused":bool,"suggestions":[…]}`. Falls back to a single JSON
+// `{answer, refused, suggestions?}` when the server doesn't speak SSE. A 422
+// `{outOfScope}` is a NORMAL refusal (not an error) — the brain answers it as
+// a calm redirect, so we surface it through onDone, never as a throw.
+
+export type ChatRole = "user" | "assistant";
+export interface ChatTurn {
+  role: ChatRole;
+  content: string;
+}
+export interface ChatContext {
+  page?: string;
+  decision?: unknown;
+  audit?: unknown;
+}
+export interface ChatArgs {
+  question: string;
+  context?: ChatContext;
+  history?: ChatTurn[];
+  signal?: AbortSignal;
+  onDelta: (text: string) => void;
+  onDone: (info: { refused: boolean; suggestions: string[] }) => void;
+}
+
+const CHAT_OFFLINE_MSG =
+  "Can't reach the GlassBox explainer right now. The engine may be waking up (~30s on a cold start). Try again in a moment.";
+
+/**
+ * Drives a chat turn. Resolves once the stream (or JSON fallback) completes.
+ * Throws a BrainError ONLY on a network/transport failure or an abort — those
+ * are the callers' single "error" state. An out-of-scope refusal resolves
+ * normally with `refused: true`.
+ */
+export async function chat(args: ChatArgs): Promise<void> {
+  const { question, context, history, signal, onDelta, onDone } = args;
+  const payload = {
+    question,
+    context: context || {},
+    history: (history || []).slice(-6),
+  };
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/chat`, {
+      method: "POST",
+      signal,
+      headers: {
+        "content-type": "application/json",
+        accept: "text/event-stream",
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    if ((e as { name?: string }).name === "AbortError") {
+      throw new BrainError("Stopped.", 0);
+    }
+    throw new BrainError(CHAT_OFFLINE_MSG, 0);
+  }
+
+  // 422 outOfScope is a valid refusal body, not a transport failure.
+  if (!res.ok && res.status !== 422) {
+    throw new BrainError(CHAT_OFFLINE_MSG, res.status);
+  }
+
+  const ct = res.headers.get("content-type") || "";
+
+  if (res.body && /text\/event-stream/.test(ct)) {
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    let refused = false;
+    let suggestions: string[] = [];
+    try {
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buf.indexOf("\n\n")) >= 0) {
+          const block = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          let ev = "message";
+          let data = "";
+          for (const ln of block.split("\n")) {
+            if (ln.startsWith("event:")) ev = ln.slice(6).trim();
+            else if (ln.startsWith("data:")) data += ln.slice(5).replace(/^ /, "");
+          }
+          if (!data) continue;
+          let j: { text?: string; refused?: boolean; suggestions?: string[] };
+          try {
+            j = JSON.parse(data);
+          } catch {
+            continue;
+          }
+          if (ev === "delta") {
+            if (j.text) onDelta(j.text);
+          } else if (ev === "done") {
+            refused = !!j.refused;
+            suggestions = Array.isArray(j.suggestions) ? j.suggestions : [];
+          } else if (ev === "error") {
+            throw new BrainError(CHAT_OFFLINE_MSG, 0);
+          }
+        }
+      }
+    } catch (e) {
+      if ((e as { name?: string }).name === "AbortError") {
+        // A user-initiated Stop: finalize whatever streamed so far, calmly.
+        onDone({ refused: false, suggestions: [] });
+        return;
+      }
+      if (e instanceof BrainError) throw e;
+      throw new BrainError(CHAT_OFFLINE_MSG, 0);
+    }
+    onDone({ refused, suggestions });
+    return;
+  }
+
+  // ── JSON fallback ──
+  type ChatJson = { answer?: string; refused?: boolean; suggestions?: string[] };
+  let body: ChatJson;
+  try {
+    body = (await res.json()) as ChatJson;
+  } catch {
+    throw new BrainError(CHAT_OFFLINE_MSG, 0);
+  }
+  if (body.answer) onDelta(body.answer);
+  onDone({
+    refused: !!body.refused,
+    suggestions: Array.isArray(body.suggestions) ? body.suggestions : [],
+  });
+}

@@ -1,7 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { ChatLauncher } from "./chat/ChatLauncher";
 import { useSession } from "@/lib/useSession";
 import { cn } from "@/lib/cn";
 import { Wordmark } from "./Wordmark";
@@ -112,6 +114,15 @@ export function AppShell({
       </main>
 
       {variant !== "bare" ? <Footer width={width} active={pathname} /> : null}
+
+      {/* Page-explainer chat launcher. Mounted on marketing + app; the
+          full-bleed verify chrome ("bare") stays free of app affordances.
+          Suspense wraps the useSearchParams (?present) read. */}
+      {variant !== "bare" ? (
+        <Suspense fallback={null}>
+          <ChatLauncher />
+        </Suspense>
+      ) : null}
     </div>
   );
 }

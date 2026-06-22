@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { ChatProvider } from "@/components/chat/ChatProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,7 +34,9 @@ export default function RootLayout({
       lang="en"
       className={`h-full ${inter.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <ChatProvider>{children}</ChatProvider>
+      </body>
     </html>
   );
 }
