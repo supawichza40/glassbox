@@ -10,6 +10,7 @@ import { ReceiptCard } from "@/components/ReceiptCard";
 import { InteractiveTamper } from "@/components/InteractiveTamper";
 import { EmptyState } from "@/components/EmptyState";
 import { getRecord } from "@/lib/store";
+import { DEMO_RECORD } from "@/lib/demo";
 import type { StoredRecord } from "@/lib/types";
 
 // Public, auth-free (proxy.ts only guards /app/*). Full-bleed verify template.
@@ -22,7 +23,8 @@ export default function VerifyPage({
   const [rec, setRec] = useState<StoredRecord | null | undefined>(undefined);
 
   useEffect(() => {
-    setRec(getRecord(id));
+    // Session records live in the store; /verify/demo falls back to a real seeded record.
+    setRec(getRecord(id) ?? (id === "demo" ? DEMO_RECORD : null));
   }, [id]);
 
   return (
