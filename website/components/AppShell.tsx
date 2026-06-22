@@ -65,6 +65,12 @@ export function AppShell({
                 How it works
               </Link>
               <Link
+                href="/pricing"
+                className="hidden px-2 text-[14px] text-ink2 no-underline hover:text-ink sm:inline"
+              >
+                Pricing
+              </Link>
+              <Link
                 href="/verify/demo"
                 className="px-2 text-[14px] font-semibold text-accent no-underline hover:brightness-110"
               >
@@ -120,9 +126,18 @@ function Footer({ width, active }: { width: string; active: string | null }) {
           prove origin; the on-chain Sui object anchors the record. Not advice,
           not a compliance guarantee.
         </p>
-        <div className="flex items-center gap-4 text-[13px]">
+        <div className="flex flex-wrap items-center gap-4 text-[13px]">
           <Link href="/verify/demo" className="text-accent no-underline">
             Verify
+          </Link>
+          <Link href="/pricing" className="text-ink2 no-underline hover:text-ink">
+            Pricing
+          </Link>
+          <Link href="/trust" className="text-ink2 no-underline hover:text-ink">
+            Trust
+          </Link>
+          <Link href="/about" className="text-ink2 no-underline hover:text-ink">
+            About
           </Link>
           <Link href="/login" className="text-ink2 no-underline hover:text-ink">
             Demo
