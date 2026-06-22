@@ -10,7 +10,7 @@ export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-lg font-semibold " +
+  "inline-flex items-center justify-center gap-2 rounded-[10px] font-semibold " +
   "min-h-[44px] select-none transition-[background,border-color,opacity,transform] " +
   "duration-150 ease-out disabled:opacity-50 disabled:cursor-not-allowed " +
   "active:translate-y-px focus-visible:outline-2 focus-visible:outline-accent";
@@ -22,9 +22,9 @@ const sizes: Record<ButtonSize, string> = {
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "bg-action text-white border border-transparent hover:brightness-110 shadow-[0_4px_16px_rgba(37,99,235,.35)]",
+    "bg-action text-white border border-transparent hover:bg-action-hi shadow-[0_2px_8px_rgba(37,99,235,.28),inset_0_1px_0_rgba(255,255,255,.18)]",
   secondary:
-    "bg-surface2 text-ink border border-line hover:border-[#3a4757] hover:bg-[#1f2939]",
+    "bg-surface2 text-ink border border-line hover:border-line-strong hover:bg-surface2",
   ghost: "bg-transparent text-ink2 border border-transparent hover:text-ink hover:bg-surface2",
   danger:
     "bg-transparent text-bear border border-bear/60 hover:bg-bear/10",

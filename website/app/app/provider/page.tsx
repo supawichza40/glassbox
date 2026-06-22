@@ -67,7 +67,7 @@ export default function ProviderDashboard() {
                   href={`/app/provider/d/${r.audit.recordId}`}
                   className="no-underline"
                 >
-                  <Card className="transition-colors hover:border-[#3a4757]">
+                  <Card className="transition-colors hover:border-line-strong">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">

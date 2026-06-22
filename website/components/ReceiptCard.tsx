@@ -53,12 +53,14 @@ export function ReceiptCard({
   return (
     <div
       className={cn(
-        "rounded-[12px] border border-line bg-well p-4 sm:p-5",
+        "rounded-[14px] border border-line bg-well p-4 sm:p-5 elev-1",
         className,
       )}
     >
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="m-0 text-[15px] font-bold text-ink">Signed receipt</h3>
+        <h3 className="m-0 text-[12px] font-bold uppercase tracking-wide text-muted">
+          Signed receipt
+        </h3>
         {/* Honest sink chip: color + word + glyph. Never render un-anchored as anchored. */}
         <span
           className={cn(

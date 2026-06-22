@@ -23,12 +23,14 @@ function Bar({
   colorVar,
   valueLabel,
   reveal,
+  delayMs = 0,
 }: {
   label: string;
   pct: number;
   colorVar: string;
   valueLabel: string;
   reveal?: boolean;
+  delayMs?: number;
 }) {
   return (
     <div className="flex items-center gap-3">
@@ -36,7 +38,11 @@ function Bar({
       <div className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-well border border-line">
         <div
           className={cn("absolute inset-y-0 left-0 rounded-full", reveal && "gb-grow")}
-          style={{ width: `${Math.max(0, Math.min(100, pct))}%`, background: colorVar }}
+          style={{
+            width: `${Math.max(0, Math.min(100, pct))}%`,
+            background: colorVar,
+            animationDelay: reveal ? `${delayMs}ms` : undefined,
+          }}
         />
       </div>
       <span className="mono w-12 shrink-0 text-right text-[13px] text-faint">
@@ -58,13 +64,14 @@ export function SignalStrengthMeter({
   const lean = net > 0 ? "Bull" : net < 0 ? "Bear" : "a draw";
 
   return (
-    <div className={cn("flex flex-col gap-3", className)}>
+    <div className={cn("glow-evidence flex flex-col gap-3", className)}>
       <Bar
         label="Bull"
         pct={(bullConviction / 5) * 100}
         colorVar="var(--bull)"
         valueLabel={`${bullConviction}/5`}
         reveal={reveal}
+        delayMs={0}
       />
       <Bar
         label="Bear"
@@ -72,13 +79,14 @@ export function SignalStrengthMeter({
         colorVar="var(--bear)"
         valueLabel={`${bearConviction}/5`}
         reveal={reveal}
+        delayMs={120}
       />
 
       {/* Direction-neutral confidence bar in --brand (never green/red). */}
       <div className="mt-1 flex items-center justify-between">
         <span className="text-[13px] font-semibold text-ink2">Signal Strength</span>
         <span className="mono text-[13px] text-ink">
-          {signalStrengthPct}% · <span className="text-brand">{band}</span>
+          {signalStrengthPct}% · <span className="text-brand-hi">{band}</span>
         </span>
       </div>
       <div
@@ -94,6 +102,7 @@ export function SignalStrengthMeter({
           style={{
             width: `${Math.max(0, Math.min(100, signalStrengthPct))}%`,
             background: "var(--brand)",
+            animationDelay: reveal ? "280ms" : undefined,
           }}
         />
       </div>

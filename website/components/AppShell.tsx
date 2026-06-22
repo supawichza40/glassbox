@@ -23,7 +23,7 @@ interface AppShellProps {
 }
 
 const MAXW: Record<NonNullable<AppShellProps["maxWidth"]>, string> = {
-  marketing: "max-w-[1040px]",
+  marketing: "max-w-[1100px]",
   app: "max-w-[1200px]",
   verify: "max-w-[760px]",
 };
@@ -60,24 +60,30 @@ export function AppShell({
             <nav className="flex items-center gap-1 sm:gap-3">
               <Link
                 href="/#how"
-                className="hidden px-2 text-[14px] text-ink2 no-underline hover:text-ink sm:inline"
+                className="hidden rounded px-2 text-[14px] text-ink2 no-underline hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:inline"
               >
                 How it works
               </Link>
               <Link
+                href="/trust"
+                className="hidden rounded px-2 text-[14px] text-ink2 no-underline hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:inline"
+              >
+                Trust
+              </Link>
+              <Link
                 href="/pricing"
-                className="hidden px-2 text-[14px] text-ink2 no-underline hover:text-ink sm:inline"
+                className="hidden rounded px-2 text-[14px] text-ink2 no-underline hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:inline"
               >
                 Pricing
               </Link>
               <Link
                 href="/verify/demo"
-                className="px-2 text-[14px] font-semibold text-accent no-underline hover:brightness-110"
+                className="rounded px-2 text-[14px] font-semibold text-accent no-underline hover:text-accent/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 Verify a record
               </Link>
               <Button href="/login" variant="primary" className="ml-1">
-                Try the live demo
+                Run an analysis
               </Button>
             </nav>
           ) : null}
@@ -88,7 +94,7 @@ export function AppShell({
               <RoleSwitch role={session.role} onSwitch={switchRole} />
               <button
                 onClick={onSignOut}
-                className="hidden h-9 rounded-md border border-line px-3 text-[13px] text-muted hover:text-ink hover:border-[#3a4757] sm:inline-flex sm:items-center"
+                className="hidden h-9 rounded-md border border-line px-3 text-[13px] text-muted hover:text-ink hover:border-line-strong sm:inline-flex sm:items-center"
               >
                 Exit demo
               </button>

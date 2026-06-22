@@ -33,7 +33,7 @@ function LoginInner() {
         <Wordmark />
       </Link>
 
-      <div className="mt-6 w-full max-w-[420px] rounded-[12px] border border-line bg-surface p-6 shadow-[0_8px_30px_rgba(0,0,0,.45)]">
+      <div className="mt-6 w-full max-w-[420px] rounded-[14px] border border-line bg-surface p-6 elev-3">
         <h1 className="m-0 text-[22px] font-bold text-ink">Enter the demo</h1>
         <p className="mt-1.5 mb-0 text-[14px] text-muted">
           The demo account holds both seats. Pick a role to start — you can switch

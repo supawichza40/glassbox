@@ -61,7 +61,7 @@ export default function AboutPage() {
           href="https://github.com/supawichza40/glassbox"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex h-11 items-center rounded-lg border border-line px-4 text-[15px] font-semibold text-ink2 no-underline hover:text-ink hover:border-[#3a4757]"
+          className="inline-flex h-11 items-center rounded-lg border border-line px-4 text-[15px] font-semibold text-ink2 no-underline hover:text-ink hover:border-line-strong"
         >
           View the code on GitHub ↗
         </a>

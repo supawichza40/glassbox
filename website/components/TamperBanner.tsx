@@ -50,10 +50,14 @@ export function TamperBanner({ status, headline, sub, className }: TamperBannerP
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    el.classList.remove("gb-pop", "gb-shake");
+    el.classList.remove("gb-pop", "gb-shake", "gb-alarm");
     // force reflow so the animation restarts
     void el.offsetWidth;
-    el.classList.add(status === "tamper" ? "gb-shake" : "gb-pop");
+    if (status === "tamper") {
+      el.classList.add("gb-shake", "gb-alarm");
+    } else {
+      el.classList.add("gb-pop");
+    }
   }, [status, headline]);
 
   return (

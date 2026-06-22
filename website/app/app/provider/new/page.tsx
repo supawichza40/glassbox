@@ -229,7 +229,10 @@ export default function NewAnalysisPage() {
             <div className="text-[12px] font-semibold uppercase tracking-wide text-muted">
               Verdict
             </div>
-            <div className="mt-3 flex justify-center">
+            <div
+              className="gb-verdict mt-3 flex justify-center"
+              style={{ animationDelay: "350ms" }}
+            >
               <VerdictPill verdict={decision.verdict} size="hero" />
             </div>
             {decision.whyResolved ? (

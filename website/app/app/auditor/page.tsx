@@ -73,7 +73,7 @@ export default function AuditorPage() {
                 href={`/verify/${r.audit.recordId}`}
                 className="no-underline"
               >
-                <Card className="transition-colors hover:border-[#3a4757]">
+                <Card className="transition-colors hover:border-line-strong">
                   <div className="flex items-center justify-between gap-2">
                     <VerdictPill verdict={r.decision.verdict} size="sm" />
                     <span className="text-[12px] text-muted">{relativeTime(r.createdAt)}</span>

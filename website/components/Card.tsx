@@ -9,6 +9,8 @@ interface CardProps {
   well?: boolean;
   /** Apply the staged-reveal rise animation. */
   reveal?: boolean;
+  /** Interactive cards lift their hairline to --line-strong on hover. */
+  interactive?: boolean;
   as?: "section" | "div" | "article";
 }
 
@@ -17,14 +19,15 @@ export function Card({
   className,
   well = false,
   reveal = false,
+  interactive = false,
   as: Tag = "section",
 }: CardProps) {
   return (
     <Tag
       className={cn(
-        "rounded-[12px] border border-line p-5 sm:p-6",
+        "rounded-[14px] border border-line p-5 sm:p-6 elev-1 transition-colors",
         well ? "bg-well" : "bg-surface",
-        "shadow-[0_8px_30px_rgba(0,0,0,.45)]",
+        interactive && "hover:border-line-strong",
         reveal && "gb-rise",
         className,
       )}

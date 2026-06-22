@@ -31,7 +31,7 @@ export function CopyButton({ value, label = "Copy", className }: CopyButtonProps
         "inline-flex h-8 min-w-8 items-center justify-center gap-1 rounded-md border px-2 text-[12px] font-medium transition-colors",
         copied
           ? "border-bull/60 text-bull"
-          : "border-line text-muted hover:text-ink hover:border-[#3a4757]",
+          : "border-line text-muted hover:text-ink hover:border-line-strong",
         className,
       )}
     >

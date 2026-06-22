@@ -29,12 +29,6 @@ export default function VerifyPage({
 
   return (
     <AppShell variant="bare" maxWidth="verify">
-      <h1 className="m-0 text-[24px] font-extrabold text-ink">Independent verification</h1>
-      <p className="mt-1 mb-5 max-w-[60ch] text-[15px] text-ink2">
-        Re-check this signed AI decision on your own device — recompute the fingerprint and
-        compare it to what was anchored. No GlassBox server in the trust path.
-      </p>
-
       {rec === undefined ? (
         <Card className="h-40 animate-pulse motion-reduce:animate-none" />
       ) : !rec ? (
@@ -50,22 +44,34 @@ export default function VerifyPage({
         />
       ) : (
         <div className="flex flex-col gap-5">
-          <Card>
-            <div className="flex flex-wrap items-center gap-3">
+          {/* Lead with the result: the VERIFIED banner + the live tamper widget. */}
+          <Card className="glow-evidence">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
               <VerdictPill verdict={rec.decision.verdict} size="md" />
               <span className="text-[14px] text-muted">
                 {rec.asset} · Signal {rec.decision.signalStrengthPct}% · {rec.decision.signalBand}
               </span>
             </div>
+            <InteractiveTamper
+              recordCanonical={rec.audit.recordCanonical}
+              recordHash={rec.audit.recordHash}
+              verifiedBaseline
+            />
           </Card>
 
-          <ReceiptCard audit={rec.audit} />
+          {/* Explainer + receipt second. */}
+          <div>
+            <h1 className="m-0 text-[20px] font-extrabold text-ink">
+              How this verification works
+            </h1>
+            <p className="mt-1 mb-0 max-w-[60ch] text-[14px] text-ink2">
+              The check above ran on your own device — it recomputed the
+              fingerprint and compared it to what was anchored. No GlassBox server
+              in the trust path.
+            </p>
+          </div>
 
-          <InteractiveTamper
-            recordCanonical={rec.audit.recordCanonical}
-            recordHash={rec.audit.recordHash}
-            verifiedBaseline
-          />
+          <ReceiptCard audit={rec.audit} />
 
           <p className="text-center text-[13px] text-muted">
             <Link href="/login" className="text-accent no-underline">
