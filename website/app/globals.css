@@ -1,26 +1,118 @@
 @import "tailwindcss";
 
+/* ── GlassBox design tokens (locked palette — glassbox-design-system) ──────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #090c12;
+  --surface: #121821;
+  --surface2: #19212e;
+  --well: #0e141d;
+  --line: #2a3543;
+
+  --ink: #eef3fa;
+  --ink2: #c0cbda;
+  --muted: #8a97a8;
+  --faint: #aab6c6;
+
+  --brand: #7c5cff; /* purple — direction-NEUTRAL confidence/evidence accent */
+  --action: #2563eb; /* blue — primary CTA buttons ONLY */
+  --accent: #21d4c4; /* teal — links, focus ring, chain/Sui links */
+  --bull: #2ed573; /* green */
+  --bear: #ff4d5e; /* red */
+  --warn: #ffc24d; /* amber */
+
+  --ease: cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
+/* Map the raw tokens into Tailwind v4's theme so bg-* / text-* / border-* and
+   opacity modifiers (bg-bull/10, border-line/70, bg-bg/85) all generate. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface2);
+  --color-well: var(--well);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink2: var(--ink2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-brand: var(--brand);
+  --color-action: var(--action);
+  --color-accent: var(--accent);
+  --color-bull: var(--bull);
+  --color-bear: var(--bear);
+  --color-warn: var(--warn);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, "JetBrains Mono", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* dark canvas with a subtle brand glow at the top-center (projector-first) */
+  background:
+    radial-gradient(72% 56% at 50% -6%, rgba(124, 92, 255, 0.09), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Monospace utility used for every hash / signature / id / record / axis number. */
+.mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+/* ── Motion (the staged reveal). Honors prefers-reduced-motion. ───────────── */
+@keyframes gbRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes gbGrow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.gb-rise {
+  animation: gbRise 0.45s var(--ease) both;
+}
+.gb-grow {
+  transform-origin: left center;
+  animation: gbGrow 0.6s var(--ease) both;
+}
+
+/* Thin on-brand scrollbar for the editable-record textarea. */
+.gb-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.gb-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.gb-scroll::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gb-rise,
+  .gb-grow {
+    animation: none !important;
+  }
 }
