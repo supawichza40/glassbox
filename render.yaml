@@ -31,9 +31,34 @@ services:
         sync: false
       - key: AUDIT_SINK
         value: walrus
+      # Allow the Next.js website service (below) to call this API from the browser.
+      # After first deploy, set this to the website's Render URL, e.g.
+      #   https://glassbox-website.onrender.com   (comma-separate if more than one)
+      - key: CORS_ORIGINS
+        sync: false
       # Generous timeouts — no Heroku-style 30s router cap on Render, so let slow calls finish
       # instead of falling back early. (Code defaults are 12 / 5 for Heroku's tight budget.)
       - key: LLM_TIMEOUT
         value: "30"
       - key: MARKET_HTTP_TIMEOUT
         value: "8"
+
+  # ── The NEW Next.js website (dashboard + chat + marketing). Hand-built in website/.
+  # Node web service; talks to the brain above over HTTP. NEXT_PUBLIC_API_BASE is
+  # inlined at BUILD time, so it must point at the brain URL before the build runs.
+  - type: web
+    name: glassbox-website
+    runtime: node
+    plan: free
+    branch: main
+    rootDir: website
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20.18.0"
+      # The brain's public Render URL (the `glassbox` service above), e.g.
+      #   https://glassbox.onrender.com
+      # Set this BEFORE the first build (NEXT_PUBLIC_* is compiled into the bundle).
+      - key: NEXT_PUBLIC_API_BASE
+        sync: false
