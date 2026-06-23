@@ -6,7 +6,8 @@
 // FULL page route owns the conversation. All three overlay states share the same
 // ChatProvider store, so escalating never loses history.
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { useChat } from "./ChatProvider";
@@ -19,15 +20,22 @@ export function ChatLauncher() {
   const pathname = usePathname();
   const search = useSearchParams();
   const launcherRef = useRef<HTMLButtonElement>(null);
+  // Portal target is document.body, which only exists after mount. Gating on
+  // `mounted` also avoids an SSR/hydration mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const present = search.get("present") !== null;
   const onFullRoute = pathname === "/chat" || pathname === "/app/chat";
   // The full route owns the conversation; don't double-render an overlay there.
-  if (present || onFullRoute) return null;
+  if (present || onFullRoute || !mounted) return null;
 
   const overlayOpen = mode === "bubble" || mode === "side";
 
-  return (
+  // Portal to <body> so the fixed launcher/overlay anchor to the VIEWPORT, not to
+  // a transformed ancestor (e.g. .gb-rise leaves an identity transform that would
+  // otherwise become the containing block and pin "fixed" to the page, not the view).
+  return createPortal(
     <>
       {/* Launcher (bottom-right). aria-expanded reflects overlay state. */}
       {!overlayOpen ? (
@@ -58,7 +66,8 @@ export function ChatLauncher() {
           returnFocusRef={launcherRef}
         />
       ) : null}
-    </>
+    </>,
+    document.body,
   );
 }
 
