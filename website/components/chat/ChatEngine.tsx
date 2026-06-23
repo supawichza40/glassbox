@@ -77,28 +77,34 @@ export function ChatEngine({ variant }: { variant: "bubble" | "side" | "full" })
           isFull && "px-0",
         )}
       >
-        <div className={cn("mx-auto flex flex-col gap-6", isFull && "max-w-[720px]")}>
-          {empty ? (
-            <EmptyState onPick={send} isFull={isFull} />
-          ) : (
-            messages.map((m) =>
-              m.role === "user" ? (
-                <UserMessage key={m.id} message={m} />
-              ) : (
-                <AssistantMessage
-                  key={m.id}
-                  message={m}
-                  streaming={streaming}
-                  onPick={send}
-                />
-              ),
-            )
-          )}
-          {streaming &&
-          messages[messages.length - 1]?.role === "assistant" &&
-          !messages[messages.length - 1]?.content ? (
-            <TypingIndicator />
-          ) : null}
+        {/* Bottom-anchored: min-h-full fills the scroll viewport, mt-auto pushes the
+            thread to sit just above the composer (iMessage/Claude behavior). A short
+            conversation hugs the input instead of stranding at the top; a long one
+            scrolls normally with the newest turn nearest the composer. */}
+        <div className={cn("mx-auto flex min-h-full flex-col", isFull && "max-w-[720px]")}>
+          <div className="mt-auto flex flex-col gap-6">
+            {empty ? (
+              <EmptyState onPick={send} isFull={isFull} />
+            ) : (
+              messages.map((m) =>
+                m.role === "user" ? (
+                  <UserMessage key={m.id} message={m} />
+                ) : (
+                  <AssistantMessage
+                    key={m.id}
+                    message={m}
+                    streaming={streaming}
+                    onPick={send}
+                  />
+                ),
+              )
+            )}
+            {streaming &&
+            messages[messages.length - 1]?.role === "assistant" &&
+            !messages[messages.length - 1]?.content ? (
+              <TypingIndicator />
+            ) : null}
+          </div>
         </div>
       </div>
 
