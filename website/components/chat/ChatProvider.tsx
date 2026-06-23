@@ -51,6 +51,17 @@ const Ctx = createContext<ChatState | null>(null);
 let _seq = 0;
 const nextId = () => `m${Date.now().toString(36)}_${(_seq++).toString(36)}`;
 
+// The brain's ChatContext.page is a strict enum ("dashboard" | "verify"); sending a
+// raw pathname like "/chat" makes it 422 the whole turn. Map the route to that enum
+// (undefined on marketing pages — page context is optional).
+function pageContext(path: string | null): "dashboard" | "verify" | undefined {
+  if (!path) return undefined;
+  if (path.startsWith("/verify")) return "verify";
+  if (path.startsWith("/app")) return "dashboard";
+  // /chat (general explainer) + marketing pages send no page context.
+  return undefined;
+}
+
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [mode, setModeState] = useState<ChatMode>("closed");
@@ -111,7 +122,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
       chat({
         question,
-        context: { page: pathname || undefined },
+        context: { page: pageContext(pathname) },
         history: priorHistory,
         signal: ctrl.signal,
         onDelta: (text) =>
